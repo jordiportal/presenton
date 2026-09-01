@@ -60,8 +60,15 @@ async def app_lifespan(_: FastAPI):
     await migrate_database_on_startup()
     await create_db_and_tables()
     await bootstrap_database_admin()
+    from api.v1.auth.embed import (
+        ensure_embed_owner_user,
+        seed_provider_settings_from_env,
+    )
+
+    await ensure_embed_owner_user()
     async with async_session_maker() as session:
         await migrate_provider_settings_from_file(session)
+    await seed_provider_settings_from_env()
     await import_default_templates_on_startup()
     if get_can_change_keys_env() != "false":
         update_env_with_user_config()

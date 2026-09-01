@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { isAuthDisabled } from "@/utils/auth";
+import { PRESENTON_EMBED_HEADER } from "@/utils/embed";
 
 export type AuthStatus = {
   configured: boolean;
@@ -48,11 +49,19 @@ export async function getServerAuthStatus(): Promise<AuthStatus> {
 
   const h = await headers();
   const cookie = h.get("cookie") ?? "";
+  const embedToken = h.get(PRESENTON_EMBED_HEADER)?.trim();
+  const outbound: Record<string, string> = {};
+  if (cookie) {
+    outbound.cookie = cookie;
+  }
+  if (embedToken) {
+    outbound.Authorization = `Bearer ${embedToken}`;
+  }
 
   try {
     const response = await fetch(`${getServerFastApiBase()}/api/v1/auth/status`, {
       method: "GET",
-      headers: cookie ? { cookie } : undefined,
+      headers: Object.keys(outbound).length ? outbound : undefined,
       cache: "no-store",
     });
 

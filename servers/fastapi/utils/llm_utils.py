@@ -14,14 +14,20 @@ from llmai.shared import (
     LLMTool,
     Message,
     ReasoningConfig,
+    ReasoningEffortValue,
     ResponseFormat,
     ResponseStreamCompletionChunk,
     UserMessage,
     normalize_content_parts,
 )
 
-from utils.llm_config import get_extra_body
+from utils.llm_config import get_extra_body, get_generation_defaults
 from utils.schema_utils import get_schema_validation_errors
+
+# GLM/Kimi thinking-only models burn the balanced 8k cap on reasoning and
+# return empty content for large json_schema (slide layouts). Structured
+# calls need a higher floor and a low reasoning effort so JSON still fits.
+STRUCTURED_OUTPUT_TOKEN_FLOOR = 16384
 
 LOGGER = logging.getLogger(__name__)
 CLIENT_DISCONNECT_POLL_SECONDS = 0.1
@@ -116,6 +122,17 @@ def get_generate_kwargs(
     reasoning: Optional[ReasoningConfig] = None,
     stream: bool = False,
 ) -> dict[str, Any]:
+    if response_format is not None:
+        defaults = get_generation_defaults()
+        if reasoning is None:
+            reasoning = defaults.reasoning
+            if reasoning.effort is None and reasoning.enabled is not False:
+                reasoning = reasoning.model_copy(
+                    update={"effort": ReasoningEffortValue.LOW}
+                )
+        if max_tokens is None:
+            max_tokens = defaults.max_output_tokens or STRUCTURED_OUTPUT_TOKEN_FLOOR
+
     kwargs: dict[str, Any] = {
         "model": model,
         "messages": list(messages),

@@ -33,6 +33,7 @@ import {
   useAutoSave,
 } from "../hooks";
 import { PresentationPageProps } from "../types";
+import { isTruthyEmbedFlag } from "@/utils/embed";
 import { applyPresentationThemeToElement } from "../utils/applyPresentationThemeDom";
 
 import { replaceSlidesWithBlankFallback } from "@/store/slices/presentationGeneration";
@@ -144,6 +145,7 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
 }) => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const isEmbed = isTruthyEmbedFlag(searchParams.get("embed"));
   const dispatch = useDispatch();
   // State management
   const [loading, setLoading] = useState(true);
@@ -824,17 +826,19 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
             >
               Refresh Page
             </Button>
-            <Button
-              onClick={() => {
-                trackEvent(MixpanelEvent.Navigation, {
-                  from: pathname,
-                  to: "/upload",
-                });
-                router.push("/upload");
-              }}
-            >
-              Go to Upload
-            </Button>
+            {isEmbed ? null : (
+              <Button
+                onClick={() => {
+                  trackEvent(MixpanelEvent.Navigation, {
+                    from: pathname,
+                    to: "/upload",
+                  });
+                  router.push("/upload");
+                }}
+              >
+                Go to Upload
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -862,6 +866,7 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
           isPresentationSaving={isSaving}
           currentSlide={selectedSlide}
           generationMode={isSmartPresentation ? "smart" : "standard"}
+          embed={isEmbed}
         />
         <div className="flex flex-1 min-h-0 gap-3 overflow-hidden xl:gap-5 2xl:gap-6">
           <div className="sticky top-0 hidden h-full w-[165px] shrink-0 self-start md:block">
@@ -954,6 +959,7 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
               </div>
             )}
           </div>
+          {isEmbed ? null : (
           <button
             ref={mobileAssistantTriggerRef}
             type="button"
@@ -969,7 +975,9 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
             <Sparkles className="h-4 w-4 text-[#7A5AF8]" aria-hidden="true" />
             AI Assistant
           </button>
+          )}
 
+          {isEmbed ? null : (
           <button
             type="button"
             aria-label="Close AI Assistant"
@@ -979,7 +987,9 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
               isMobileAssistantOpen ? "fixed" : "hidden"
             )}
           />
+          )}
 
+          {isEmbed ? null : (
           <div
             id="presentation-mobile-assistant"
             role={isMobileAssistantOpen ? "dialog" : undefined}
@@ -1040,6 +1050,7 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
               />
             </div>
           </div>
+          )}
         </div>
       </div>
     </div>

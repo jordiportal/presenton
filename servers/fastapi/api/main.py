@@ -98,6 +98,11 @@ app.add_middleware(UserConfigEnvUpdateMiddleware)
 app.add_middleware(SessionAuthMiddleware)
 
 
+@app.get("/health", include_in_schema=False)
+async def health():
+    return {"status": "ok"}
+
+
 @app.middleware("http")
 async def static_icon_fallback_middleware(request: Request, call_next):
     """Serve placeholder when icon paths are missing (e.g. renamed Phosphor icons)."""

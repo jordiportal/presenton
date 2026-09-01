@@ -3,9 +3,9 @@ from typing import Literal
 import uuid
 
 from fastapi import HTTPException, Request
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from api.v1.auth.embed import BRAIN_EMBED_OWNER_ID, resolve_embed_auth
 from api.v1.auth.users import UsernameUserDatabase, UserManager, get_jwt_strategy
 from models.sql.access_token import AccessToken
 from models.sql.user import User
@@ -17,7 +17,7 @@ class AuthPrincipal:
     user_id: uuid.UUID
     username: str
     is_admin: bool
-    method: Literal["jwt", "api_key"]
+    method: Literal["jwt", "api_key", "embed", "service"]
 
 
 async def resolve_request_principal(
@@ -41,22 +41,33 @@ async def resolve_request_principal(
     authorization = request.headers.get("Authorization", "")
     if authorization.lower().startswith("bearer "):
         token = authorization.split(" ", 1)[1].strip()
-        if not token.startswith("sk-presenton-"):
-            return None, None
-        access_token = await session.get(AccessToken, token)
-        if access_token is None:
-            return None, None
-        user = await session.get(User, access_token.user_id)
-        if user is None or not user.is_active or not user.is_superuser:
-            return None, None
+        if token.startswith("sk-presenton-"):
+            access_token = await session.get(AccessToken, token)
+            if access_token is None:
+                return None, None
+            user = await session.get(User, access_token.user_id)
+            if user is None or not user.is_active or not user.is_superuser:
+                return None, None
+            return (
+                AuthPrincipal(
+                    user_id=user.id,
+                    username=user.username,
+                    is_admin=True,
+                    method="api_key",
+                ),
+                user,
+            )
+
+    embed_method = resolve_embed_auth(request)
+    if embed_method is not None:
         return (
             AuthPrincipal(
-                user_id=user.id,
-                username=user.username,
+                user_id=BRAIN_EMBED_OWNER_ID,
+                username="brain-service" if embed_method == "service" else "brain-embed",
                 is_admin=True,
-                method="api_key",
+                method=embed_method,
             ),
-            user,
+            None,
         )
 
     return None, None

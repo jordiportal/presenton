@@ -28,6 +28,7 @@ class UserConfigEnvUpdateMiddleware(BaseHTTPMiddleware):
 
 class SessionAuthMiddleware(BaseHTTPMiddleware):
     _PUBLIC_AUTH_PATHS = {
+        "/health",
         "/api/v1/auth/status",
         "/api/v1/auth/verify",
         "/api/v1/auth/setup",
@@ -80,16 +81,17 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
             configured = bool(
                 await session.scalar(select(func.count()).select_from(User))
             )
-            if not configured:
-                return JSONResponse(
-                    status_code=428,
-                    content={
-                        "detail": "Login setup is required",
-                        "setup_required": True,
-                    },
-                )
             principal, user = await resolve_request_principal(request, session)
-            if principal is None:
+            if not configured:
+                if principal is None or principal.method not in {"embed", "service"}:
+                    return JSONResponse(
+                        status_code=428,
+                        content={
+                            "detail": "Login setup is required",
+                            "setup_required": True,
+                        },
+                    )
+            elif principal is None:
                 return JSONResponse(
                     status_code=401,
                     content={"detail": "Unauthorized"},

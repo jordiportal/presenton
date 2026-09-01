@@ -1486,7 +1486,11 @@ async def duplicate_presentation(
     )
 
 
-@PRESENTATION_ROUTER.post("/{id}/export", response_model=PresentationPathAndEditPath)
+@PRESENTATION_ROUTER.post(
+    "/{id}/export",
+    response_model=PresentationPathAndEditPath,
+    operation_id="export_presentation",
+)
 async def export_existing_presentation(
     id: uuid.UUID,
     request_http: Request,
@@ -2994,7 +2998,11 @@ async def generate_presentation_handler(
             raise e
 
 
-@PRESENTATION_ROUTER.post("/generate", response_model=PresentationPathAndEditPath)
+@PRESENTATION_ROUTER.post(
+    "/generate",
+    response_model=PresentationPathAndEditPath,
+    operation_id="generate_presentation",
+)
 async def generate_presentation_sync(
     request_http: Request,
     request: GeneratePresentationRequest,
@@ -3052,7 +3060,11 @@ async def _run_generate_presentation_task(
         )
 
 
-@PRESENTATION_ROUTER.post("/generate/async", response_model=AsyncTaskModel)
+@PRESENTATION_ROUTER.post(
+    "/generate/async",
+    response_model=AsyncTaskModel,
+    operation_id="generate_presentation_async",
+)
 async def generate_presentation_async(
     request_http: Request,
     request: GeneratePresentationRequest,
@@ -3093,7 +3105,11 @@ async def generate_presentation_async(
         raise e
 
 
-@PRESENTATION_ROUTER.get("/status/{id}", response_model=AsyncTaskModel)
+@PRESENTATION_ROUTER.get(
+    "/status/{id}",
+    response_model=AsyncTaskModel,
+    operation_id="get_presentation_generation_status",
+)
 async def check_async_presentation_generation_status(
     id: str = Path(description="ID of the presentation generation task"),
     sql_session: AsyncSession = Depends(get_async_session),

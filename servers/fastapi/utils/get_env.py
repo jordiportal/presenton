@@ -57,6 +57,15 @@ def is_disable_auth_enabled():
     return _is_truthy(get_disable_auth_env())
 
 
+def get_presenton_embed_secret_env() -> str | None:
+    """Shared secret with Brain: Bearer de tools OpenAPI y firma del JWT de embed."""
+    raw = os.getenv("PRESENTON_EMBED_SECRET")
+    if raw is None:
+        return None
+    secret = raw.strip()
+    return secret or None
+
+
 def is_presenton_electron_desktop():
     """True when running inside the Presenton Electron desktop app."""
     return _is_truthy(os.getenv("PRESENTON_ELECTRON"))

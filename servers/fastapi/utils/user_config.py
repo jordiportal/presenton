@@ -379,7 +379,8 @@ def update_env_with_user_config():
     user_config_path = get_user_config_path_env()
     if user_config_path:
         persisted = read_user_config_file(user_config_path)
-        if not persisted.get("LLM"):
+        # Un archivo vacío no debe borrar el LLM que inyectó el pack (env).
+        if not persisted.get("LLM") and not (os.getenv("LLM") or "").strip():
             os.environ.pop("LLM", None)
         for key in (
             "LLM_GENERATION_PROFILE",

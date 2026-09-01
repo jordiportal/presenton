@@ -41,10 +41,20 @@ MCP_ROUTE_MAPS = [
         pattern=r"^/api/v1/ppt/presentation/status/\{id\}$",
         mcp_type=MCPType.TOOL,
     ),
+    RouteMap(
+        methods=["POST"],
+        pattern=r"^/api/v1/ppt/presentation/\{id\}/export$",
+        mcp_type=MCPType.TOOL,
+    ),
     RouteMap(mcp_type=MCPType.EXCLUDE),
 ]
 
 MCP_TOOL_NAMES = {
+    "generate_presentation": "generate_presentation",
+    "generate_presentation_async": "generate_presentation_async",
+    "get_presentation_generation_status": "get_presentation_generation_status",
+    "export_presentation": "export_presentation",
+    # Spec estática (openai_spec.json) hasta que se regenere.
     "generate_presentation_sync_api_v1_ppt_presentation_generate_post": (
         "generate_presentation"
     ),

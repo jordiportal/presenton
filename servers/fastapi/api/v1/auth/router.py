@@ -80,6 +80,7 @@ def _set_login_cookie(response: JSONResponse, token: str, request: Request) -> N
 
 @API_V1_AUTH_ROUTER.get("/status")
 async def get_status(
+    request: Request,
     session: AsyncSession = Depends(get_async_session),
     user: User | None = Depends(read_user_from_cookie),
 ):
@@ -92,12 +93,29 @@ async def get_status(
             "role": "admin",
         }
     configured = await _account_count(session) > 0
+    if user is not None:
+        return {
+            "configured": configured,
+            "authenticated": True,
+            "username": user.username,
+            "user_id": str(user.id),
+            "role": "admin" if user.is_superuser else "user",
+        }
+    principal, _ = await resolve_request_principal(request, session)
+    if principal is not None and principal.method in {"embed", "service"}:
+        return {
+            "configured": True,
+            "authenticated": True,
+            "username": principal.username,
+            "user_id": str(principal.user_id),
+            "role": "user",
+        }
     return {
         "configured": configured,
-        "authenticated": user is not None,
-        "username": user.username if user else None,
-        "user_id": str(user.id) if user else None,
-        "role": "admin" if user and user.is_superuser else ("user" if user else None),
+        "authenticated": False,
+        "username": None,
+        "user_id": None,
+        "role": None,
     }
 
 
@@ -114,7 +132,9 @@ async def verify_session(
             "method": "local",
         }
     principal, user = await resolve_request_principal(request, session)
-    if principal is None or user is None:
+    if principal is None:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    if user is None and principal.method not in {"embed", "service"}:
         raise HTTPException(status_code=401, detail="Unauthorized")
     original_uri = request.headers.get("x-original-uri")
     if original_uri and not is_app_data_path_authorized(
@@ -123,6 +143,14 @@ async def verify_session(
         is_admin=principal.is_admin,
     ):
         raise HTTPException(status_code=403, detail="Asset access denied")
+    if user is None:
+        return {
+            "authenticated": True,
+            "username": principal.username,
+            "user_id": str(principal.user_id),
+            "role": "admin" if principal.is_admin else "user",
+            "method": principal.method,
+        }
     return {
         "authenticated": True,
         **serialize_user(user),

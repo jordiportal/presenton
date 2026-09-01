@@ -7,6 +7,11 @@ from api import middlewares
 from api.middlewares import SessionAuthMiddleware
 
 
+def test_health_is_public():
+    middleware = SessionAuthMiddleware(app=None)
+    assert middleware._requires_auth("/health") is False
+
+
 def test_only_shared_app_data_asset_prefixes_do_not_require_auth():
     middleware = SessionAuthMiddleware(app=None)
 

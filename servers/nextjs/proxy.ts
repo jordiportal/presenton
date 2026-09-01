@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isAuthDisabled } from "@/utils/auth";
+import {
+  PRESENTON_EMBED_COOKIE,
+  PRESENTON_EMBED_HEADER,
+} from "@/utils/embed";
 
 /**
  * API-only: session required for all /api/* except auth, telemetry, public
@@ -44,6 +48,12 @@ function rewriteToFastApi(request: NextRequest): NextResponse {
     `${request.nextUrl.pathname}${request.nextUrl.search}`,
     `${getFastApiBaseUrl()}/`
   );
+  const embedToken = request.cookies.get(PRESENTON_EMBED_COOKIE)?.value;
+  if (embedToken && !request.headers.get("authorization")) {
+    const headers = new Headers(request.headers);
+    headers.set("Authorization", `Bearer ${embedToken}`);
+    return NextResponse.rewrite(destination, { request: { headers } });
+  }
   return NextResponse.rewrite(destination);
 }
 
@@ -60,14 +70,60 @@ type AuthStatus = {
 
 const SESSION_COOKIE_NAME = "presenton_session";
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 30;
+const EMBED_COOKIE_TTL_SECONDS = 60 * 60;
+
+function isSecureRequest(request: NextRequest): boolean {
+  return (
+    request.headers.get("x-forwarded-proto")?.toLowerCase() === "https" ||
+    request.nextUrl.protocol === "https:"
+  );
+}
+
+function stampEmbedPresentation(request: NextRequest): NextResponse | null {
+  if (request.nextUrl.pathname !== "/presentation") {
+    return null;
+  }
+  const queryToken = request.nextUrl.searchParams.get("token")?.trim();
+  const cookieToken = request.cookies.get(PRESENTON_EMBED_COOKIE)?.value;
+  const token = queryToken || cookieToken;
+  if (!token) {
+    return null;
+  }
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set(PRESENTON_EMBED_HEADER, token);
+  const response = NextResponse.next({ request: { headers: requestHeaders } });
+  if (queryToken) {
+    response.cookies.set({
+      name: PRESENTON_EMBED_COOKIE,
+      value: queryToken,
+      maxAge: EMBED_COOKIE_TTL_SECONDS,
+      httpOnly: true,
+      secure: isSecureRequest(request),
+      sameSite: "lax",
+      path: "/",
+    });
+  }
+  return response;
+}
 
 async function getAuthStatus(request: NextRequest): Promise<AuthStatus> {
   const cookieHeader = request.headers.get("cookie");
+  const authorization = request.headers.get("authorization");
+  const embedToken = request.cookies.get(PRESENTON_EMBED_COOKIE)?.value;
   const authStatusUrl = `${getFastApiBaseUrl()}/api/v1/auth/status`;
+  const headers: HeadersInit = {};
+  if (cookieHeader) {
+    headers.Cookie = cookieHeader;
+  }
+  if (authorization) {
+    headers.Authorization = authorization;
+  } else if (embedToken) {
+    headers.Authorization = `Bearer ${embedToken}`;
+  }
   try {
     const response = await fetch(authStatusUrl, {
       method: "GET",
-      headers: cookieHeader ? { Cookie: cookieHeader } : undefined,
+      headers: Object.keys(headers).length ? headers : undefined,
       cache: "no-store",
     });
     if (!response.ok) {
@@ -115,15 +171,22 @@ export async function proxy(request: NextRequest) {
         value: exportSession,
         maxAge: SESSION_TTL_SECONDS,
         httpOnly: true,
-        secure:
-          request.headers.get("x-forwarded-proto")?.toLowerCase() === "https" ||
-          request.nextUrl.protocol === "https:",
+        secure: isSecureRequest(request),
         sameSite: "lax",
         path: "/",
       });
       return response;
     }
 
+    return NextResponse.next();
+  }
+
+  const embedResponse = stampEmbedPresentation(request);
+  if (embedResponse) {
+    return embedResponse;
+  }
+  if (pathname === "/presentation") {
+    // El layout exige sesión; aquí solo se sella el token de embed.
     return NextResponse.next();
   }
 
@@ -136,15 +199,18 @@ export async function proxy(request: NextRequest) {
   }
 
   const authorization = request.headers.get("authorization") || "";
-  if (authorization.toLowerCase().startsWith("bearer sk-presenton-")) {
-    // FastAPI validates admin-owned API keys. Do not treat them as browser
-    // sessions or expose them to local Next.js configuration routes.
+  if (authorization.toLowerCase().startsWith("bearer ")) {
+    // FastAPI valida API keys, JWT de Brain o el secreto de servicio.
     return isFastApiApiPath(pathname)
       ? rewriteToFastApi(request)
       : NextResponse.json(
-          { detail: "API keys are only accepted by the Presenton API" },
+          { detail: "Bearer tokens are only accepted by the Presenton API" },
           { status: 403 }
         );
+  }
+
+  if (request.cookies.get(PRESENTON_EMBED_COOKIE)?.value && isFastApiApiPath(pathname)) {
+    return rewriteToFastApi(request);
   }
 
   const authStatus = await getAuthStatus(request);
@@ -164,5 +230,11 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/api/:path*", "/app_data/:path*", "/static/:path*", "/pdf-maker"],
+  matcher: [
+    "/api/:path*",
+    "/app_data/:path*",
+    "/static/:path*",
+    "/pdf-maker",
+    "/presentation",
+  ],
 };

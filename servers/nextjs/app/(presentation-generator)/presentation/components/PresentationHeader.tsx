@@ -97,12 +97,14 @@ const PresentationHeader = ({
   isPresentationSaving,
   currentSlide,
   generationMode = "standard",
+  embed = false,
 
 }: {
   presentation_id: string;
   isPresentationSaving: boolean;
   currentSlide?: number;
   generationMode?: "standard" | "smart";
+  embed?: boolean;
 }) => {
   const [open, setOpen] = useState(false);
   const [shortcutsDialogOpen, setShortcutsDialogOpen] = useState(false);
@@ -134,13 +136,13 @@ const PresentationHeader = ({
   }, [isEditingTitle]);
 
   useEffect(() => {
-    if (generationMode !== "smart" || isStreaming) {
+    if (embed || generationMode !== "smart" || isStreaming) {
       dispatch(setEnableHtmlSelector(false));
       return;
     }
     const storedMode = window.localStorage.getItem("html-selector-mode");
     dispatch(setEnableHtmlSelector(storedMode !== "false"));
-  }, [dispatch, generationMode, isStreaming]);
+  }, [dispatch, embed, generationMode, isStreaming]);
 
   const toggleHtmlSelector = () => {
     const nextValue = !enableHtmlSelector;
@@ -571,12 +573,20 @@ const PresentationHeader = ({
       <div className="py-[18px] px-4 sticky top-0 bg-white z-50 shadow-sm font-syne flex justify-between items-center gap-4">
         <div className="flex min-w-0 flex-1 items-center gap-3">
           <img
-            onClick={() => {
-              router.push("/dashboard");
-            }}
+            onClick={
+              embed
+                ? undefined
+                : () => {
+                    router.push("/dashboard");
+                  }
+            }
             src="/logo-with-bg.png"
             alt=""
-            className="w-10 h-10 cursor-pointer object-contain"
+            className={
+              embed
+                ? "w-10 h-10 object-contain"
+                : "w-10 h-10 cursor-pointer object-contain"
+            }
           />
           {presentationData && !isStreaming && !isEditingTitle ? (
             <ToolTip content="Rename presentation">{titleBlock}</ToolTip>
@@ -595,7 +605,7 @@ const PresentationHeader = ({
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
             </div>
           )}
-          {generationMode === "smart" && !isStreaming && (
+          {generationMode === "smart" && !isStreaming && !embed && (
             <ToolTip
               content={
                 enableHtmlSelector
@@ -638,6 +648,8 @@ const PresentationHeader = ({
             </ToolTip>
           )}
           <div className="flex items-center gap-2 bg-[#F6F6F9] px-3.5 h-[38px] border border-[#EDECEC] rounded-[80px]">
+            {embed ? null : (
+              <>
             <ToolTip content="Regenerate Presentation">
               <button
                 type="button"
@@ -648,6 +660,8 @@ const PresentationHeader = ({
               </button>
             </ToolTip>
             <Separator orientation="vertical" className="h-4" />
+              </>
+            )}
             <ToolTip content="Undo">
               <button
                 disabled={!canUndo}

@@ -142,4 +142,6 @@ COPY scripts/user-config-env.cjs /app/scripts/user-config-env.cjs
 COPY nginx.conf /etc/nginx/nginx.conf
 
 EXPOSE 80
+HEALTHCHECK --interval=30s --timeout=5s --start-period=90s --retries=3 \
+    CMD curl -fsS http://127.0.0.1/health || exit 1
 CMD ["node", "/app/start.js"]
