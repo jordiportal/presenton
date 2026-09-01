@@ -14,7 +14,9 @@ import {
   X,
   AlertTriangle,
   MousePointer2,
+  Sparkles,
 } from "lucide-react";
+import { askBrain } from "@/utils/brain-bridge";
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import {
@@ -113,6 +115,7 @@ const PresentationHeader = ({
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isRegenerateConfirmOpen, setIsRegenerateConfirmOpen] = useState(false);
   const [draftTitle, setDraftTitle] = useState("");
+  const [brainAsk, setBrainAsk] = useState("");
   const titleInputRef = useRef<HTMLInputElement>(null);
   /** Avoid committing on blur when Save/Cancel was used (focus/click ordering) */
   const titleBlurIntentRef = useRef<"none" | "save" | "cancel">("none");
@@ -597,6 +600,41 @@ const PresentationHeader = ({
         </div>
 
         <div className="flex shrink-0 items-center gap-2.5">
+          {embed ? (
+            <form
+              className="hidden max-w-[320px] items-center gap-1.5 sm:flex"
+              onSubmit={(event) => {
+                event.preventDefault();
+                const text = brainAsk.trim();
+                if (!text) return;
+                if (
+                  askBrain(text, {
+                    slideIndex: currentSlide,
+                  })
+                ) {
+                  notify.success(
+                    "Pedido enviado a Brain",
+                    "Sigue el turno en el chat de la mesa."
+                  );
+                  setBrainAsk("");
+                }
+              }}
+            >
+              <input
+                value={brainAsk}
+                onChange={(event) => setBrainAsk(event.target.value)}
+                placeholder="Pedir a Brain…"
+                className="h-[38px] w-[220px] rounded-xl border border-[#E4E4E8] bg-white px-3 font-syne text-xs text-[#101323] outline-none focus:border-[#6D5DFB] focus:ring-2 focus:ring-[#6D5DFB]/20"
+              />
+              <button
+                type="submit"
+                className="inline-flex h-[38px] items-center gap-1 rounded-xl border border-[#CEC6FF] bg-[#F3F0FF] px-3 font-syne text-xs font-semibold text-[#5141E5]"
+              >
+                <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+                Enviar
+              </button>
+            </form>
+          ) : null}
           {generationMode === "smart" && generationMetrics ? (
             <StreamingGenerationMetrics metrics={generationMetrics} />
           ) : null}

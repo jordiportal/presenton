@@ -231,3 +231,63 @@ def test_admin_provider_settings_include_safe_global_presenton_status(
     assert "PRESENTON_ACCESS_TOKEN" not in response.json()
     assert "PRESENTON_REFRESH_TOKEN" not in response.json()
     asyncio.run(engine.dispose())
+
+
+def test_embed_jwt_reads_masked_runtime_config(monkeypatch, tmp_path):
+    import time
+
+    import jwt
+
+    from api.v1.auth.embed import ALG, AUD, ISS
+    from models.sql.provider_settings import ProviderSettings
+
+    secret = "presenton-embed-secret-32-bytes-min"
+    monkeypatch.setenv("USER_CONFIG_PATH", str(tmp_path / "userConfig.json"))
+    monkeypatch.setenv("PRESENTON_EMBED_SECRET", secret)
+    monkeypatch.delenv("DISABLE_AUTH", raising=False)
+    client, engine = _build_client(tmp_path)
+
+    async def seed_settings():
+        session_maker = async_sessionmaker(engine, expire_on_commit=False)
+        async with session_maker() as session:
+            session.add(
+                ProviderSettings(
+                    id=1,
+                    config={
+                        "LLM": "custom",
+                        "CUSTOM_LLM_URL": "http://llm.example/v1",
+                        "CUSTOM_LLM_API_KEY": "sk-secret",
+                        "CUSTOM_MODEL": "kimi",
+                    },
+                )
+            )
+            await session.commit()
+
+    asyncio.run(seed_settings())
+    token = jwt.encode(
+        {
+            "iss": ISS,
+            "aud": AUD,
+            "sub": "user-1",
+            "iat": int(time.time()),
+            "exp": int(time.time()) + 3600,
+            "handler": "presenton",
+        },
+        secret,
+        algorithm=ALG,
+    )
+
+    denied = client.get("/api/v1/auth/runtime-config")
+    assert denied.status_code == 401
+
+    response = client.get(
+        "/api/v1/auth/runtime-config",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["configured"] is True
+    assert payload["config"]["LLM"] == "custom"
+    assert payload["config"]["CUSTOM_MODEL"] == "kimi"
+    assert payload["config"]["CUSTOM_LLM_API_KEY"] == "__configured__"
+    asyncio.run(engine.dispose())

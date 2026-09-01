@@ -14,6 +14,7 @@ import {
 } from '@/utils/api';
 import { notify } from '@/components/ui/sonner';
 import { PRESENTON_SPLASH_MIN_DURATION_MS } from '@/components/ui/presenton-splash-loader';
+import { isEmbedView } from '@/utils/embed';
 
 function ConfigurationLoadingScreen() {
   return (
@@ -95,7 +96,7 @@ export function ConfigurationInitializer({ children }: { children: React.ReactNo
         dispatch(setLLMConfig(config));
 
         if (!hasValidLLMConfig(config)) {
-          if (!cancelled) {
+          if (!cancelled && !isEmbedView()) {
             notify.warning(
               "Provider setup required",
               "Choose and configure a text provider before opening other pages.",
@@ -118,7 +119,7 @@ export function ConfigurationInitializer({ children }: { children: React.ReactNo
         }
         const status = await statusResponse.json() as { linked?: boolean };
 
-        if (!cancelled && !status?.linked) {
+        if (!cancelled && !status?.linked && !isEmbedView()) {
           dispatch(setLLMConfig({ ...config, LLM: '' }));
           notify.warning(
             "Provider setup required",

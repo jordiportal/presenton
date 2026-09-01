@@ -34,6 +34,7 @@ import {
 } from "../hooks";
 import { PresentationPageProps } from "../types";
 import { isTruthyEmbedFlag } from "@/utils/embed";
+import { isBrainPresentonMessage } from "@/utils/brain-bridge";
 import { applyPresentationThemeToElement } from "../utils/applyPresentationThemeDom";
 
 import { replaceSlidesWithBlankFallback } from "@/store/slices/presentationGeneration";
@@ -582,6 +583,17 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
       );
     }
   }, [dispatch, fetchUserSlides]);
+
+  useEffect(() => {
+    if (!isEmbed) return;
+    const onMessage = (event: MessageEvent) => {
+      if (!isBrainPresentonMessage(event.data)) return;
+      if (event.data.type !== "refresh") return;
+      void handlePresentationChanged();
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [handlePresentationChanged, isEmbed]);
 
   const handleChatSendingStateChange = useCallback((sending: boolean) => {
     setIsChatSending(sending);

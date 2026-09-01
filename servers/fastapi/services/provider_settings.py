@@ -1,4 +1,5 @@
 import logging
+import re
 from typing import Any
 
 from sqlalchemy import create_engine, select
@@ -47,6 +48,19 @@ OPTIONAL_ADVANCED_FIELDS = {
     "OPENROUTER_DATA_COLLECTION",
     "OPENROUTER_ZDR",
 }
+
+
+_SECRET_FIELD = re.compile(r"(API_KEY|ACCESS_KEY|SECRET|TOKEN|PASSWORD)", re.I)
+
+
+def public_runtime_config(config: dict[str, Any]) -> dict[str, Any]:
+    """Settings visibles en el embed: sin secretos en claro."""
+    return {
+        key: ("__configured__" if value else "")
+        if _SECRET_FIELD.search(key)
+        else value
+        for key, value in config.items()
+    }
 
 
 def sanitize_provider_settings(config: dict[str, Any]) -> dict[str, Any]:

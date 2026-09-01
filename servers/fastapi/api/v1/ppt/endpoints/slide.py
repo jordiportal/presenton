@@ -26,7 +26,7 @@ def _is_template_layout_payload(layout: object) -> bool:
     return isinstance(layout, dict) and isinstance(layout.get("layouts"), list)
 
 
-@SLIDE_ROUTER.post("/edit")
+@SLIDE_ROUTER.post("/edit", operation_id="edit_slide")
 async def edit_slide(
     id: Annotated[uuid.UUID, Body()],
     prompt: Annotated[str, Body()],
@@ -107,7 +107,7 @@ async def edit_slide(
     return slide
 
 
-@SLIDE_ROUTER.post("/edit-html", response_model=SlideModel)
+@SLIDE_ROUTER.post("/edit-html", response_model=SlideModel, operation_id="edit_slide_html")
 async def edit_slide_html(
     id: Annotated[uuid.UUID, Body()],
     prompt: Annotated[str, Body()],

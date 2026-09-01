@@ -1422,7 +1422,7 @@ async def get_all_presentations(
     return presentations_with_slides
 
 
-@PRESENTATION_ROUTER.get("/{id}", response_model=PresentationWithSlides)
+@PRESENTATION_ROUTER.get("/{id}", response_model=PresentationWithSlides, operation_id="get_presentation")
 async def get_presentation(
     id: uuid.UUID,
     request: Request,
@@ -2356,7 +2356,7 @@ async def stream_presentation(
     )
 
 
-@PRESENTATION_ROUTER.patch("/update", response_model=PresentationWithSlides)
+@PRESENTATION_ROUTER.patch("/update", response_model=PresentationWithSlides, operation_id="update_presentation")
 async def update_presentation(
     id: Annotated[uuid.UUID, Body()],
     n_slides: Annotated[Optional[int], Body()] = None,
@@ -2417,7 +2417,7 @@ async def update_presentation(
     )
 
 
-@PRESENTATION_ROUTER.patch("/slide_update", response_model=SlideModel)
+@PRESENTATION_ROUTER.patch("/slide_update", response_model=SlideModel, operation_id="update_slide")
 async def update_presentation_slide(
     slide: Annotated[SlideModel, Body(embed=True)],
     sql_session: AsyncSession = Depends(get_async_session),

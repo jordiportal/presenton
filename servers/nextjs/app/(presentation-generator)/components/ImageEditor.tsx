@@ -21,6 +21,8 @@ import { trackEvent, MixpanelEvent } from "@/utils/mixpanel";
 import { ImagesApi } from "../services/api/images";
 import { ImageAssetResponse } from "../services/api/types";
 import { resolveBackendAssetSource } from "@/utils/api";
+import { askBrain } from "@/utils/brain-bridge";
+import { isEmbedView } from "@/utils/embed";
 import { ImageEditorToolbar } from "./ImageEditorToolbar";
 
 const STOCK_IMAGE_PROVIDERS = new Set(["pexels", "pixabay"]);
@@ -284,6 +286,13 @@ const ImageEditor = ({
       setIsGenerating(true);
       setError(null);
       trackEvent(MixpanelEvent.ImageEditor_GenerateImage_API_Call);
+      if (isEmbedView() && askBrain(`Genera una imagen: ${prompt}`)) {
+        notify.success(
+          "Pedido enviado a Brain",
+          "El diseñador genera la imagen en el chat de la mesa."
+        );
+        return;
+      }
       const response = await PresentationGenerationApi.generateImage({
         prompt: prompt,
       });

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { PRESENTON_EMBED_COOKIE } from "@/utils/embed";
 
 export type ServerAuthStatus = {
   configured: boolean;
@@ -16,13 +17,44 @@ function fastApiBase(): string {
   ).replace(/\/+$/, "");
 }
 
+function embedTokenFromCookie(cookie: string): string | null {
+  const match = cookie.match(
+    new RegExp(`(?:^|;\\s*)${PRESENTON_EMBED_COOKIE}=([^;]+)`)
+  );
+  if (!match?.[1]) return null;
+  try {
+    return decodeURIComponent(match[1]);
+  } catch {
+    return match[1];
+  }
+}
+
+/** Cookie de sesión, Bearer de embed, o cookie `presenton_embed`. */
+export function outboundAuthHeaders(request: Request): Record<string, string> {
+  const headers: Record<string, string> = {};
+  const cookie = request.headers.get("cookie") || "";
+  const authorization = request.headers.get("authorization") || "";
+  if (cookie) {
+    headers.cookie = cookie;
+  }
+  if (authorization) {
+    headers.authorization = authorization;
+  } else {
+    const embedToken = embedTokenFromCookie(cookie);
+    if (embedToken) {
+      headers.authorization = `Bearer ${embedToken}`;
+    }
+  }
+  return headers;
+}
+
 export async function authStatusForRequest(
   request: Request
 ): Promise<ServerAuthStatus> {
-  const cookie = request.headers.get("cookie") || "";
+  const headers = outboundAuthHeaders(request);
   try {
     const response = await fetch(`${fastApiBase()}/api/v1/auth/status`, {
-      headers: cookie ? { cookie } : undefined,
+      headers: Object.keys(headers).length ? headers : undefined,
       cache: "no-store",
     });
     if (!response.ok) {

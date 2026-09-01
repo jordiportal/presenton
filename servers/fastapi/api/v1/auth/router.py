@@ -18,6 +18,7 @@ from api.v1.auth.users import (
 )
 from models.sql.user import User
 from services.database import get_async_session
+from services.provider_settings import get_provider_settings, public_runtime_config
 from utils.get_env import is_disable_auth_enabled
 from api.v1.auth.config import (
     SESSION_COOKIE_NAME,
@@ -116,6 +117,29 @@ async def get_status(
         "username": None,
         "user_id": None,
         "role": None,
+    }
+
+
+@API_V1_AUTH_ROUTER.get("/runtime-config")
+async def get_runtime_config(
+    request: Request,
+    session: AsyncSession = Depends(get_async_session),
+):
+    """Config LLM de solo lectura para el embed (secretos enmascarados)."""
+    if is_disable_auth_enabled():
+        settings = await get_provider_settings(session)
+        public = public_runtime_config(settings)
+        return {
+            "configured": bool((settings.get("LLM") or "").strip()),
+            "config": public,
+        }
+    principal, user = await resolve_request_principal(request, session)
+    if principal is None and user is None:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    settings = await get_provider_settings(session)
+    return {
+        "configured": bool((settings.get("LLM") or "").strip()),
+        "config": public_runtime_config(settings),
     }
 
 

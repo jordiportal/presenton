@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getFastApiBaseUrl } from "@/lib/fastapi-internal";
-import { requireAdminApi } from "@/lib/server-auth-role";
+import { resolveRuntimeProviderConfig } from "@/lib/runtime-provider-config";
+import { authStatusForRequest, requireAdminApi } from "@/lib/server-auth-role";
 
 const canChangeKeys = process.env.CAN_CHANGE_KEYS !== "false";
 
@@ -17,12 +18,14 @@ async function forwardProviderSettings(
   body?: string
 ) {
   const cookie = request.headers.get("cookie") || "";
+  const authorization = request.headers.get("authorization") || "";
   const response = await fetch(
     `${getFastApiBaseUrl()}/api/v1/admin/provider-settings`,
     {
       method,
       headers: {
         ...(cookie ? { cookie } : {}),
+        ...(authorization ? { authorization } : {}),
         ...(body ? { "content-type": "application/json" } : {}),
       },
       body,
@@ -40,12 +43,25 @@ async function forwardProviderSettings(
 }
 
 export async function GET(request: Request) {
-  const denied = await requireAdminApi(request);
-  if (denied) return denied;
-  if (!canChangeKeys) return immutableResponse();
+  const status = await authStatusForRequest(request);
+  if (!status.authenticated) {
+    return NextResponse.json({ detail: "Unauthorized" }, { status: 401 });
+  }
+
+  if (status.role === "admin" && canChangeKeys) {
+    try {
+      return await forwardProviderSettings(request, "GET");
+    } catch {
+      return NextResponse.json(
+        { error: "Unable to read provider settings", status: 500 },
+        { status: 500 }
+      );
+    }
+  }
 
   try {
-    return await forwardProviderSettings(request, "GET");
+    const runtime = await resolveRuntimeProviderConfig(request);
+    return NextResponse.json(runtime.config);
   } catch {
     return NextResponse.json(
       { error: "Unable to read provider settings", status: 500 },

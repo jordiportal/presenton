@@ -4,6 +4,7 @@ from models.sql.user import User
 from services.provider_settings import (
     merge_provider_settings,
     migrate_provider_settings_from_file,
+    public_runtime_config,
     sanitize_provider_settings,
 )
 from utils.user_config_store import read_user_config_file, update_user_config_file
@@ -43,6 +44,24 @@ def test_provider_settings_exclude_all_legacy_auth_fields():
             "AUTH_SECRET_KEY": "jwt-secret",
         }
     ) == {"LLM": "openai"}
+
+
+def test_public_runtime_config_masks_secrets_and_keeps_models():
+    assert public_runtime_config(
+        {
+            "LLM": "custom",
+            "CUSTOM_LLM_URL": "http://llm.example/v1",
+            "CUSTOM_LLM_API_KEY": "sk-secret",
+            "CUSTOM_MODEL": "kimi",
+            "DISABLE_IMAGE_GENERATION": "true",
+        }
+    ) == {
+        "LLM": "custom",
+        "CUSTOM_LLM_URL": "http://llm.example/v1",
+        "CUSTOM_LLM_API_KEY": "__configured__",
+        "CUSTOM_MODEL": "kimi",
+        "DISABLE_IMAGE_GENERATION": "true",
+    }
 
 
 def test_reset_advanced_settings_removes_only_optional_overrides():

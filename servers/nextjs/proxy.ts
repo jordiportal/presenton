@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isAuthDisabled } from "@/utils/auth";
 import {
+  EMBED_SAFE_NEXT_API_PATHS,
   PRESENTON_EMBED_COOKIE,
   PRESENTON_EMBED_HEADER,
 } from "@/utils/embed";
@@ -201,12 +202,27 @@ export async function proxy(request: NextRequest) {
   const authorization = request.headers.get("authorization") || "";
   if (authorization.toLowerCase().startsWith("bearer ")) {
     // FastAPI valida API keys, JWT de Brain o el secreto de servicio.
-    return isFastApiApiPath(pathname)
-      ? rewriteToFastApi(request)
-      : NextResponse.json(
-          { detail: "Bearer tokens are only accepted by the Presenton API" },
-          { status: 403 }
-        );
+    if (isFastApiApiPath(pathname)) {
+      return rewriteToFastApi(request);
+    }
+    // El iframe no puede usar cookie SameSite=Lax; el JWT viaja en Authorization.
+    // Solo lectura: POST /api/user-config sigue bloqueado.
+    if (
+      request.method === "GET" &&
+      EMBED_SAFE_NEXT_API_PATHS.has(pathname)
+    ) {
+      const embedStatus = await getAuthStatus(request);
+      return embedStatus.authenticated
+        ? NextResponse.next()
+        : NextResponse.json(
+            { detail: "Unauthorized" },
+            { status: 401, headers: { "Cache-Control": "no-store" } }
+          );
+    }
+    return NextResponse.json(
+      { detail: "Bearer tokens are only accepted by the Presenton API" },
+      { status: 403 }
+    );
   }
 
   if (request.cookies.get(PRESENTON_EMBED_COOKIE)?.value && isFastApiApiPath(pathname)) {
