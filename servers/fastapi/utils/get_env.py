@@ -467,3 +467,15 @@ def get_openai_compat_image_api_key_env():
 
 def get_openai_compat_image_model_env():
     return os.getenv("OPENAI_COMPAT_IMAGE_MODEL")
+
+
+def get_kh7_bi_url_env() -> str | None:
+    raw = (os.getenv("KH7_BI_URL") or "").strip().rstrip("/")
+    return raw or None
+
+
+def get_kh7_bi_service_key_env() -> str | None:
+    raw = (
+        os.getenv("KH7_BI_SERVICE_KEY") or os.getenv("KH7_BI_TOKEN") or ""
+    ).strip()
+    return raw or None

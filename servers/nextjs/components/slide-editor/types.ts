@@ -492,6 +492,25 @@ export type TableCell = {
 
 export type TableStyle = "simple" | "advanced";
 
+export type Kh7FilterBinding = {
+  column?: string;
+  dimension?: string;
+  operator?: string;
+  value?: unknown;
+  values?: unknown[] | null;
+};
+
+export type DataBinding = {
+  source: "kh7" | "mock";
+  query_id: string;
+  query_name?: string | null;
+  dimensions?: string[];
+  column_dimensions?: string[];
+  measures?: string[];
+  filters: Kh7FilterBinding[];
+  fetched_at?: string | null;
+};
+
 export type TableElement = ElementBase & {
   type: "table";
   font?: Font | null;
@@ -502,6 +521,7 @@ export type TableElement = ElementBase & {
   min_columns?: number | null;
   max_rows?: number | null;
   min_rows?: number | null;
+  data_binding?: DataBinding | null;
 };
 
 export type VectorCurve = {
@@ -566,6 +586,7 @@ export type ChartElement = ElementBase & {
   legend?: boolean | null;
   legend_color?: string | null;
   source?: string | null;
+  data_binding?: DataBinding | null;
 };
 
 export type InfographicElement = ElementBase & {

@@ -46,6 +46,7 @@ import {
 } from "@/components/slide-editor/types";
 import { ChartColorPaletteCard } from "@/components/slide-editor/charts/ChartColorPalette";
 import { TemplateV2ChartJsElement } from "@/components/slide-editor/charts/TemplateV2ChartJsElement";
+import { Kh7QueryPanel } from "@/components/slide-editor/data/Kh7QueryPanel";
 
 const CHART_TYPES: Array<{ label: string; value: ChartType }> = [
   { label: "Bar Chart", value: "bar" },
@@ -871,6 +872,11 @@ function ChartDataModal({
   onClose: () => void;
 }) {
   const [draftChart, setDraftChart] = useState<ChartElement>(() => chart);
+  const [dataTab, setDataTab] = useState<"manual" | "kh7">(
+    chart.data_binding?.source === "kh7" || chart.data_binding?.source === "mock"
+      ? "kh7"
+      : "manual",
+  );
   const categories = safeCategoriesForChart(draftChart);
   const series = normalizedSeries(draftChart, categories.length);
   const previewChart = useMemo(
@@ -1055,6 +1061,50 @@ function ChartDataModal({
             </aside>
 
             <main className="min-h-0 min-w-0 flex-1 overflow-auto overscroll-contain px-8 py-5">
+              <div className="mb-4 flex gap-1 rounded-full bg-[#F4F4F7] p-1 w-fit">
+                <button
+                  type="button"
+                  className={`h-7 rounded-full px-3 text-[11px] font-semibold ${
+                    dataTab === "manual"
+                      ? "bg-white text-[#191919] shadow-sm"
+                      : "text-[#6B6B74]"
+                  }`}
+                  onClick={() => setDataTab("manual")}
+                >
+                  Manual
+                </button>
+                <button
+                  type="button"
+                  className={`h-7 rounded-full px-3 text-[11px] font-semibold ${
+                    dataTab === "kh7"
+                      ? "bg-white text-[#191919] shadow-sm"
+                      : "text-[#6B6B74]"
+                  }`}
+                  onClick={() => setDataTab("kh7")}
+                >
+                  KH7 query
+                </button>
+              </div>
+              {dataTab === "kh7" ? (
+                <div className="mb-5">
+                  <Kh7QueryPanel
+                    binding={draftChart.data_binding}
+                    onApply={(result, nextBinding) => {
+                      updateData(
+                        result.chart.categories,
+                        result.chart.series.map((item) => ({
+                          name: item.name,
+                          values: item.values,
+                        })),
+                      );
+                      setDraftChart((currentChart) => ({
+                        ...currentChart,
+                        data_binding: nextBinding,
+                      }));
+                    }}
+                  />
+                </div>
+              ) : null}
               <EditableDataTable
                 allowMultipleSeries={chartSupportsMultipleSeries(
                   draftChart.chart_type,
@@ -1664,6 +1714,7 @@ function clearChartData(chart: ChartElement): ChartElement {
     categories,
     series,
     data,
+    data_binding: null,
   };
 }
 

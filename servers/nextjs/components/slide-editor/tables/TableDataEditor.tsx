@@ -15,6 +15,7 @@ import {
   setTableRowsFromStrings,
   tableRowsAsStrings,
 } from "@/components/slide-editor/model/element-model";
+import { Kh7QueryPanel } from "@/components/slide-editor/data/Kh7QueryPanel";
 import {
   tableColumnLimit,
   tableRowLimit,
@@ -58,6 +59,11 @@ function TableDataModal({
   onClose: () => void;
 }) {
   const [draft, setDraft] = useState<TableSlideElement>(() => table);
+  const [dataTab, setDataTab] = useState<"manual" | "kh7">(
+    table.data_binding?.source === "kh7" || table.data_binding?.source === "mock"
+      ? "kh7"
+      : "manual",
+  );
   const rows = normalizeGrid(tableRowsAsStrings(draft));
   const maxColumns = tableColumnLimit(draft);
   const maxRows = tableRowLimit(draft);
@@ -93,7 +99,10 @@ function TableDataModal({
               <button
                 type="button"
                 className="flex h-8 items-center gap-1.5 rounded-full border border-[#E6E6EA] bg-white px-4 text-[12px] font-semibold text-[#191919] transition hover:bg-[#F7F7FA]"
-                onClick={() => commitGrid(clearedGrid(rows))}
+                onClick={() => {
+                  commitGrid(clearedGrid(rows));
+                  setDraft((current) => ({ ...current, data_binding: null }));
+                }}
               >
                 <Trash2 size={14} strokeWidth={2} />
                 Clear data
@@ -133,6 +142,47 @@ function TableDataModal({
             </aside>
 
             <main className="min-h-0 min-w-0 flex-1 overflow-auto overscroll-contain px-8 py-5">
+              <div className="mb-4 flex gap-1 rounded-full bg-[#F4F4F7] p-1 w-fit">
+                <button
+                  type="button"
+                  className={`h-7 rounded-full px-3 text-[11px] font-semibold ${
+                    dataTab === "manual"
+                      ? "bg-white text-[#191919] shadow-sm"
+                      : "text-[#6B6B74]"
+                  }`}
+                  onClick={() => setDataTab("manual")}
+                >
+                  Manual
+                </button>
+                <button
+                  type="button"
+                  className={`h-7 rounded-full px-3 text-[11px] font-semibold ${
+                    dataTab === "kh7"
+                      ? "bg-white text-[#191919] shadow-sm"
+                      : "text-[#6B6B74]"
+                  }`}
+                  onClick={() => setDataTab("kh7")}
+                >
+                  KH7 query
+                </button>
+              </div>
+              {dataTab === "kh7" ? (
+                <div className="mb-5">
+                  <Kh7QueryPanel
+                    binding={draft.data_binding}
+                    onApply={(result, nextBinding) => {
+                      const columns = result.table.columns;
+                      const body = result.table.rows.map((row) =>
+                        row.map((cell) => (cell == null ? "" : String(cell))),
+                      );
+                      setDraft((current) => ({
+                        ...setTableRowsFromStrings(current, [columns, ...body]),
+                        data_binding: nextBinding,
+                      }));
+                    }}
+                  />
+                </div>
+              ) : null}
               <EditableTableGrid
                 maxColumns={maxColumns}
                 maxRows={maxRows}
