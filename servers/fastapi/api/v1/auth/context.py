@@ -8,6 +8,9 @@ _CURRENT_OWNER_ID: ContextVar[uuid.UUID | None] = ContextVar(
 _CURRENT_OWNER_IS_ADMIN: ContextVar[bool] = ContextVar(
     "presenton_current_owner_is_admin", default=False
 )
+_SHARED_ASSET_OWNER_IDS: ContextVar[frozenset[uuid.UUID]] = ContextVar(
+    "presenton_shared_asset_owner_ids", default=frozenset()
+)
 
 
 def get_current_owner_id() -> uuid.UUID | None:
@@ -32,3 +35,15 @@ def reset_current_owner_id(token: Token) -> None:
 
 def reset_current_owner_is_admin(token: Token) -> None:
     _CURRENT_OWNER_IS_ADMIN.reset(token)
+
+
+def get_shared_asset_owner_ids() -> frozenset[uuid.UUID]:
+    return _SHARED_ASSET_OWNER_IDS.get()
+
+
+def set_shared_asset_owner_ids(owner_ids: set[uuid.UUID] | frozenset[uuid.UUID]) -> Token:
+    return _SHARED_ASSET_OWNER_IDS.set(frozenset(owner_ids))
+
+
+def reset_shared_asset_owner_ids(token: Token) -> None:
+    _SHARED_ASSET_OWNER_IDS.reset(token)

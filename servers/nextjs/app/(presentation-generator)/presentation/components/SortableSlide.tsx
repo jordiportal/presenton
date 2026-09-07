@@ -3,6 +3,11 @@ import { CSS } from '@dnd-kit/utilities';
 import type { Slide } from '../../types/slide';
 import { memo, useRef } from 'react';
 import { SlideThumbnailCard } from './SlideThumbnailCard';
+import { useCollaboration } from '../hooks/PresentationCollaborationContext';
+import {
+    collaborationHolderInitial,
+    collaborationHolderLabel,
+} from '../../services/api/collaboration';
 interface SortableSlideProps {
     slide: Slide;
     index: number;
@@ -21,6 +26,8 @@ export const SortableSlide = memo(function SortableSlide({
     presentationVersion,
 }: SortableSlideProps) {
     const lastClickTime = useRef(0);
+    const { presenceForSlide } = useCollaboration();
+    const holder = presenceForSlide(typeof slide.id === "string" ? slide.id : null);
     const {
         attributes,
         listeners,
@@ -59,6 +66,8 @@ export const SortableSlide = memo(function SortableSlide({
             selected={selectedSlide === index}
             fonts={fonts}
             presentationVersion={presentationVersion}
+            holderLabel={holder ? collaborationHolderLabel(holder) : null}
+            holderInitial={holder ? collaborationHolderInitial(holder) : null}
             style={style}
             {...attributes}
             {...listeners}

@@ -4,6 +4,8 @@ MAX_NUMBER_OF_SLIDES = 50
 MAX_OUTLINE_CONTENT_WORDS = 100
 
 _PREFERRED_TEMPLATE_ORDER = [
+    "kh7",
+    "minimal",
     "momentum",
     "dynamic",
     "executive",

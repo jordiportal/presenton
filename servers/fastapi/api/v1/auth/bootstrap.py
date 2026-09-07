@@ -14,6 +14,11 @@ from models.sql.chat_history_message import ChatHistoryMessageModel
 from models.sql.image_asset import ImageAsset
 from models.sql.key_value import KeyValueSqlModel
 from models.sql.presentation import PresentationModel
+from models.sql.presentation_collaboration import (  # noqa: F401
+    PresentationLease,
+    PresentationPresence,
+)
+from models.sql.presentation_share import PresentationShare  # noqa: F401
 from models.sql.presentation_layout_code import PresentationLayoutCodeModel
 from models.sql.slide import SlideModel
 from models.sql.template import TemplateModel

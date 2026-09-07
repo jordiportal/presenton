@@ -1,10 +1,11 @@
 import React, { memo } from "react";
 import Image from "next/image";
-import { Loader2 } from "lucide-react";
+import { Loader2, Lock } from "lucide-react";
 import SlideScale from "../../components/PresentationRender";
 import SlideActionBar from "./SlideActionBar";
 import { isTemplateV2Slide } from "../../_shared/blank-slide";
 import { cn } from "@/lib/utils";
+import { collaborationHolderLabel } from "../../services/api/collaboration";
 
 interface SlideContentProps {
   slide: any;
@@ -29,6 +30,7 @@ interface SlideContentProps {
   editingDisabled?: boolean;
   isStreaming?: boolean | null;
   fitToContainer?: boolean;
+  lockedBy?: { holder_name?: string | null } | null;
 }
 
 const SlideContent = ({
@@ -48,8 +50,12 @@ const SlideContent = ({
   editingDisabled = false,
   isStreaming = false,
   fitToContainer = false,
+  lockedBy = null,
 }: SlideContentProps) => {
-  const canEditSlide = !editingDisabled && isStreaming !== true;
+  const canEditSlide = !editingDisabled && isStreaming !== true && !lockedBy;
+  const lockLabel = lockedBy
+    ? `Being edited by ${collaborationHolderLabel(lockedBy)}`
+    : null;
 
   const isTemplateV2SlideContent = isTemplateV2Slide(slide);
 
@@ -83,6 +89,18 @@ const SlideContent = ({
           )}
           onPointerDownCapture={() => onSlideActive?.(index)}
         >
+          {lockLabel ? (
+            <div
+              className="absolute inset-0 z-[85] flex items-start justify-center rounded-[14px] bg-white/45 pt-6 font-syne"
+              data-collaboration-locked="true"
+              aria-live="polite"
+            >
+              <span className="inline-flex items-center gap-2 rounded-full border border-[#E1E3E9] bg-white/95 px-3 py-1.5 text-[13px] text-[#344054] shadow-[0_8px_24px_rgba(16,24,40,0.12)]">
+                <Lock className="h-3.5 w-3.5 text-[#7A5AF8]" aria-hidden="true" />
+                {lockLabel}
+              </span>
+            </div>
+          ) : null}
           {isChatEditing && (
             <div
               className="pointer-events-none absolute inset-x-0 bottom-4 z-[90] flex justify-center font-syne"
@@ -156,5 +174,6 @@ export default memo(
     previous.fonts === next.fonts &&
     previous.editingDisabled === next.editingDisabled &&
     previous.isStreaming === next.isStreaming &&
-    previous.fitToContainer === next.fitToContainer,
+    previous.fitToContainer === next.fitToContainer &&
+    previous.lockedBy === next.lockedBy,
 );

@@ -14,6 +14,8 @@ interface SlideThumbnailCardProps extends React.HTMLAttributes<HTMLDivElement> {
   selected: boolean;
   fonts?: unknown;
   presentationVersion?: unknown;
+  holderLabel?: string | null;
+  holderInitial?: string | null;
 }
 
 const THUMBNAIL_WIDTH = 110;
@@ -30,6 +32,8 @@ const SlideThumbnailCardComponent = forwardRef<
       selected,
       fonts,
       presentationVersion,
+      holderLabel,
+      holderInitial,
       className = "",
       style,
       ...props
@@ -141,6 +145,15 @@ const SlideThumbnailCardComponent = forwardRef<
               />
             </div>
           )}
+          {holderInitial ? (
+            <div
+              className="absolute right-1 top-1 z-10 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#7A5AF8] px-1 text-[9px] font-semibold leading-none text-white shadow-sm"
+              title={holderLabel || undefined}
+              data-collaboration-holder={holderLabel || undefined}
+            >
+              {holderInitial}
+            </div>
+          ) : null}
         </div>
       </div>
     );
@@ -158,7 +171,9 @@ export const SlideThumbnailCard = memo(
     previous.fonts === next.fonts &&
     previous.presentationVersion === next.presentationVersion &&
     previous.className === next.className &&
-    previous.style === next.style
+    previous.style === next.style &&
+    previous.holderLabel === next.holderLabel &&
+    previous.holderInitial === next.holderInitial
 );
 
 SlideThumbnailCard.displayName = "Memo(SlideThumbnailCard)";

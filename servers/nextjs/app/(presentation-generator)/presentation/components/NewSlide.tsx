@@ -26,6 +26,7 @@ import {
 } from "../../_shared/blank-slide";
 import { MAX_NUMBER_OF_SLIDES } from "@/utils/presentationLimits";
 import TemplateService from "../../services/api/template";
+import { useCollaboration } from "../hooks/PresentationCollaborationContext";
 
 interface LayoutItemProps {
   layout: any;
@@ -183,6 +184,7 @@ const NewSlideV1 = ({
   const [layouts, setLayouts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const { runStructureChange } = useCollaboration();
 
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
@@ -203,7 +205,7 @@ const NewSlideV1 = ({
         return;
       }
 
-      try {
+      void runStructureChange(() => {
         const slideId = uuidv4();
         const newSlide = {
           id: slideId,
@@ -232,10 +234,10 @@ const NewSlideV1 = ({
           layout_id: id,
         });
         setShowNewSlideSelection(false);
-      } catch (error: any) {
+      }).catch((error: unknown) => {
         console.error(error);
         notify.error("Could not add slide", "Something went wrong while adding the new slide.");
-      }
+      });
     },
     [
       index,
@@ -245,6 +247,7 @@ const NewSlideV1 = ({
       setShowNewSlideSelection,
       pathname,
       onSlideAdded,
+      runStructureChange,
       slideCount,
     ]
   );

@@ -30,6 +30,8 @@ export interface PresentationResponse {
   components?: any;
   fonts?: any;
   slides: any[];
+  access_role?: "owner" | "editor" | "viewer";
+  owner_username?: string | null;
 }
 
 export class DashboardApi {

@@ -36,6 +36,11 @@ import {
   isTemplateFreePresentation,
 } from "../../_shared/blank-slide";
 import { MAX_NUMBER_OF_SLIDES } from "@/utils/presentationLimits";
+import { useCollaboration } from "../hooks/PresentationCollaborationContext";
+import {
+  collaborationHolderInitial,
+  collaborationHolderLabel,
+} from "../../services/api/collaboration";
 
 interface SidePanelProps {
   selectedSlide: number;
@@ -67,6 +72,8 @@ const SidePanel = ({
   );
 
   const dispatch = useDispatch();
+  const { runStructureChange, canChangeStructure, presenceForSlide } =
+    useCollaboration();
 
   const lastSlideIndex = presentationData?.slides?.length
     ? presentationData.slides.length - 1
@@ -99,37 +106,39 @@ const SidePanel = ({
       return;
     }
 
-    if (isTemplateFree) {
-      const slideId = uuidv4();
-      const newIndex = lastSlideIndex + 1;
-      const blankSlide = createBlankPresentationSlide({
-        id: slideId,
-        index: newIndex,
-        presentationId,
-        templateId: BLANK_SLIDE_LAYOUT_GROUP,
-        isTemplateV2: true,
-      });
+    void runStructureChange(() => {
+      if (isTemplateFree) {
+        const slideId = uuidv4();
+        const newIndex = lastSlideIndex + 1;
+        const blankSlide = createBlankPresentationSlide({
+          id: slideId,
+          index: newIndex,
+          presentationId,
+          templateId: BLANK_SLIDE_LAYOUT_GROUP,
+          isTemplateV2: true,
+        });
 
-      dispatch(
-        addNewSlide({
-          slideData: blankSlide,
-          index: lastSlideIndex,
-        })
-      );
-      trackEvent(MixpanelEvent.Presentation_Slide_Added, {
-        pathname,
-        presentation_id: presentationId,
-        inserted_after_index: lastSlideIndex,
-        template_id: BLANK_SLIDE_LAYOUT_GROUP,
-        layout_id: BLANK_SLIDE_LAYOUT_ID,
-        source: "blank_side_panel",
-        is_template_v2: true,
-      });
-      onSlideClick(newIndex);
-      return;
-    }
+        dispatch(
+          addNewSlide({
+            slideData: blankSlide,
+            index: lastSlideIndex,
+          })
+        );
+        trackEvent(MixpanelEvent.Presentation_Slide_Added, {
+          pathname,
+          presentation_id: presentationId,
+          inserted_after_index: lastSlideIndex,
+          template_id: BLANK_SLIDE_LAYOUT_GROUP,
+          layout_id: BLANK_SLIDE_LAYOUT_ID,
+          source: "blank_side_panel",
+          is_template_v2: true,
+        });
+        onSlideClick(newIndex);
+        return;
+      }
 
-    setShowNewSlideSelection(true);
+      setShowNewSlideSelection(true);
+    });
   };
 
   const sensors = useSensors(
@@ -157,6 +166,13 @@ const SidePanel = ({
     const { active, over } = event;
 
     if (!active || !over || !presentationData?.slides) return;
+    if (!canChangeStructure) {
+      notify.error(
+        "Deck structure is locked",
+        "Another session is adding or reordering slides."
+      );
+      return;
+    }
 
     if (active.id !== over.id) {
       // Find the indices of the dragged and target items
@@ -180,16 +196,17 @@ const SidePanel = ({
         index: index,
       }));
 
-      // Update the store with new order and indices
-      dispatch(
-        setPresentationData({ ...presentationData, slides: updatedArray })
-      );
-      trackEvent(MixpanelEvent.Presentation_Slides_Reordered, {
-        pathname,
-        presentation_id: presentationId,
-        from_index: oldIndex,
-        to_index: newIndex,
-        slide_count: updatedArray.length,
+      void runStructureChange(() => {
+        dispatch(
+          setPresentationData({ ...presentationData, slides: updatedArray })
+        );
+        trackEvent(MixpanelEvent.Presentation_Slides_Reordered, {
+          pathname,
+          presentation_id: presentationId,
+          from_index: oldIndex,
+          to_index: newIndex,
+          slide_count: updatedArray.length,
+        });
       });
     }
   };
@@ -261,7 +278,11 @@ const SidePanel = ({
             >
               {isStreaming ? (
                 presentationData &&
-                presentationData?.slides.map((slide: any, index: number) => (
+                presentationData?.slides.map((slide: any, index: number) => {
+                  const holder = presenceForSlide(
+                    typeof slide.id === "string" ? slide.id : null,
+                  );
+                  return (
                   <SlideThumbnailCard
                     key={
                       slide.id ??
@@ -272,9 +293,16 @@ const SidePanel = ({
                     selected={selectedSlide === index}
                     fonts={presentationData.fonts}
                     presentationVersion={presentationData.version}
+                    holderLabel={
+                      holder ? collaborationHolderLabel(holder) : null
+                    }
+                    holderInitial={
+                      holder ? collaborationHolderInitial(holder) : null
+                    }
                     onClick={() => onSlideClick(index)}
                   />
-                ))
+                  );
+                })
               ) : (
                 <SortableContext
                   items={
@@ -310,7 +338,8 @@ const SidePanel = ({
               <button
                 type="button"
                 onClick={handleAddSlideClick}
-                className="flex w-[70px] cursor-pointer flex-col items-center justify-center gap-2 px-3 text-black transition-opacity duration-200 hover:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5141E5] focus-visible:ring-offset-2"
+                disabled={!canChangeStructure}
+                className="flex w-[70px] cursor-pointer flex-col items-center justify-center gap-2 px-3 text-black transition-opacity duration-200 hover:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5141E5] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <Plus className="h-3.5 w-3.5" />
                 <span className="whitespace-nowrap text-[11px] font-normal leading-normal tracking-[0.11px]">

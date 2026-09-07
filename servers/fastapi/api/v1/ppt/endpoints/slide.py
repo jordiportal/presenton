@@ -1,11 +1,13 @@
 import logging
 from typing import Annotated, Optional
-from fastapi import APIRouter, Body, Depends, HTTPException
+from fastapi import APIRouter, Body, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 import uuid
 
 from models.sql.presentation import PresentationModel
 from models.sql.slide import SlideModel
+from services.collaboration import enforce_slide_write
+from services.presentation_access import require_presentation_access
 from services.database import get_async_session
 from services.image_generation_service import ImageGenerationService
 from services.mem0_presentation_memory_service import (
@@ -30,6 +32,7 @@ def _is_template_layout_payload(layout: object) -> bool:
 async def edit_slide(
     id: Annotated[uuid.UUID, Body()],
     prompt: Annotated[str, Body()],
+    request: Request,
     sql_session: AsyncSession = Depends(get_async_session),
 ):
     slide = await sql_session.get(SlideModel, id)
@@ -38,6 +41,8 @@ async def edit_slide(
     presentation = await sql_session.get(PresentationModel, slide.presentation)
     if not presentation:
         raise HTTPException(status_code=404, detail="Presentation not found")
+    await require_presentation_access(sql_session, presentation, write=True)
+    await enforce_slide_write(request, sql_session, presentation.id, slide.id)
 
     memory_context = await MEM0_PRESENTATION_MEMORY_SERVICE.retrieve_context(
         presentation.id,
@@ -121,6 +126,7 @@ async def edit_slide_html(
     presentation = await sql_session.get(PresentationModel, slide.presentation)
     if not presentation:
         raise HTTPException(status_code=404, detail="Presentation not found")
+    await require_presentation_access(sql_session, presentation, write=True)
 
     html_to_edit = html or slide.html_content
     if not html_to_edit:

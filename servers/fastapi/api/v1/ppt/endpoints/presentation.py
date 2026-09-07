@@ -62,6 +62,18 @@ from models.sse_response import (
     SSEStatusResponse,
 )
 
+from services.collaboration import (
+    enforce_slide_write,
+    enforce_structure_write,
+    foreign_slide_lease,
+    read_session_id,
+)
+from services.presentation_access import (
+    access_roles_by_presentation,
+    get_access_role,
+    owner_usernames_by_id,
+    require_presentation_access,
+)
 from services.database import get_async_session
 from services.database import async_session_maker
 from services.concurrent_service import CONCURRENT_SERVICE
@@ -325,11 +337,18 @@ def _extract_template_fonts_from_assets(assets: Any) -> Optional[dict[str, str]]
     return _coerce_presentation_font_map(assets.get("fonts"))
 
 
-def _presentation_response_data(presentation: PresentationModel) -> dict:
+def _presentation_response_data(
+    presentation: PresentationModel,
+    *,
+    access_role: str = "owner",
+    owner_username: str | None = None,
+) -> dict:
     data = presentation.model_dump(exclude={"layout", "structure"})
     data["type"] = (
         "smart" if presentation.generation_mode == "smart" else "standard"
     )
+    data["access_role"] = access_role
+    data["owner_username"] = owner_username
     return data
 
 
@@ -1401,21 +1420,45 @@ async def get_all_presentations(
 
     results = await sql_session.execute(query)
     if not include_slides:
+        presentations = list(results.scalars().all())
+        roles = await access_roles_by_presentation(sql_session, presentations)
+        usernames = await owner_usernames_by_id(
+            sql_session,
+            {item.owner_id for item in presentations if item.owner_id},
+        )
         return [
             PresentationWithSlides(
-                **_presentation_response_data(presentation),
+                **_presentation_response_data(
+                    presentation,
+                    access_role=roles.get(presentation.id, "owner"),
+                    owner_username=usernames.get(presentation.owner_id)
+                    if presentation.owner_id
+                    else None,
+                ),
                 slides=[],
             )
-            for presentation in results.scalars().all()
+            for presentation in presentations
         ]
 
     rows = results.all()
+    presentations = [presentation for presentation, _slide in rows]
+    roles = await access_roles_by_presentation(sql_session, presentations)
+    usernames = await owner_usernames_by_id(
+        sql_session,
+        {item.owner_id for item in presentations if item.owner_id},
+    )
     presentations_with_slides = []
     for presentation, first_slide in rows:
         slides = [first_slide]
         presentations_with_slides.append(
             PresentationWithSlides(
-                **_presentation_response_data(presentation),
+                **_presentation_response_data(
+                    presentation,
+                    access_role=roles.get(presentation.id, "owner"),
+                    owner_username=usernames.get(presentation.owner_id)
+                    if presentation.owner_id
+                    else None,
+                ),
                 slides=slides,
             )
         )
@@ -1431,6 +1474,13 @@ async def get_presentation(
     presentation = await sql_session.get(PresentationModel, id)
     if not presentation:
         raise HTTPException(404, "Presentation not found")
+    role = await get_access_role(sql_session, presentation)
+    if role is None:
+        raise HTTPException(404, "Presentation not found")
+    owner_name = None
+    if presentation.owner_id:
+        names = await owner_usernames_by_id(sql_session, {presentation.owner_id})
+        owner_name = names.get(presentation.owner_id)
     slides_result = await sql_session.scalars(
         select(SlideModel)
         .where(SlideModel.presentation == id)
@@ -1438,7 +1488,11 @@ async def get_presentation(
     )
     slides = list(slides_result)
     return PresentationWithSlides(
-        **_presentation_response_data(presentation),
+        **_presentation_response_data(
+            presentation,
+            access_role=role,
+            owner_username=owner_name,
+        ),
         slides=slides,
     )
 
@@ -1450,6 +1504,7 @@ async def delete_presentation(
     presentation = await sql_session.get(PresentationModel, id)
     if not presentation:
         raise HTTPException(404, "Presentation not found")
+    await require_presentation_access(sql_session, presentation, manage=True)
 
     await sql_session.delete(presentation)
     await sql_session.commit()
@@ -2356,9 +2411,81 @@ async def stream_presentation(
     )
 
 
+async def _sync_presentation_slides(
+    sql_session: AsyncSession,
+    presentation: PresentationModel,
+    incoming_slides: List[SlideModel],
+    request: Request | None = None,
+) -> list[SlideModel]:
+    session_id = read_session_id(request)
+    stored_result = await sql_session.scalars(
+        select(SlideModel)
+        .where(SlideModel.presentation == presentation.id)
+        .order_by(SlideModel.index)
+    )
+    stored_slides = list(stored_result)
+    stored_by_id = {slide.id: slide for slide in stored_slides}
+    incoming_by_id: dict[uuid.UUID, SlideModel] = {}
+    for slide in incoming_slides:
+        slide.presentation = uuid.UUID(str(slide.presentation))
+        slide.id = uuid.UUID(str(slide.id))
+        incoming_by_id[slide.id] = slide
+
+    removed_ids = [slide_id for slide_id in stored_by_id if slide_id not in incoming_by_id]
+    if session_id:
+        for slide_id in removed_ids:
+            held = await foreign_slide_lease(
+                sql_session, presentation.id, slide_id, session_id
+            )
+            if held:
+                raise HTTPException(
+                    status_code=409,
+                    detail={
+                        "code": "lease_held",
+                        "scope": held.scope,
+                        "holder_name": held.holder_name,
+                        "message": f"{held.holder_name} is editing a slide you tried to remove.",
+                    },
+                )
+
+    for slide_id in removed_ids:
+        await sql_session.delete(stored_by_id[slide_id])
+
+    synced: list[SlideModel] = []
+    for index, incoming in enumerate(incoming_slides):
+        incoming.index = index
+        stored = stored_by_id.get(incoming.id)
+        if stored is None:
+            incoming.presentation = presentation.id
+            incoming.index = index
+            sql_session.add(incoming)
+            synced.append(incoming)
+            continue
+
+        foreign = (
+            await foreign_slide_lease(
+                sql_session, presentation.id, stored.id, session_id
+            )
+            if session_id
+            else None
+        )
+        stored.index = index
+        if foreign is None:
+            stored.sqlmodel_update(
+                incoming.model_dump(
+                    exclude={"id", "presentation", "index", "owner_id"},
+                )
+            )
+        sql_session.add(stored)
+        synced.append(stored)
+
+    return synced
+
+
 @PRESENTATION_ROUTER.patch("/update", response_model=PresentationWithSlides, operation_id="update_presentation")
 async def update_presentation(
     id: Annotated[uuid.UUID, Body()],
+    request: Request,
     n_slides: Annotated[Optional[int], Body()] = None,
     title: Annotated[Optional[str], Body()] = None,
     theme: Annotated[Optional[dict], Body()] = None,
@@ -2368,6 +2495,10 @@ async def update_presentation(
     presentation = await sql_session.get(PresentationModel, id)
     if not presentation:
         raise HTTPException(status_code=404, detail="Presentation not found")
+    await require_presentation_access(sql_session, presentation, write=True)
+
+    if slides is not None:
+        await enforce_structure_write(request, sql_session, presentation.id)
 
     presentation_update_dict = {}
     if n_slides is not None:
@@ -2389,30 +2520,39 @@ async def update_presentation(
 
     if presentation_update_dict:
         presentation.sqlmodel_update(presentation_update_dict)
-    if slides:
+
+    response_slides: list[SlideModel] = []
+    if slides is not None:
         if len(slides) > MAX_NUMBER_OF_SLIDES:
             raise HTTPException(
                 status_code=400,
                 detail=f"Number of slides cannot be greater than {MAX_NUMBER_OF_SLIDES}",
             )
-        # Just to make sure id is UUID
-        for slide in slides:
-            slide.presentation = uuid.UUID(slide.presentation)
-            slide.id = uuid.UUID(slide.id)
-
-        await sql_session.execute(
-            delete(SlideModel).where(
-                SlideModel.presentation == presentation.id,
-                SlideModel.owner_id == get_current_owner_id(),
-            )
+        response_slides = await _sync_presentation_slides(
+            sql_session, presentation, slides, request
         )
-        sql_session.add_all(slides)
+        presentation.n_slides = len(response_slides)
 
     await sql_session.commit()
+    if not response_slides:
+        stored = await sql_session.scalars(
+            select(SlideModel)
+            .where(SlideModel.presentation == presentation.id)
+            .order_by(SlideModel.index)
+        )
+        response_slides = list(stored)
 
-    response_slides = slides or []
+    role = await get_access_role(sql_session, presentation)
+    owner_name = None
+    if presentation.owner_id:
+        names = await owner_usernames_by_id(sql_session, {presentation.owner_id})
+        owner_name = names.get(presentation.owner_id)
     return PresentationWithSlides(
-        **_presentation_response_data(presentation),
+        **_presentation_response_data(
+            presentation,
+            access_role=role or "owner",
+            owner_username=owner_name,
+        ),
         slides=response_slides,
     )
 
@@ -2420,6 +2560,7 @@ async def update_presentation(
 @PRESENTATION_ROUTER.patch("/slide_update", response_model=SlideModel, operation_id="update_slide")
 async def update_presentation_slide(
     slide: Annotated[SlideModel, Body(embed=True)],
+    request: Request,
     sql_session: AsyncSession = Depends(get_async_session),
 ):
     try:
@@ -2440,6 +2581,11 @@ async def update_presentation_slide(
             status_code=400,
             detail="Slide does not belong to the supplied presentation",
         )
+
+    presentation = await sql_session.get(PresentationModel, presentation_id)
+    if presentation:
+        await require_presentation_access(sql_session, presentation, write=True)
+    await enforce_slide_write(request, sql_session, presentation_id, slide_id)
 
     stored_slide.sqlmodel_update(
         slide.model_dump(
@@ -3131,6 +3277,7 @@ async def edit_presentation_with_new_content(
     presentation = await sql_session.get(PresentationModel, data.presentation_id)
     if not presentation:
         raise HTTPException(status_code=404, detail="Presentation not found")
+    await require_presentation_access(sql_session, presentation, write=True)
 
     slides = await sql_session.scalars(
         select(SlideModel).where(SlideModel.presentation == data.presentation_id)

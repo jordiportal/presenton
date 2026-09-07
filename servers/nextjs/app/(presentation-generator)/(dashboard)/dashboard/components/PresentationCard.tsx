@@ -187,6 +187,11 @@ export const PresentationCard = ({
         <p className="absolute right-2 top-2 z-40 rounded-full bg-white/90 px-2 py-0.5 text-xs font-medium text-[#191919] shadow-sm backdrop-blur-sm">
           {presentation.n_slides ?? presentation?.slides?.length ?? 0}
         </p>
+        {presentation?.access_role && presentation.access_role !== "owner" ? (
+          <p className="absolute left-2 bottom-14 z-40 rounded-full bg-[#F3F0FF] px-2 py-0.5 text-[11px] font-medium text-[#5141E5] shadow-sm">
+            {presentation.access_role === "viewer" ? "Shared · view" : "Shared"}
+          </p>
+        ) : null}
         <div className={`z-40 flex bg-white px-5 py-3 ${viewMode === "list" ? "min-w-0 flex-1 items-center border-l border-[#EDEEEF]" : "relative mt-auto w-full border-t border-[#EDEEEF]"}`}>
           <div className="flex items-center justify-between gap-7 w-full">
             <div className="flex flex-col items-start gap-1">
@@ -222,6 +227,7 @@ export const PresentationCard = ({
                     )}
                   </button>
                 )}
+                {presentation?.access_role && presentation.access_role !== "owner" ? null : (
                 <button
                   className="flex w-full items-center justify-between rounded-[6px] px-2 py-1 text-[#D92D20] transition-colors hover:bg-[#FEF3F2]"
                   onClick={(e) => {
@@ -234,6 +240,7 @@ export const PresentationCard = ({
                   <p>Delete</p>
                   <Trash className="h-4 w-4" />
                 </button>
+                )}
               </PopoverContent>
             </Popover>
           </div>

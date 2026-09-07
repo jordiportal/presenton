@@ -19,6 +19,7 @@ from models.sse_response import (
 )
 from services.temp_file_service import TEMP_FILE_SERVICE
 from services.database import get_async_session
+from services.presentation_access import require_presentation_access
 from services.documents_loader import DocumentsLoader
 from services.mem0_presentation_memory_service import (
     MEM0_PRESENTATION_MEMORY_SERVICE,
@@ -65,6 +66,7 @@ async def update_outline(
     presentation = await sql_session.get(PresentationModel, id)
     if not presentation:
         raise HTTPException(status_code=404, detail="Presentation not found")
+    await require_presentation_access(sql_session, presentation, write=True)
 
     presentation.outlines = outline.model_dump(mode="json")
     presentation.n_slides = len(outline.slides)

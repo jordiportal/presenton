@@ -12,15 +12,22 @@ import {
     fingerprintValue,
     getAutoSaveChanges,
 } from '../utils/autoSaveDiff';
+import { isConflictError } from '../../services/api/collaboration';
 
 interface UseAutoSaveOptions {
     debounceMs?: number;
     enabled?: boolean;
+    acquireStructure?: () => Promise<boolean>;
+    releaseStructure?: () => Promise<void>;
+    onConflict?: () => void | Promise<void>;
 }
 
 export const useAutoSave = ({
     debounceMs = 1000,
     enabled = true,
+    acquireStructure,
+    releaseStructure,
+    onConflict,
 }: UseAutoSaveOptions = {}) => {
    
     const dispatch = useDispatch();
@@ -36,7 +43,16 @@ export const useAutoSave = ({
     const pendingSaveRef = useRef(false);
     const saveLatestRef = useRef<() => Promise<void>>(async () => undefined);
     const isSavingRef = useRef(false);
+    const acquireStructureRef = useRef(acquireStructure);
+    const releaseStructureRef = useRef(releaseStructure);
+    const onConflictRef = useRef(onConflict);
     const [isSaving, setIsSaving] = useState<boolean>(false);
+
+    useEffect(() => {
+        acquireStructureRef.current = acquireStructure;
+        releaseStructureRef.current = releaseStructure;
+        onConflictRef.current = onConflict;
+    }, [acquireStructure, onConflict, releaseStructure]);
 
     const autoSavePaused =
         !enabled || isStreaming || isLoading || isLayoutLoading;
@@ -73,12 +89,21 @@ export const useAutoSave = ({
             console.log('🔄 Auto-saving presentation data...');
 
             if (changes.structuralChange) {
+                if (acquireStructureRef.current) {
+                    const acquired = await acquireStructureRef.current();
+                    if (!acquired) {
+                        wasAutoSavePausedRef.current = true;
+                        void onConflictRef.current?.();
+                        return;
+                    }
+                }
                 // Serialize once after the debounce window. The API accepts the
                 // serialized body and avoids a second whole-deck stringify.
                 await PresentationGenerationApi.updatePresentationContent(
                     JSON.stringify(data)
                 );
                 acknowledgedDataRef.current = createAutoSaveSnapshot(data);
+                void releaseStructureRef.current?.();
             } else {
                 let firstError: unknown = null;
                 const nextAcknowledged: AutoSaveSnapshot = {
@@ -123,6 +148,10 @@ export const useAutoSave = ({
             console.log('✅ Auto-save successful');
         } catch (error) {
             console.error('❌ Auto-save failed:', error);
+            if (isConflictError(error)) {
+                wasAutoSavePausedRef.current = true;
+                void onConflictRef.current?.();
+            }
         } finally {
             isSavingRef.current = false;
             setIsSaving(false);

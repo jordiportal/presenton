@@ -19,10 +19,12 @@ from models.sse_response import (
     SSEStatusResponse,
     SSETraceResponse,
 )
+from models.sql.presentation import PresentationModel
 from services.chat import sql_chat_history
 from services.chat import ChatTurnResult, PresentationChatService
 from services.chat.conversation_store import ChatConversationStore
 from services.database import get_async_session
+from services.presentation_access import require_presentation_access
 
 
 CHAT_ROUTER = APIRouter(prefix="/chat", tags=["Chat"])
@@ -102,11 +104,22 @@ async def delete_chat_conversation(
     await sql_session.commit()
 
 
+async def _require_writable_presentation(
+    presentation_id: uuid.UUID,
+    sql_session: AsyncSession,
+) -> None:
+    presentation = await sql_session.get(PresentationModel, presentation_id)
+    if not presentation:
+        raise HTTPException(status_code=404, detail="Presentation not found")
+    await require_presentation_access(sql_session, presentation, write=True)
+
+
 @CHAT_ROUTER.post("/message", response_model=ChatMessageResponse)
 async def chat_message(
     payload: ChatMessageRequest,
     sql_session: AsyncSession = Depends(get_async_session),
 ):
+    await _require_writable_presentation(payload.presentation_id, sql_session)
     service = PresentationChatService(
         sql_session=sql_session,
         presentation_id=payload.presentation_id,
@@ -126,6 +139,7 @@ async def chat_message_stream(
     payload: ChatMessageRequest,
     sql_session: AsyncSession = Depends(get_async_session),
 ):
+    await _require_writable_presentation(payload.presentation_id, sql_session)
     service = PresentationChatService(
         sql_session=sql_session,
         presentation_id=payload.presentation_id,

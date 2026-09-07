@@ -379,12 +379,49 @@ def test_bundled_general_template_json_matches_template_v2_shapes():
     )
 
 
+def test_bundled_kh7_and_minimal_templates_match_template_v2_shapes():
+    templates_root = Path(__file__).resolve().parents[4] / "templates"
+    expected_layout_ids = {
+        "cover",
+        "toc",
+        "chapter",
+        "kpis",
+        "cards_2",
+        "cards_3",
+        "cards_4",
+        "table",
+        "table_stats",
+        "bar_chart",
+        "two_col",
+        "bullets",
+        "quote",
+        "close",
+    }
+
+    for template_id, primary in (("kh7", "#EA7C00"), ("minimal", "#111827")):
+        template = default_templates._load_default_template(templates_root / template_id)
+        assert template.id == template_id
+        assert template.is_default is True
+        layout_ids = {layout["id"] for layout in template.layouts["layouts"]}
+        assert layout_ids == expected_layout_ids
+        assert template.merged_components is None
+        assert template.theme["colors"]["primary"] == primary
+        assert template.assets["thumbnail"] == (
+            f"/app_data/templates/{template_id}/static/thumbnail.png"
+        )
+
+
 def test_resolve_default_template_id_maps_public_name_to_json_id():
     templates_root = Path(__file__).resolve().parents[4] / "templates"
 
     assert default_templates.resolve_default_template_id(
         "general", templates_root
     ) == "general"
+    assert default_templates.resolve_default_template_id("kh7", templates_root) == "kh7"
+    assert (
+        default_templates.resolve_default_template_id("minimal", templates_root)
+        == "minimal"
+    )
 
 
 def test_resolve_default_template_id_rejects_paths(tmp_path):

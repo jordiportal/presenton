@@ -6,6 +6,8 @@ from constants.presentation import DEFAULT_TEMPLATES
 
 def test_default_templates_match_supported_builtin_groups():
     assert DEFAULT_TEMPLATES == [
+        "kh7",
+        "minimal",
         "momentum",
         "dynamic",
         "executive",

@@ -7,8 +7,10 @@ from api.v1.auth.assets import is_app_data_path_authorized
 from api.v1.auth.context import (
     reset_current_owner_id,
     reset_current_owner_is_admin,
+    reset_shared_asset_owner_ids,
     set_current_owner_id,
     set_current_owner_is_admin,
+    set_shared_asset_owner_ids,
 )
 from api.v1.auth.principal import resolve_request_principal
 from api.v1.auth.users import get_jwt_strategy
@@ -123,6 +125,12 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
                 )
             context_token = set_current_owner_id(principal.user_id)
             admin_context_token = set_current_owner_is_admin(principal.is_admin)
+            from services.presentation_access import list_shared_asset_owner_ids
+
+            shared_owners = await list_shared_asset_owner_ids(
+                session, principal.user_id
+            )
+            shared_token = set_shared_asset_owner_ids(shared_owners)
             try:
                 if principal.method == "jwt":
                     cloud_response = await maybe_proxy_presenton_cloud_request(
@@ -138,6 +146,7 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
                     path,
                     user_id=principal.user_id,
                     is_admin=principal.is_admin,
+                    extra_owner_ids=shared_owners,
                 ):
                     return JSONResponse(
                         status_code=404,
@@ -145,5 +154,6 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
                     )
                 return await call_next(request)
             finally:
+                reset_shared_asset_owner_ids(shared_token)
                 reset_current_owner_is_admin(admin_context_token)
                 reset_current_owner_id(context_token)

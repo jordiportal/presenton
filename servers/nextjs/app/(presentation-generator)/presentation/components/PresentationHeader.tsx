@@ -15,6 +15,7 @@ import {
   AlertTriangle,
   MousePointer2,
   Sparkles,
+  Share2,
 } from "lucide-react";
 import { askBrain } from "@/utils/brain-bridge";
 import React, { useEffect, useRef, useState } from "react";
@@ -57,6 +58,12 @@ import { KeyboardShortcutsDialog } from "./KeyboardShortcutsDialog";
 import { sanitizeAnalyticsError } from "@/utils/analytics";
 import { v4 as uuidv4 } from "uuid";
 import StreamingGenerationMetrics from "./StreamingGenerationMetrics";
+import { ShareDialog } from "./ShareDialog";
+import {
+  collaborationHolderInitial,
+  collaborationHolderLabel,
+  type CollaborationPresence,
+} from "../../services/api/collaboration";
 
 const MAX_EXPORT_TITLE_LENGTH = 40;
 
@@ -100,6 +107,7 @@ const PresentationHeader = ({
   currentSlide,
   generationMode = "standard",
   embed = false,
+  editors = [],
 
 }: {
   presentation_id: string;
@@ -107,8 +115,10 @@ const PresentationHeader = ({
   currentSlide?: number;
   generationMode?: "standard" | "smart";
   embed?: boolean;
+  editors?: CollaborationPresence[];
 }) => {
   const [open, setOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [shortcutsDialogOpen, setShortcutsDialogOpen] = useState(false);
   const router = useRouter();
   const [isExporting, setIsExporting] = useState(false);
@@ -130,6 +140,12 @@ const PresentationHeader = ({
     generationMetrics,
   } = useSelector((state: RootState) => state.presentationGeneration);
   const { onUndo, onRedo, canUndo, canRedo } = usePresentationUndoRedo();
+  const accessRole =
+    presentationData?.access_role === "editor" ||
+    presentationData?.access_role === "viewer"
+      ? presentationData.access_role
+      : "owner";
+  const canManageSharing = accessRole === "owner" && !embed && !isStreaming;
 
   useEffect(() => {
     if (isEditingTitle) {
@@ -160,7 +176,7 @@ const PresentationHeader = ({
   };
 
   const beginTitleEdit = () => {
-    if (isStreaming || !presentationData) return;
+    if (isStreaming || !presentationData || accessRole === "viewer") return;
     setDraftTitle(presentationData.title || "");
     setIsEditingTitle(true);
   };
@@ -547,7 +563,7 @@ const PresentationHeader = ({
         <button
           type="button"
           onClick={beginTitleEdit}
-          disabled={isStreaming || !presentationData}
+          disabled={isStreaming || !presentationData || accessRole === "viewer"}
           className={cn(
             "group/title flex w-full min-w-0 items-center gap-2.5 rounded-[14px] px-3 py-2 text-left -mx-3 transition-colors",
             "hover:bg-[#F6F6F9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5141e5] focus-visible:ring-offset-2",
@@ -560,7 +576,7 @@ const PresentationHeader = ({
               className="mb-0 min-w-0 overflow-hidden text-ellipsis line-clamp-1 text-sm text-[#101323] prose-p:my-0 prose-headings:my-0"
             />
           </h2>
-          {presentationData && !isStreaming && (
+          {presentationData && !isStreaming && accessRole !== "viewer" && (
             <Pencil
               className="h-3.5 w-3.5 shrink-0 text-[#101323]/40 transition-all duration-200 group-hover/title:text-[#5141e5] opacity-80 sm:opacity-0 sm:group-hover/title:opacity-100 group-hover/title:opacity-100"
               aria-hidden
@@ -637,6 +653,47 @@ const PresentationHeader = ({
           ) : null}
           {generationMode === "smart" && generationMetrics ? (
             <StreamingGenerationMetrics metrics={generationMetrics} />
+          ) : null}
+          {editors.length > 0 ? (
+            <div
+              className="hidden items-center -space-x-1 sm:flex"
+              aria-label="Other editors"
+            >
+              {editors.slice(0, 4).map((editor) => {
+                const label = collaborationHolderLabel(editor);
+                const slideLabel =
+                  typeof editor.slide_index === "number"
+                    ? ` · slide ${editor.slide_index + 1}`
+                    : "";
+                return (
+                  <div
+                    key={editor.session_id}
+                    title={`${label}${slideLabel}`}
+                    data-collaboration-editor={label}
+                    className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-[#7A5AF8] text-[11px] font-semibold text-white"
+                  >
+                    {collaborationHolderInitial(editor)}
+                  </div>
+                );
+              })}
+            </div>
+          ) : null}
+          {accessRole !== "owner" && presentationData?.owner_username ? (
+            <span className="hidden rounded-full border border-[#E4E4E8] bg-white px-3 py-1 font-syne text-xs text-[#667085] sm:inline">
+              Shared by {presentationData.owner_username}
+            </span>
+          ) : null}
+          {canManageSharing ? (
+            <ToolTip content="Share with another user">
+              <button
+                type="button"
+                onClick={() => setShareOpen(true)}
+                className="inline-flex h-[38px] items-center gap-2 rounded-xl border border-[#E4E4E8] bg-white px-3 font-syne text-xs font-semibold text-[#3D3D48] shadow-sm transition hover:border-[#D7D2F5] hover:bg-[#FAF9FF] hover:text-[#5141E5]"
+              >
+                <Share2 className="h-3.5 w-3.5" />
+                Share
+              </button>
+            </ToolTip>
           ) : null}
           {isPresentationSaving && (
             <div className="flex items-center gap-2">
@@ -839,6 +896,11 @@ const PresentationHeader = ({
       <KeyboardShortcutsDialog
         open={shortcutsDialogOpen}
         onOpenChange={setShortcutsDialogOpen}
+      />
+      <ShareDialog
+        presentationId={presentation_id}
+        open={shareOpen}
+        onOpenChange={setShareOpen}
       />
     </>
   );

@@ -29,6 +29,12 @@ def test_browser_asset_paths_are_owner_scoped_and_traversal_safe():
         user_id=owner_id,
         is_admin=False,
     )
+    assert is_app_data_path_authorized(
+        f"/app_data/images/users/{other_id}/slide.png",
+        user_id=owner_id,
+        is_admin=False,
+        extra_owner_ids={other_id},
+    )
     assert not is_app_data_path_authorized(
         "/app_data/images/%252e%252e/userConfig.json",
         user_id=owner_id,

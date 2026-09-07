@@ -57,8 +57,9 @@ export class ApiResponseHandler {
       }
     }
 
-    // Throw error with appropriate message
-    throw new Error(errorMessage);
+    const error = new Error(errorMessage) as Error & { status: number };
+    error.status = response.status;
+    throw error;
   }
 
 

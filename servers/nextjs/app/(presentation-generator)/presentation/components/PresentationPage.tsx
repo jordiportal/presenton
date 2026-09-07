@@ -31,6 +31,8 @@ import {
   usePresentationData,
   usePresentationNavigation,
   useAutoSave,
+  usePresentationCollaboration,
+  PresentationCollaborationProvider,
 } from "../hooks";
 import { PresentationPageProps } from "../types";
 import { isTruthyEmbedFlag } from "@/utils/embed";
@@ -202,7 +204,23 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
     presentationData?.version === "v2-standard" ||
     hasTemplateV2Layouts(presentationData?.layout) ||
     hasTemplateV2Slides(presentationData?.slides);
-  const editingDisabled = isStreaming === true;
+  const accessRole =
+    presentationData?.access_role === "editor" ||
+    presentationData?.access_role === "viewer"
+      ? presentationData.access_role
+      : presentationData
+        ? "owner"
+        : null;
+  const canWrite = accessRole === "owner" || accessRole === "editor";
+  const editingDisabled = isStreaming === true || !canWrite;
+  const collaborationSlideIndex =
+    slidesLength > 0
+      ? Math.min(Math.max(selectedSlide, 0), slidesLength - 1)
+      : 0;
+  const collaborationSlideId =
+    typeof presentationData?.slides?.[collaborationSlideIndex]?.id === "string"
+      ? presentationData.slides[collaborationSlideIndex].id
+      : null;
 
   useEffect(() => {
     presentationDataRef.current = presentationData;
@@ -261,19 +279,6 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
       desktopQuery.removeEventListener("change", closeDrawerOnDesktop);
   }, []);
 
-  // Auto-save functionality.
-  // Pause while the chat assistant is mutating the deck: the assistant edits
-  // slide.ui directly in the database, so a debounced autosave firing with the
-  // pre-edit Redux state would overwrite (revert) the assistant's change.
-  const { isSaving } = useAutoSave({
-    debounceMs: 2000,
-    enabled:
-      !!presentationData &&
-      !isStreaming &&
-      !isChatSending &&
-      !isChatMutating,
-  });
-
   // Custom hooks
   const { fetchUserSlides } = usePresentationData(
     presentation_id,
@@ -294,6 +299,38 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
     setSelectedSlide,
     setIsFullscreen
   );
+
+  const collaboration = usePresentationCollaboration({
+    presentationId: presentation_id,
+    slideId: collaborationSlideId,
+    slideIndex: collaborationSlideIndex,
+    enabled:
+      Boolean(presentation_id) &&
+      !loading &&
+      !error &&
+      !isStreaming &&
+      !isPresentMode,
+    canWrite,
+  });
+  const slideEditingDisabled =
+    editingDisabled || !collaboration.canEditCurrent;
+
+  // Auto-save functionality.
+  // Pause while the chat assistant is mutating the deck: the assistant edits
+  // slide.ui directly in the database, so a debounced autosave firing with the
+  // pre-edit Redux state would overwrite (revert) the assistant's change.
+  const { isSaving } = useAutoSave({
+    debounceMs: 2000,
+    enabled:
+      !!presentationData &&
+      canWrite &&
+      !isStreaming &&
+      !isChatSending &&
+      !isChatMutating,
+    acquireStructure: collaboration.acquireStructure,
+    releaseStructure: collaboration.releaseStructure,
+    onConflict: () => fetchUserSlides({ clearHistory: false }),
+  });
 
   // Initialize streaming
   usePresentationStreaming(
@@ -858,6 +895,7 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
   }
 
   return (
+    <PresentationCollaborationProvider value={collaboration}>
     <div className="h-dvh overflow-hidden font-syne">
       <OverlayLoader
         show={loadingState.isLoading}
@@ -879,6 +917,7 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
           currentSlide={selectedSlide}
           generationMode={isSmartPresentation ? "smart" : "standard"}
           embed={isEmbed}
+          editors={collaboration.editors}
         />
         <div className="flex flex-1 min-h-0 gap-3 overflow-hidden xl:gap-5 2xl:gap-6">
           <div className="sticky top-0 hidden h-full w-[165px] shrink-0 self-start md:block">
@@ -947,7 +986,8 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
                   onSlideAdded={handleEditorSlideNavigation}
                   theme={presentationData.theme}
                   fonts={presentationData.fonts}
-                  editingDisabled={editingDisabled}
+                  editingDisabled={slideEditingDisabled}
+                  lockedBy={collaboration.currentHolder}
                   isStreaming={isStreaming}
                   showBlankPromptOverlay={
                     typeof activeEditorSlide?.id === "string" &&
@@ -1066,6 +1106,7 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
         </div>
       </div>
     </div>
+    </PresentationCollaborationProvider>
   );
 };
 

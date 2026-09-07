@@ -35,6 +35,9 @@ import { ImagesApi } from "../../services/api/images";
 import { PresentationGenerationApi } from "../../services/api/presentation-generation";
 import {
   PRESENTON_BLANK_SLIDE_PROMPT_EVENT,
+  consumeQueuedBlankSlidePrompt,
+  peekQueuedBlankSlidePrompt,
+  queueBlankSlidePrompt,
   type BlankSlidePromptEventDetail,
 } from "../../_shared/blank-slide-prompt-event";
 import type {
@@ -1984,14 +1987,21 @@ const Chat = ({
     submitMessageRef.current = submitMessage;
   });
 
+  const chatInputDisabledRef = useRef(chatInputDisabled);
   useEffect(() => {
-    if (variant !== "template-v2" || typeof window === "undefined") return;
+    chatInputDisabledRef.current = chatInputDisabled;
+  }, [chatInputDisabled]);
 
-    const handleBlankSlidePrompt = (event: Event) => {
-      const detail = (event as CustomEvent<BlankSlidePromptEventDetail>).detail;
+  const submitBlankSlidePrompt = useCallback(
+    (detail: BlankSlidePromptEventDetail | null | undefined) => {
       const prompt = typeof detail?.prompt === "string" ? detail.prompt.trim() : "";
-      if (!prompt) return;
+      if (!prompt || !detail) return false;
+      if (chatInputDisabledRef.current) {
+        queueBlankSlidePrompt(detail);
+        return false;
+      }
 
+      consumeQueuedBlankSlidePrompt();
       const target =
         typeof detail.slideIndex === "number"
           ? `slide ${detail.slideIndex + 1}`
@@ -2018,6 +2028,19 @@ const Chat = ({
             }
             : undefined,
       });
+      return true;
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (variant !== "template-v2" || typeof window === "undefined") return;
+
+    const handleBlankSlidePrompt = (event: Event) => {
+      const detail =
+        (event as CustomEvent<BlankSlidePromptEventDetail>).detail ??
+        peekQueuedBlankSlidePrompt();
+      submitBlankSlidePrompt(detail);
     };
 
     window.addEventListener(
@@ -2030,7 +2053,12 @@ const Chat = ({
         handleBlankSlidePrompt,
       );
     };
-  }, [variant]);
+  }, [submitBlankSlidePrompt, variant]);
+
+  useEffect(() => {
+    if (variant !== "template-v2" || chatInputDisabled) return;
+    submitBlankSlidePrompt(peekQueuedBlankSlidePrompt());
+  }, [chatInputDisabled, submitBlankSlidePrompt, variant]);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

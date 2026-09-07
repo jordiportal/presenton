@@ -98,6 +98,7 @@ import {
   resolvePresentationTheme,
   type TemplateTheme,
 } from "@/lib/template-theme";
+import { PRESENTON_ACTIVATE_AI_PANEL_EVENT } from "../../_shared/blank-slide-prompt-event";
 import {
   InsertPalettePreview,
   type InsertPalettePreviewKind,
@@ -1472,6 +1473,21 @@ const PresentationActions = (props: PresentationActionsProps) => {
     setHiddenSlideReference(null);
     setHiddenTargetReferenceKey(null);
   }, [props.currentSlide]);
+
+  useEffect(() => {
+    const activateAiPanel = () => {
+      dispatchUiState({ type: "selectAction", activeAction: "ai" });
+      onPanelOpenChange(true);
+    };
+
+    window.addEventListener(PRESENTON_ACTIVATE_AI_PANEL_EVENT, activateAiPanel);
+    return () => {
+      window.removeEventListener(
+        PRESENTON_ACTIVATE_AI_PANEL_EVENT,
+        activateAiPanel,
+      );
+    };
+  }, [onPanelOpenChange]);
 
   useEffect(() => {
     const handleSurfaceSelected = (event: Event) => {

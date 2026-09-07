@@ -1,0 +1,6238 @@
+{
+  "id": "kh7",
+  "name": "KH7",
+  "description": "Marca KH7: naranja, azul y tipografía Inter. Parrilla de layouts fijos (portada, índice, KPIs, cards, tabla, barras, cierre) para export PPTX fiel en modo standard.",
+  "thumbnail": "static/thumbnail.png",
+  "theme": {
+    "colors": {
+      "primary": "#EA7C00",
+      "background": "#FFFFFF",
+      "card": "#FFFFFF",
+      "stroke": "#E8E8E8",
+      "primary_text": "#212121",
+      "background_text": "#FFFFFF",
+      "graph_0": "#EA7C00",
+      "graph_1": "#212D8A",
+      "graph_2": "#178347",
+      "graph_3": "#DE4F00",
+      "graph_4": "#585858",
+      "graph_5": "#E87500",
+      "graph_6": "#F5F5F5",
+      "graph_7": "#212121",
+      "graph_8": "#9CA3AF",
+      "graph_9": "#E8E8E8"
+    },
+    "fonts": {
+      "textFont": {
+        "name": "Inter",
+        "url": "/vendor/fonts/sans_serif/inter/Inter[opsz,wght].ttf"
+      }
+    }
+  },
+  "layouts": [
+    {
+      "id": "cover",
+      "description": "Portada de marca: pre-título, título grande, tagline y badges sobre fondo de acento.",
+      "components": [
+        {
+          "id": "background",
+          "description": "Full-slide canvas that sets the brand surface.",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "elements": [
+            {
+              "type": "vector",
+              "shape": "polygon",
+              "fill": {
+                "color": "#EA7C00"
+              },
+              "points": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 720
+                },
+                {
+                  "x": 0,
+                  "y": 720
+                }
+              ],
+              "closed": true
+            }
+          ]
+        },
+        {
+          "id": "cover_shape",
+          "description": "Decorative right-side brand block.",
+          "position": {
+            "x": 980,
+            "y": 0
+          },
+          "elements": [
+            {
+              "type": "vector",
+              "shape": "polygon",
+              "fill": {
+                "color": "#DE4F00",
+                "opacity": 0.35
+              },
+              "points": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 300,
+                  "y": 0
+                },
+                {
+                  "x": 300,
+                  "y": 720
+                },
+                {
+                  "x": 0,
+                  "y": 720
+                }
+              ],
+              "closed": true
+            }
+          ]
+        },
+        {
+          "id": "cover_copy",
+          "description": "Cover typography stack with badges.",
+          "position": {
+            "x": 80,
+            "y": 160
+          },
+          "elements": [
+            {
+              "type": "text",
+              "position": {
+                "x": 0,
+                "y": 0
+              },
+              "size": {
+                "width": 400,
+                "height": 28
+              },
+              "font": {
+                "size": 16,
+                "family": "Inter",
+                "color": "#FFFFFF",
+                "bold": true,
+                "line_height": 1.15
+              },
+              "alignment": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "runs": [
+                {
+                  "text": "KH7"
+                }
+              ],
+              "decorative": true,
+              "name": "brand_mark",
+              "max_length": 20,
+              "min_length": 10
+            },
+            {
+              "type": "text",
+              "position": {
+                "x": 0,
+                "y": 80
+              },
+              "size": {
+                "width": 1000,
+                "height": 32
+              },
+              "font": {
+                "size": 18,
+                "family": "Inter",
+                "color": "#FFFFFF",
+                "bold": false,
+                "line_height": 1.15
+              },
+              "alignment": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "runs": [
+                {
+                  "text": "Informe trimestral"
+                }
+              ],
+              "decorative": false,
+              "name": "pre_title",
+              "max_length": 48,
+              "min_length": 24
+            },
+            {
+              "type": "text",
+              "position": {
+                "x": 0,
+                "y": 120
+              },
+              "size": {
+                "width": 1050,
+                "height": 140
+              },
+              "font": {
+                "size": 56,
+                "family": "Inter",
+                "color": "#FFFFFF",
+                "bold": true,
+                "line_height": 1.15
+              },
+              "alignment": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "runs": [
+                {
+                  "text": "Plan de medios y crecimiento"
+                }
+              ],
+              "decorative": false,
+              "name": "title",
+              "max_length": 72,
+              "min_length": 36
+            },
+            {
+              "type": "text",
+              "position": {
+                "x": 0,
+                "y": 280
+              },
+              "size": {
+                "width": 900,
+                "height": 64
+              },
+              "font": {
+                "size": 22,
+                "family": "Inter",
+                "color": "#FFFFFF",
+                "bold": false,
+                "line_height": 1.15
+              },
+              "alignment": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "runs": [
+                {
+                  "text": "Prioridades, inversión y aprendizajes del periodo."
+                }
+              ],
+              "decorative": false,
+              "name": "tagline",
+              "max_length": 120,
+              "min_length": 60
+            },
+            {
+              "type": "flex",
+              "position": {
+                "x": 0,
+                "y": 380
+              },
+              "size": {
+                "width": 700,
+                "height": 40
+              },
+              "direction": "row",
+              "gap": 12,
+              "name": "badges",
+              "min_children": 2,
+              "max_children": 4,
+              "children": [
+                {
+                  "type": "container",
+                  "size": {
+                    "width": 148,
+                    "height": 36
+                  },
+                  "fill": {
+                    "color": "#EA7C00"
+                  },
+                  "border_radius": {
+                    "tl": 18,
+                    "tr": 18,
+                    "bl": 18,
+                    "br": 18
+                  },
+                  "child": {
+                    "type": "text",
+                    "position": {
+                      "x": 0,
+                      "y": 0
+                    },
+                    "size": {
+                      "width": 148,
+                      "height": 36
+                    },
+                    "font": {
+                      "size": 13,
+                      "family": "Inter",
+                      "color": "#FFFFFF",
+                      "bold": true,
+                      "line_height": 1.15
+                    },
+                    "alignment": {
+                      "horizontal": "center",
+                      "vertical": "middle"
+                    },
+                    "runs": [
+                      {
+                        "text": "Q4 2026"
+                      }
+                    ],
+                    "decorative": false,
+                    "name": "badge_1",
+                    "max_length": 22,
+                    "min_length": 11
+                  }
+                },
+                {
+                  "type": "container",
+                  "size": {
+                    "width": 148,
+                    "height": 36
+                  },
+                  "fill": {
+                    "color": "#EA7C00"
+                  },
+                  "border_radius": {
+                    "tl": 18,
+                    "tr": 18,
+                    "bl": 18,
+                    "br": 18
+                  },
+                  "child": {
+                    "type": "text",
+                    "position": {
+                      "x": 0,
+                      "y": 0
+                    },
+                    "size": {
+                      "width": 148,
+                      "height": 36
+                    },
+                    "font": {
+                      "size": 13,
+                      "family": "Inter",
+                      "color": "#FFFFFF",
+                      "bold": true,
+                      "line_height": 1.15
+                    },
+                    "alignment": {
+                      "horizontal": "center",
+                      "vertical": "middle"
+                    },
+                    "runs": [
+                      {
+                        "text": "Mercado Iberia"
+                      }
+                    ],
+                    "decorative": false,
+                    "name": "badge_2",
+                    "max_length": 22,
+                    "min_length": 11
+                  }
+                },
+                {
+                  "type": "container",
+                  "size": {
+                    "width": 148,
+                    "height": 36
+                  },
+                  "fill": {
+                    "color": "#EA7C00"
+                  },
+                  "border_radius": {
+                    "tl": 18,
+                    "tr": 18,
+                    "bl": 18,
+                    "br": 18
+                  },
+                  "child": {
+                    "type": "text",
+                    "position": {
+                      "x": 0,
+                      "y": 0
+                    },
+                    "size": {
+                      "width": 148,
+                      "height": 36
+                    },
+                    "font": {
+                      "size": 13,
+                      "family": "Inter",
+                      "color": "#FFFFFF",
+                      "bold": true,
+                      "line_height": 1.15
+                    },
+                    "alignment": {
+                      "horizontal": "center",
+                      "vertical": "middle"
+                    },
+                    "runs": [
+                      {
+                        "text": "Confidencial"
+                      }
+                    ],
+                    "decorative": false,
+                    "name": "badge_3",
+                    "max_length": 22,
+                    "min_length": 11
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "toc",
+      "description": "Índice o agenda en grid 2x2 de cards con título y resumen corto.",
+      "components": [
+        {
+          "id": "background",
+          "description": "Full-slide canvas that sets the brand surface.",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "elements": [
+            {
+              "type": "vector",
+              "shape": "polygon",
+              "fill": {
+                "color": "#FFFFFF"
+              },
+              "points": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 720
+                },
+                {
+                  "x": 0,
+                  "y": 720
+                }
+              ],
+              "closed": true
+            }
+          ]
+        },
+        {
+          "id": "accent_bar",
+          "description": "Thin brand accent strip along the top edge.",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "elements": [
+            {
+              "type": "vector",
+              "shape": "polygon",
+              "fill": {
+                "color": "#EA7C00"
+              },
+              "points": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 8
+                },
+                {
+                  "x": 0,
+                  "y": 8
+                }
+              ],
+              "closed": true
+            }
+          ]
+        },
+        {
+          "id": "header",
+          "description": "Eyebrow and slide title used on content slides.",
+          "position": {
+            "x": 64,
+            "y": 36
+          },
+          "elements": [
+            {
+              "type": "text",
+              "position": {
+                "x": 0,
+                "y": 0
+              },
+              "size": {
+                "width": 1150,
+                "height": 28
+              },
+              "font": {
+                "size": 16,
+                "family": "Inter",
+                "color": "#EA7C00",
+                "bold": true,
+                "line_height": 1.15
+              },
+              "alignment": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "runs": [
+                {
+                  "text": "Índice"
+                }
+              ],
+              "decorative": false,
+              "name": "pre_title",
+              "max_length": 40,
+              "min_length": 20
+            },
+            {
+              "type": "text",
+              "position": {
+                "x": 0,
+                "y": 32
+              },
+              "size": {
+                "width": 1150,
+                "height": 56
+              },
+              "font": {
+                "size": 36,
+                "family": "Inter",
+                "color": "#212121",
+                "bold": true,
+                "line_height": 1.15
+              },
+              "alignment": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "runs": [
+                {
+                  "text": "Qué vamos a recorrer"
+                }
+              ],
+              "decorative": false,
+              "name": "title",
+              "max_length": 60,
+              "min_length": 30
+            }
+          ]
+        },
+        {
+          "id": "toc_grid",
+          "description": "Four agenda cards in a two-by-two grid.",
+          "position": {
+            "x": 64,
+            "y": 160
+          },
+          "elements": [
+            {
+              "type": "grid",
+              "size": {
+                "width": 1152,
+                "height": 430
+              },
+              "columns": 2,
+              "gap": 24,
+              "name": "toc_cards",
+              "min_children": 4,
+              "max_children": 4,
+              "children": [
+                {
+                  "type": "container",
+                  "size": {
+                    "width": 540,
+                    "height": 200
+                  },
+                  "fill": {
+                    "color": "#FFFFFF"
+                  },
+                  "stroke": {
+                    "color": "#E8E8E8",
+                    "width": 1
+                  },
+                  "border_radius": {
+                    "tl": 12,
+                    "tr": 12,
+                    "bl": 12,
+                    "br": 12
+                  },
+                  "shadow": {
+                    "color": "#000000",
+                    "blur": 12,
+                    "opacity": 0.06,
+                    "offset_x": 0,
+                    "offset_y": 4
+                  },
+                  "padding": {
+                    "top": 24,
+                    "right": 24,
+                    "bottom": 24,
+                    "left": 24
+                  },
+                  "child": {
+                    "type": "flex",
+                    "direction": "column",
+                    "gap": 12,
+                    "name": "toc_1_stack",
+                    "min_children": 3,
+                    "max_children": 3,
+                    "children": [
+                      {
+                        "type": "vector",
+                        "shape": "polygon",
+                        "fill": {
+                          "color": "#EA7C00"
+                        },
+                        "points": [
+                          {
+                            "x": 0,
+                            "y": 0
+                          },
+                          {
+                            "x": 40,
+                            "y": 0
+                          },
+                          {
+                            "x": 40,
+                            "y": 4
+                          },
+                          {
+                            "x": 0,
+                            "y": 4
+                          }
+                        ],
+                        "closed": true
+                      },
+                      {
+                        "type": "text",
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "size": {
+                          "width": 492,
+                          "height": 40
+                        },
+                        "font": {
+                          "size": 22,
+                          "family": "Inter",
+                          "color": "#212121",
+                          "bold": true,
+                          "line_height": 1.15
+                        },
+                        "alignment": {
+                          "horizontal": "left",
+                          "vertical": "top"
+                        },
+                        "runs": [
+                          {
+                            "text": "Contexto"
+                          }
+                        ],
+                        "decorative": false,
+                        "name": "toc_1_title",
+                        "max_length": 48,
+                        "min_length": 24
+                      },
+                      {
+                        "type": "text",
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "size": {
+                          "width": 492,
+                          "height": 90
+                        },
+                        "font": {
+                          "size": 16,
+                          "family": "Inter",
+                          "color": "#585858",
+                          "bold": false,
+                          "line_height": 1.15
+                        },
+                        "alignment": {
+                          "horizontal": "left",
+                          "vertical": "top"
+                        },
+                        "runs": [
+                          {
+                            "text": "Mercado, audiencia y objetivos del periodo."
+                          }
+                        ],
+                        "decorative": false,
+                        "name": "toc_1_body",
+                        "max_length": 180,
+                        "min_length": 90
+                      }
+                    ]
+                  }
+                },
+                {
+                  "type": "container",
+                  "size": {
+                    "width": 540,
+                    "height": 200
+                  },
+                  "fill": {
+                    "color": "#FFFFFF"
+                  },
+                  "stroke": {
+                    "color": "#E8E8E8",
+                    "width": 1
+                  },
+                  "border_radius": {
+                    "tl": 12,
+                    "tr": 12,
+                    "bl": 12,
+                    "br": 12
+                  },
+                  "shadow": {
+                    "color": "#000000",
+                    "blur": 12,
+                    "opacity": 0.06,
+                    "offset_x": 0,
+                    "offset_y": 4
+                  },
+                  "padding": {
+                    "top": 24,
+                    "right": 24,
+                    "bottom": 24,
+                    "left": 24
+                  },
+                  "child": {
+                    "type": "flex",
+                    "direction": "column",
+                    "gap": 12,
+                    "name": "toc_2_stack",
+                    "min_children": 3,
+                    "max_children": 3,
+                    "children": [
+                      {
+                        "type": "vector",
+                        "shape": "polygon",
+                        "fill": {
+                          "color": "#EA7C00"
+                        },
+                        "points": [
+                          {
+                            "x": 0,
+                            "y": 0
+                          },
+                          {
+                            "x": 40,
+                            "y": 0
+                          },
+                          {
+                            "x": 40,
+                            "y": 4
+                          },
+                          {
+                            "x": 0,
+                            "y": 4
+                          }
+                        ],
+                        "closed": true
+                      },
+                      {
+                        "type": "text",
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "size": {
+                          "width": 492,
+                          "height": 40
+                        },
+                        "font": {
+                          "size": 22,
+                          "family": "Inter",
+                          "color": "#212121",
+                          "bold": true,
+                          "line_height": 1.15
+                        },
+                        "alignment": {
+                          "horizontal": "left",
+                          "vertical": "top"
+                        },
+                        "runs": [
+                          {
+                            "text": "Inversión"
+                          }
+                        ],
+                        "decorative": false,
+                        "name": "toc_2_title",
+                        "max_length": 48,
+                        "min_length": 24
+                      },
+                      {
+                        "type": "text",
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "size": {
+                          "width": 492,
+                          "height": 90
+                        },
+                        "font": {
+                          "size": 16,
+                          "family": "Inter",
+                          "color": "#585858",
+                          "bold": false,
+                          "line_height": 1.15
+                        },
+                        "alignment": {
+                          "horizontal": "left",
+                          "vertical": "top"
+                        },
+                        "runs": [
+                          {
+                            "text": "Reparto por medio, canal y geografía."
+                          }
+                        ],
+                        "decorative": false,
+                        "name": "toc_2_body",
+                        "max_length": 180,
+                        "min_length": 90
+                      }
+                    ]
+                  }
+                },
+                {
+                  "type": "container",
+                  "size": {
+                    "width": 540,
+                    "height": 200
+                  },
+                  "fill": {
+                    "color": "#FFFFFF"
+                  },
+                  "stroke": {
+                    "color": "#E8E8E8",
+                    "width": 1
+                  },
+                  "border_radius": {
+                    "tl": 12,
+                    "tr": 12,
+                    "bl": 12,
+                    "br": 12
+                  },
+                  "shadow": {
+                    "color": "#000000",
+                    "blur": 12,
+                    "opacity": 0.06,
+                    "offset_x": 0,
+                    "offset_y": 4
+                  },
+                  "padding": {
+                    "top": 24,
+                    "right": 24,
+                    "bottom": 24,
+                    "left": 24
+                  },
+                  "child": {
+                    "type": "flex",
+                    "direction": "column",
+                    "gap": 12,
+                    "name": "toc_3_stack",
+                    "min_children": 3,
+                    "max_children": 3,
+                    "children": [
+                      {
+                        "type": "vector",
+                        "shape": "polygon",
+                        "fill": {
+                          "color": "#EA7C00"
+                        },
+                        "points": [
+                          {
+                            "x": 0,
+                            "y": 0
+                          },
+                          {
+                            "x": 40,
+                            "y": 0
+                          },
+                          {
+                            "x": 40,
+                            "y": 4
+                          },
+                          {
+                            "x": 0,
+                            "y": 4
+                          }
+                        ],
+                        "closed": true
+                      },
+                      {
+                        "type": "text",
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "size": {
+                          "width": 492,
+                          "height": 40
+                        },
+                        "font": {
+                          "size": 22,
+                          "family": "Inter",
+                          "color": "#212121",
+                          "bold": true,
+                          "line_height": 1.15
+                        },
+                        "alignment": {
+                          "horizontal": "left",
+                          "vertical": "top"
+                        },
+                        "runs": [
+                          {
+                            "text": "Resultados"
+                          }
+                        ],
+                        "decorative": false,
+                        "name": "toc_3_title",
+                        "max_length": 48,
+                        "min_length": 24
+                      },
+                      {
+                        "type": "text",
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "size": {
+                          "width": 492,
+                          "height": 90
+                        },
+                        "font": {
+                          "size": 16,
+                          "family": "Inter",
+                          "color": "#585858",
+                          "bold": false,
+                          "line_height": 1.15
+                        },
+                        "alignment": {
+                          "horizontal": "left",
+                          "vertical": "top"
+                        },
+                        "runs": [
+                          {
+                            "text": "KPIs, aprendizajes y comparativa."
+                          }
+                        ],
+                        "decorative": false,
+                        "name": "toc_3_body",
+                        "max_length": 180,
+                        "min_length": 90
+                      }
+                    ]
+                  }
+                },
+                {
+                  "type": "container",
+                  "size": {
+                    "width": 540,
+                    "height": 200
+                  },
+                  "fill": {
+                    "color": "#FFFFFF"
+                  },
+                  "stroke": {
+                    "color": "#E8E8E8",
+                    "width": 1
+                  },
+                  "border_radius": {
+                    "tl": 12,
+                    "tr": 12,
+                    "bl": 12,
+                    "br": 12
+                  },
+                  "shadow": {
+                    "color": "#000000",
+                    "blur": 12,
+                    "opacity": 0.06,
+                    "offset_x": 0,
+                    "offset_y": 4
+                  },
+                  "padding": {
+                    "top": 24,
+                    "right": 24,
+                    "bottom": 24,
+                    "left": 24
+                  },
+                  "child": {
+                    "type": "flex",
+                    "direction": "column",
+                    "gap": 12,
+                    "name": "toc_4_stack",
+                    "min_children": 3,
+                    "max_children": 3,
+                    "children": [
+                      {
+                        "type": "vector",
+                        "shape": "polygon",
+                        "fill": {
+                          "color": "#EA7C00"
+                        },
+                        "points": [
+                          {
+                            "x": 0,
+                            "y": 0
+                          },
+                          {
+                            "x": 40,
+                            "y": 0
+                          },
+                          {
+                            "x": 40,
+                            "y": 4
+                          },
+                          {
+                            "x": 0,
+                            "y": 4
+                          }
+                        ],
+                        "closed": true
+                      },
+                      {
+                        "type": "text",
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "size": {
+                          "width": 492,
+                          "height": 40
+                        },
+                        "font": {
+                          "size": 22,
+                          "family": "Inter",
+                          "color": "#212121",
+                          "bold": true,
+                          "line_height": 1.15
+                        },
+                        "alignment": {
+                          "horizontal": "left",
+                          "vertical": "top"
+                        },
+                        "runs": [
+                          {
+                            "text": "Próximos pasos"
+                          }
+                        ],
+                        "decorative": false,
+                        "name": "toc_4_title",
+                        "max_length": 48,
+                        "min_length": 24
+                      },
+                      {
+                        "type": "text",
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "size": {
+                          "width": 492,
+                          "height": 90
+                        },
+                        "font": {
+                          "size": 16,
+                          "family": "Inter",
+                          "color": "#585858",
+                          "bold": false,
+                          "line_height": 1.15
+                        },
+                        "alignment": {
+                          "horizontal": "left",
+                          "vertical": "top"
+                        },
+                        "runs": [
+                          {
+                            "text": "Hoja de ruta y owners de cada palanca."
+                          }
+                        ],
+                        "decorative": false,
+                        "name": "toc_4_body",
+                        "max_length": 180,
+                        "min_length": 90
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "chapter",
+      "description": "Separador de capítulo o país: etiqueta, título y badges sobre fondo azul o neutro.",
+      "components": [
+        {
+          "id": "background",
+          "description": "Full-slide canvas that sets the brand surface.",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "elements": [
+            {
+              "type": "vector",
+              "shape": "polygon",
+              "fill": {
+                "color": "#212D8A"
+              },
+              "points": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 720
+                },
+                {
+                  "x": 0,
+                  "y": 720
+                }
+              ],
+              "closed": true
+            }
+          ]
+        },
+        {
+          "id": "chapter_copy",
+          "description": "Chapter label, title and context badges.",
+          "position": {
+            "x": 80,
+            "y": 220
+          },
+          "elements": [
+            {
+              "type": "text",
+              "position": {
+                "x": 0,
+                "y": 0
+              },
+              "size": {
+                "width": 600,
+                "height": 28
+              },
+              "font": {
+                "size": 16,
+                "family": "Inter",
+                "color": "#FFFFFF",
+                "bold": true,
+                "line_height": 1.15
+              },
+              "alignment": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "runs": [
+                {
+                  "text": "Capítulo 02"
+                }
+              ],
+              "decorative": false,
+              "name": "chapter_label",
+              "max_length": 32,
+              "min_length": 16
+            },
+            {
+              "type": "text",
+              "position": {
+                "x": 0,
+                "y": 40
+              },
+              "size": {
+                "width": 1100,
+                "height": 100
+              },
+              "font": {
+                "size": 52,
+                "family": "Inter",
+                "color": "#FFFFFF",
+                "bold": true,
+                "line_height": 1.15
+              },
+              "alignment": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "runs": [
+                {
+                  "text": "Mercado y competencia"
+                }
+              ],
+              "decorative": false,
+              "name": "chapter_title",
+              "max_length": 48,
+              "min_length": 24
+            },
+            {
+              "type": "flex",
+              "position": {
+                "x": 0,
+                "y": 160
+              },
+              "size": {
+                "width": 700,
+                "height": 40
+              },
+              "direction": "row",
+              "gap": 12,
+              "name": "chapter_badges",
+              "min_children": 2,
+              "max_children": 4,
+              "children": [
+                {
+                  "type": "container",
+                  "size": {
+                    "width": 148,
+                    "height": 36
+                  },
+                  "fill": {
+                    "color": "#EA7C00"
+                  },
+                  "border_radius": {
+                    "tl": 18,
+                    "tr": 18,
+                    "bl": 18,
+                    "br": 18
+                  },
+                  "child": {
+                    "type": "text",
+                    "position": {
+                      "x": 0,
+                      "y": 0
+                    },
+                    "size": {
+                      "width": 148,
+                      "height": 36
+                    },
+                    "font": {
+                      "size": 13,
+                      "family": "Inter",
+                      "color": "#FFFFFF",
+                      "bold": true,
+                      "line_height": 1.15
+                    },
+                    "alignment": {
+                      "horizontal": "center",
+                      "vertical": "middle"
+                    },
+                    "runs": [
+                      {
+                        "text": "Iberia"
+                      }
+                    ],
+                    "decorative": false,
+                    "name": "chapter_badge_1",
+                    "max_length": 22,
+                    "min_length": 11
+                  }
+                },
+                {
+                  "type": "container",
+                  "size": {
+                    "width": 148,
+                    "height": 36
+                  },
+                  "fill": {
+                    "color": "#EA7C00"
+                  },
+                  "border_radius": {
+                    "tl": 18,
+                    "tr": 18,
+                    "bl": 18,
+                    "br": 18
+                  },
+                  "child": {
+                    "type": "text",
+                    "position": {
+                      "x": 0,
+                      "y": 0
+                    },
+                    "size": {
+                      "width": 148,
+                      "height": 36
+                    },
+                    "font": {
+                      "size": 13,
+                      "family": "Inter",
+                      "color": "#FFFFFF",
+                      "bold": true,
+                      "line_height": 1.15
+                    },
+                    "alignment": {
+                      "horizontal": "center",
+                      "vertical": "middle"
+                    },
+                    "runs": [
+                      {
+                        "text": "Retail"
+                      }
+                    ],
+                    "decorative": false,
+                    "name": "chapter_badge_2",
+                    "max_length": 22,
+                    "min_length": 11
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "kpis",
+      "description": "Fila de 3–4 KPIs: número hero y etiqueta. Para resultados y tableros.",
+      "components": [
+        {
+          "id": "background",
+          "description": "Full-slide canvas that sets the brand surface.",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "elements": [
+            {
+              "type": "vector",
+              "shape": "polygon",
+              "fill": {
+                "color": "#F5F5F5"
+              },
+              "points": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 720
+                },
+                {
+                  "x": 0,
+                  "y": 720
+                }
+              ],
+              "closed": true
+            }
+          ]
+        },
+        {
+          "id": "accent_bar",
+          "description": "Thin brand accent strip along the top edge.",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "elements": [
+            {
+              "type": "vector",
+              "shape": "polygon",
+              "fill": {
+                "color": "#EA7C00"
+              },
+              "points": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 8
+                },
+                {
+                  "x": 0,
+                  "y": 8
+                }
+              ],
+              "closed": true
+            }
+          ]
+        },
+        {
+          "id": "header",
+          "description": "Eyebrow and slide title used on content slides.",
+          "position": {
+            "x": 64,
+            "y": 36
+          },
+          "elements": [
+            {
+              "type": "text",
+              "position": {
+                "x": 0,
+                "y": 0
+              },
+              "size": {
+                "width": 1150,
+                "height": 28
+              },
+              "font": {
+                "size": 16,
+                "family": "Inter",
+                "color": "#EA7C00",
+                "bold": true,
+                "line_height": 1.15
+              },
+              "alignment": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "runs": [
+                {
+                  "text": "Resultados"
+                }
+              ],
+              "decorative": false,
+              "name": "pre_title",
+              "max_length": 40,
+              "min_length": 20
+            },
+            {
+              "type": "text",
+              "position": {
+                "x": 0,
+                "y": 32
+              },
+              "size": {
+                "width": 1150,
+                "height": 56
+              },
+              "font": {
+                "size": 36,
+                "family": "Inter",
+                "color": "#212121",
+                "bold": true,
+                "line_height": 1.15
+              },
+              "alignment": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "runs": [
+                {
+                  "text": "Cifras que importan"
+                }
+              ],
+              "decorative": false,
+              "name": "title",
+              "max_length": 60,
+              "min_length": 30
+            }
+          ]
+        },
+        {
+          "id": "kpi_row",
+          "description": "Four headline metric cards.",
+          "position": {
+            "x": 64,
+            "y": 180
+          },
+          "elements": [
+            {
+              "type": "flex",
+              "size": {
+                "width": 1152,
+                "height": 240
+              },
+              "direction": "row",
+              "gap": 24,
+              "name": "kpis",
+              "min_children": 2,
+              "max_children": 4,
+              "children": [
+                {
+                  "type": "container",
+                  "size": {
+                    "width": 270,
+                    "height": 240
+                  },
+                  "fill": {
+                    "color": "#FFFFFF"
+                  },
+                  "stroke": {
+                    "color": "#E8E8E8",
+                    "width": 1
+                  },
+                  "border_radius": {
+                    "tl": 12,
+                    "tr": 12,
+                    "bl": 12,
+                    "br": 12
+                  },
+                  "shadow": {
+                    "color": "#000000",
+                    "blur": 12,
+                    "opacity": 0.06,
+                    "offset_x": 0,
+                    "offset_y": 4
+                  },
+                  "padding": {
+                    "top": 28,
+                    "right": 24,
+                    "bottom": 24,
+                    "left": 24
+                  },
+                  "child": {
+                    "type": "flex",
+                    "direction": "column",
+                    "gap": 8,
+                    "name": "kpi_1_stack",
+                    "min_children": 2,
+                    "max_children": 2,
+                    "children": [
+                      {
+                        "type": "text",
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "size": {
+                          "width": 222,
+                          "height": 64
+                        },
+                        "font": {
+                          "size": 48,
+                          "family": "Inter",
+                          "color": "#EA7C00",
+                          "bold": true,
+                          "line_height": 1.15
+                        },
+                        "alignment": {
+                          "horizontal": "left",
+                          "vertical": "top"
+                        },
+                        "runs": [
+                          {
+                            "text": "32%"
+                          }
+                        ],
+                        "decorative": false,
+                        "name": "kpi_1_value",
+                        "max_length": 12,
+                        "min_length": 6
+                      },
+                      {
+                        "type": "text",
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "size": {
+                          "width": 222,
+                          "height": 40
+                        },
+                        "font": {
+                          "size": 16,
+                          "family": "Inter",
+                          "color": "#585858",
+                          "bold": false,
+                          "line_height": 1.15
+                        },
+                        "alignment": {
+                          "horizontal": "left",
+                          "vertical": "top"
+                        },
+                        "runs": [
+                          {
+                            "text": "Notoriedad"
+                          }
+                        ],
+                        "decorative": false,
+                        "name": "kpi_1_label",
+                        "max_length": 40,
+                        "min_length": 20
+                      }
+                    ]
+                  }
+                },
+                {
+                  "type": "container",
+                  "size": {
+                    "width": 270,
+                    "height": 240
+                  },
+                  "fill": {
+                    "color": "#FFFFFF"
+                  },
+                  "stroke": {
+                    "color": "#E8E8E8",
+                    "width": 1
+                  },
+                  "border_radius": {
+                    "tl": 12,
+                    "tr": 12,
+                    "bl": 12,
+                    "br": 12
+                  },
+                  "shadow": {
+                    "color": "#000000",
+                    "blur": 12,
+                    "opacity": 0.06,
+                    "offset_x": 0,
+                    "offset_y": 4
+                  },
+                  "padding": {
+                    "top": 28,
+                    "right": 24,
+                    "bottom": 24,
+                    "left": 24
+                  },
+                  "child": {
+                    "type": "flex",
+                    "direction": "column",
+                    "gap": 8,
+                    "name": "kpi_2_stack",
+                    "min_children": 2,
+                    "max_children": 2,
+                    "children": [
+                      {
+                        "type": "text",
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "size": {
+                          "width": 222,
+                          "height": 64
+                        },
+                        "font": {
+                          "size": 48,
+                          "family": "Inter",
+                          "color": "#EA7C00",
+                          "bold": true,
+                          "line_height": 1.15
+                        },
+                        "alignment": {
+                          "horizontal": "left",
+                          "vertical": "top"
+                        },
+                        "runs": [
+                          {
+                            "text": "4.2x"
+                          }
+                        ],
+                        "decorative": false,
+                        "name": "kpi_2_value",
+                        "max_length": 12,
+                        "min_length": 6
+                      },
+                      {
+                        "type": "text",
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "size": {
+                          "width": 222,
+                          "height": 40
+                        },
+                        "font": {
+                          "size": 16,
+                          "family": "Inter",
+                          "color": "#585858",
+                          "bold": false,
+                          "line_height": 1.15
+                        },
+                        "alignment": {
+                          "horizontal": "left",
+                          "vertical": "top"
+                        },
+                        "runs": [
+                          {
+                            "text": "ROI medio"
+                          }
+                        ],
+                        "decorative": false,
+                        "name": "kpi_2_label",
+                        "max_length": 40,
+                        "min_length": 20
+                      }
+                    ]
+                  }
+                },
+                {
+                  "type": "container",
+                  "size": {
+                    "width": 270,
+                    "height": 240
+                  },
+                  "fill": {
+                    "color": "#FFFFFF"
+                  },
+                  "stroke": {
+                    "color": "#E8E8E8",
+                    "width": 1
+                  },
+                  "border_radius": {
+                    "tl": 12,
+                    "tr": 12,
+                    "bl": 12,
+                    "br": 12
+                  },
+                  "shadow": {
+                    "color": "#000000",
+                    "blur": 12,
+                    "opacity": 0.06,
+                    "offset_x": 0,
+                    "offset_y": 4
+                  },
+                  "padding": {
+                    "top": 28,
+                    "right": 24,
+                    "bottom": 24,
+                    "left": 24
+                  },
+                  "child": {
+                    "type": "flex",
+                    "direction": "column",
+                    "gap": 8,
+                    "name": "kpi_3_stack",
+                    "min_children": 2,
+                    "max_children": 2,
+                    "children": [
+                      {
+                        "type": "text",
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "size": {
+                          "width": 222,
+                          "height": 64
+                        },
+                        "font": {
+                          "size": 48,
+                          "family": "Inter",
+                          "color": "#EA7C00",
+                          "bold": true,
+                          "line_height": 1.15
+                        },
+                        "alignment": {
+                          "horizontal": "left",
+                          "vertical": "top"
+                        },
+                        "runs": [
+                          {
+                            "text": "18"
+                          }
+                        ],
+                        "decorative": false,
+                        "name": "kpi_3_value",
+                        "max_length": 12,
+                        "min_length": 6
+                      },
+                      {
+                        "type": "text",
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "size": {
+                          "width": 222,
+                          "height": 40
+                        },
+                        "font": {
+                          "size": 16,
+                          "family": "Inter",
+                          "color": "#585858",
+                          "bold": false,
+                          "line_height": 1.15
+                        },
+                        "alignment": {
+                          "horizontal": "left",
+                          "vertical": "top"
+                        },
+                        "runs": [
+                          {
+                            "text": "Medios activos"
+                          }
+                        ],
+                        "decorative": false,
+                        "name": "kpi_3_label",
+                        "max_length": 40,
+                        "min_length": 20
+                      }
+                    ]
+                  }
+                },
+                {
+                  "type": "container",
+                  "size": {
+                    "width": 270,
+                    "height": 240
+                  },
+                  "fill": {
+                    "color": "#FFFFFF"
+                  },
+                  "stroke": {
+                    "color": "#E8E8E8",
+                    "width": 1
+                  },
+                  "border_radius": {
+                    "tl": 12,
+                    "tr": 12,
+                    "bl": 12,
+                    "br": 12
+                  },
+                  "shadow": {
+                    "color": "#000000",
+                    "blur": 12,
+                    "opacity": 0.06,
+                    "offset_x": 0,
+                    "offset_y": 4
+                  },
+                  "padding": {
+                    "top": 28,
+                    "right": 24,
+                    "bottom": 24,
+                    "left": 24
+                  },
+                  "child": {
+                    "type": "flex",
+                    "direction": "column",
+                    "gap": 8,
+                    "name": "kpi_4_stack",
+                    "min_children": 2,
+                    "max_children": 2,
+                    "children": [
+                      {
+                        "type": "text",
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "size": {
+                          "width": 222,
+                          "height": 64
+                        },
+                        "font": {
+                          "size": 48,
+                          "family": "Inter",
+                          "color": "#EA7C00",
+                          "bold": true,
+                          "line_height": 1.15
+                        },
+                        "alignment": {
+                          "horizontal": "left",
+                          "vertical": "top"
+                        },
+                        "runs": [
+                          {
+                            "text": "€2.4M"
+                          }
+                        ],
+                        "decorative": false,
+                        "name": "kpi_4_value",
+                        "max_length": 12,
+                        "min_length": 6
+                      },
+                      {
+                        "type": "text",
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "size": {
+                          "width": 222,
+                          "height": 40
+                        },
+                        "font": {
+                          "size": 16,
+                          "family": "Inter",
+                          "color": "#585858",
+                          "bold": false,
+                          "line_height": 1.15
+                        },
+                        "alignment": {
+                          "horizontal": "left",
+                          "vertical": "top"
+                        },
+                        "runs": [
+                          {
+                            "text": "Inversión"
+                          }
+                        ],
+                        "decorative": false,
+                        "name": "kpi_4_label",
+                        "max_length": 40,
+                        "min_length": 20
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cards_2",
+      "description": "Dos cards anchas: producto, competencia o pilares.",
+      "components": [
+        {
+          "id": "background",
+          "description": "Full-slide canvas that sets the brand surface.",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "elements": [
+            {
+              "type": "vector",
+              "shape": "polygon",
+              "fill": {
+                "color": "#FFFFFF"
+              },
+              "points": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 720
+                },
+                {
+                  "x": 0,
+                  "y": 720
+                }
+              ],
+              "closed": true
+            }
+          ]
+        },
+        {
+          "id": "accent_bar",
+          "description": "Thin brand accent strip along the top edge.",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "elements": [
+            {
+              "type": "vector",
+              "shape": "polygon",
+              "fill": {
+                "color": "#EA7C00"
+              },
+              "points": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 8
+                },
+                {
+                  "x": 0,
+                  "y": 8
+                }
+              ],
+              "closed": true
+            }
+          ]
+        },
+        {
+          "id": "header",
+          "description": "Eyebrow and slide title used on content slides.",
+          "position": {
+            "x": 64,
+            "y": 36
+          },
+          "elements": [
+            {
+              "type": "text",
+              "position": {
+                "x": 0,
+                "y": 0
+              },
+              "size": {
+                "width": 1150,
+                "height": 28
+              },
+              "font": {
+                "size": 16,
+                "family": "Inter",
+                "color": "#EA7C00",
+                "bold": true,
+                "line_height": 1.15
+              },
+              "alignment": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "runs": [
+                {
+                  "text": "Detalle"
+                }
+              ],
+              "decorative": false,
+              "name": "pre_title",
+              "max_length": 40,
+              "min_length": 20
+            },
+            {
+              "type": "text",
+              "position": {
+                "x": 0,
+                "y": 32
+              },
+              "size": {
+                "width": 1150,
+                "height": 56
+              },
+              "font": {
+                "size": 36,
+                "family": "Inter",
+                "color": "#212121",
+                "bold": true,
+                "line_height": 1.15
+              },
+              "alignment": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "runs": [
+                {
+                  "text": "Puntos clave del bloque"
+                }
+              ],
+              "decorative": false,
+              "name": "title",
+              "max_length": 60,
+              "min_length": 30
+            }
+          ]
+        },
+        {
+          "id": "cards",
+          "description": "Grid of 2 content cards.",
+          "position": {
+            "x": 64,
+            "y": 160
+          },
+          "elements": [
+            {
+              "type": "grid",
+              "size": {
+                "width": 1152,
+                "height": 380
+              },
+              "columns": 2,
+              "gap": 24,
+              "name": "content_cards",
+              "min_children": 2,
+              "max_children": 2,
+              "children": [
+                {
+                  "type": "container",
+                  "size": {
+                    "width": 564.0,
+                    "height": 380
+                  },
+                  "fill": {
+                    "color": "#FFFFFF"
+                  },
+                  "stroke": {
+                    "color": "#E8E8E8",
+                    "width": 1
+                  },
+                  "border_radius": {
+                    "tl": 12,
+                    "tr": 12,
+                    "bl": 12,
+                    "br": 12
+                  },
+                  "shadow": {
+                    "color": "#000000",
+                    "blur": 12,
+                    "opacity": 0.06,
+                    "offset_x": 0,
+                    "offset_y": 4
+                  },
+                  "padding": {
+                    "top": 24,
+                    "right": 24,
+                    "bottom": 24,
+                    "left": 24
+                  },
+                  "child": {
+                    "type": "flex",
+                    "direction": "column",
+                    "gap": 12,
+                    "name": "card_1_stack",
+                    "min_children": 3,
+                    "max_children": 3,
+                    "children": [
+                      {
+                        "type": "vector",
+                        "shape": "polygon",
+                        "fill": {
+                          "color": "#EA7C00"
+                        },
+                        "points": [
+                          {
+                            "x": 0,
+                            "y": 0
+                          },
+                          {
+                            "x": 40,
+                            "y": 0
+                          },
+                          {
+                            "x": 40,
+                            "y": 4
+                          },
+                          {
+                            "x": 0,
+                            "y": 4
+                          }
+                        ],
+                        "closed": true
+                      },
+                      {
+                        "type": "text",
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "size": {
+                          "width": 516.0,
+                          "height": 40
+                        },
+                        "font": {
+                          "size": 22,
+                          "family": "Inter",
+                          "color": "#212121",
+                          "bold": true,
+                          "line_height": 1.15
+                        },
+                        "alignment": {
+                          "horizontal": "left",
+                          "vertical": "top"
+                        },
+                        "runs": [
+                          {
+                            "text": "Producto A"
+                          }
+                        ],
+                        "decorative": false,
+                        "name": "card_1_title",
+                        "max_length": 48,
+                        "min_length": 24
+                      },
+                      {
+                        "type": "text",
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "size": {
+                          "width": 516.0,
+                          "height": 270
+                        },
+                        "font": {
+                          "size": 16,
+                          "family": "Inter",
+                          "color": "#585858",
+                          "bold": false,
+                          "line_height": 1.15
+                        },
+                        "alignment": {
+                          "horizontal": "left",
+                          "vertical": "top"
+                        },
+                        "runs": [
+                          {
+                            "text": "Propuesta, precio y canal principal para este bloque."
+                          }
+                        ],
+                        "decorative": false,
+                        "name": "card_1_body",
+                        "max_length": 180,
+                        "min_length": 90
+                      }
+                    ]
+                  }
+                },
+                {
+                  "type": "container",
+                  "size": {
+                    "width": 564.0,
+                    "height": 380
+                  },
+                  "fill": {
+                    "color": "#FFFFFF"
+                  },
+                  "stroke": {
+                    "color": "#E8E8E8",
+                    "width": 1
+                  },
+                  "border_radius": {
+                    "tl": 12,
+                    "tr": 12,
+                    "bl": 12,
+                    "br": 12
+                  },
+                  "shadow": {
+                    "color": "#000000",
+                    "blur": 12,
+                    "opacity": 0.06,
+                    "offset_x": 0,
+                    "offset_y": 4
+                  },
+                  "padding": {
+                    "top": 24,
+                    "right": 24,
+                    "bottom": 24,
+                    "left": 24
+                  },
+                  "child": {
+                    "type": "flex",
+                    "direction": "column",
+                    "gap": 12,
+                    "name": "card_2_stack",
+                    "min_children": 3,
+                    "max_children": 3,
+                    "children": [
+                      {
+                        "type": "vector",
+                        "shape": "polygon",
+                        "fill": {
+                          "color": "#EA7C00"
+                        },
+                        "points": [
+                          {
+                            "x": 0,
+                            "y": 0
+                          },
+                          {
+                            "x": 40,
+                            "y": 0
+                          },
+                          {
+                            "x": 40,
+                            "y": 4
+                          },
+                          {
+                            "x": 0,
+                            "y": 4
+                          }
+                        ],
+                        "closed": true
+                      },
+                      {
+                        "type": "text",
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "size": {
+                          "width": 516.0,
+                          "height": 40
+                        },
+                        "font": {
+                          "size": 22,
+                          "family": "Inter",
+                          "color": "#212121",
+                          "bold": true,
+                          "line_height": 1.15
+                        },
+                        "alignment": {
+                          "horizontal": "left",
+                          "vertical": "top"
+                        },
+                        "runs": [
+                          {
+                            "text": "Producto B"
+                          }
+                        ],
+                        "decorative": false,
+                        "name": "card_2_title",
+                        "max_length": 48,
+                        "min_length": 24
+                      },
+                      {
+                        "type": "text",
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "size": {
+                          "width": 516.0,
+                          "height": 270
+                        },
+                        "font": {
+                          "size": 16,
+                          "family": "Inter",
+                          "color": "#585858",
+                          "bold": false,
+                          "line_height": 1.15
+                        },
+                        "alignment": {
+                          "horizontal": "left",
+                          "vertical": "top"
+                        },
+                        "runs": [
+                          {
+                            "text": "Diferencial frente a competencia y siguiente palanca."
+                          }
+                        ],
+                        "decorative": false,
+                        "name": "card_2_body",
+                        "max_length": 180,
+                        "min_length": 90
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cards_3",
+      "description": "Tres cards: oferta, learnings o workstreams.",
+      "components": [
+        {
+          "id": "background",
+          "description": "Full-slide canvas that sets the brand surface.",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "elements": [
+            {
+              "type": "vector",
+              "shape": "polygon",
+              "fill": {
+                "color": "#FFFFFF"
+              },
+              "points": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 720
+                },
+                {
+                  "x": 0,
+                  "y": 720
+                }
+              ],
+              "closed": true
+            }
+          ]
+        },
+        {
+          "id": "accent_bar",
+          "description": "Thin brand accent strip along the top edge.",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "elements": [
+            {
+              "type": "vector",
+              "shape": "polygon",
+              "fill": {
+                "color": "#EA7C00"
+              },
+              "points": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 8
+                },
+                {
+                  "x": 0,
+                  "y": 8
+                }
+              ],
+              "closed": true
+            }
+          ]
+        },
+        {
+          "id": "header",
+          "description": "Eyebrow and slide title used on content slides.",
+          "position": {
+            "x": 64,
+            "y": 36
+          },
+          "elements": [
+            {
+              "type": "text",
+              "position": {
+                "x": 0,
+                "y": 0
+              },
+              "size": {
+                "width": 1150,
+                "height": 28
+              },
+              "font": {
+                "size": 16,
+                "family": "Inter",
+                "color": "#EA7C00",
+                "bold": true,
+                "line_height": 1.15
+              },
+              "alignment": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "runs": [
+                {
+                  "text": "Detalle"
+                }
+              ],
+              "decorative": false,
+              "name": "pre_title",
+              "max_length": 40,
+              "min_length": 20
+            },
+            {
+              "type": "text",
+              "position": {
+                "x": 0,
+                "y": 32
+              },
+              "size": {
+                "width": 1150,
+                "height": 56
+              },
+              "font": {
+                "size": 36,
+                "family": "Inter",
+                "color": "#212121",
+                "bold": true,
+                "line_height": 1.15
+              },
+              "alignment": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "runs": [
+                {
+                  "text": "Puntos clave del bloque"
+                }
+              ],
+              "decorative": false,
+              "name": "title",
+              "max_length": 60,
+              "min_length": 30
+            }
+          ]
+        },
+        {
+          "id": "cards",
+          "description": "Grid of 3 content cards.",
+          "position": {
+            "x": 64,
+            "y": 160
+          },
+          "elements": [
+            {
+              "type": "grid",
+              "size": {
+                "width": 1152,
+                "height": 380
+              },
+              "columns": 3,
+              "gap": 24,
+              "name": "content_cards",
+              "min_children": 3,
+              "max_children": 3,
+              "children": [
+                {
+                  "type": "container",
+                  "size": {
+                    "width": 368.0,
+                    "height": 380
+                  },
+                  "fill": {
+                    "color": "#FFFFFF"
+                  },
+                  "stroke": {
+                    "color": "#E8E8E8",
+                    "width": 1
+                  },
+                  "border_radius": {
+                    "tl": 12,
+                    "tr": 12,
+                    "bl": 12,
+                    "br": 12
+                  },
+                  "shadow": {
+                    "color": "#000000",
+                    "blur": 12,
+                    "opacity": 0.06,
+                    "offset_x": 0,
+                    "offset_y": 4
+                  },
+                  "padding": {
+                    "top": 24,
+                    "right": 24,
+                    "bottom": 24,
+                    "left": 24
+                  },
+                  "child": {
+                    "type": "flex",
+                    "direction": "column",
+                    "gap": 12,
+                    "name": "card_1_stack",
+                    "min_children": 3,
+                    "max_children": 3,
+                    "children": [
+                      {
+                        "type": "vector",
+                        "shape": "polygon",
+                        "fill": {
+                          "color": "#EA7C00"
+                        },
+                        "points": [
+                          {
+                            "x": 0,
+                            "y": 0
+                          },
+                          {
+                            "x": 40,
+                            "y": 0
+                          },
+                          {
+                            "x": 40,
+                            "y": 4
+                          },
+                          {
+                            "x": 0,
+                            "y": 4
+                          }
+                        ],
+                        "closed": true
+                      },
+                      {
+                        "type": "text",
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "size": {
+                          "width": 320.0,
+                          "height": 40
+                        },
+                        "font": {
+                          "size": 22,
+                          "family": "Inter",
+                          "color": "#212121",
+                          "bold": true,
+                          "line_height": 1.15
+                        },
+                        "alignment": {
+                          "horizontal": "left",
+                          "vertical": "top"
+                        },
+                        "runs": [
+                          {
+                            "text": "Producto A"
+                          }
+                        ],
+                        "decorative": false,
+                        "name": "card_1_title",
+                        "max_length": 48,
+                        "min_length": 24
+                      },
+                      {
+                        "type": "text",
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "size": {
+                          "width": 320.0,
+                          "height": 270
+                        },
+                        "font": {
+                          "size": 16,
+                          "family": "Inter",
+                          "color": "#585858",
+                          "bold": false,
+                          "line_height": 1.15
+                        },
+                        "alignment": {
+                          "horizontal": "left",
+                          "vertical": "top"
+                        },
+                        "runs": [
+                          {
+                            "text": "Propuesta, precio y canal principal para este bloque."
+                          }
+                        ],
+                        "decorative": false,
+                        "name": "card_1_body",
+                        "max_length": 180,
+                        "min_length": 90
+                      }
+                    ]
+                  }
+                },
+                {
+                  "type": "container",
+                  "size": {
+                    "width": 368.0,
+                    "height": 380
+                  },
+                  "fill": {
+                    "color": "#FFFFFF"
+                  },
+                  "stroke": {
+                    "color": "#E8E8E8",
+                    "width": 1
+                  },
+                  "border_radius": {
+                    "tl": 12,
+                    "tr": 12,
+                    "bl": 12,
+                    "br": 12
+                  },
+                  "shadow": {
+                    "color": "#000000",
+                    "blur": 12,
+                    "opacity": 0.06,
+                    "offset_x": 0,
+                    "offset_y": 4
+                  },
+                  "padding": {
+                    "top": 24,
+                    "right": 24,
+                    "bottom": 24,
+                    "left": 24
+                  },
+                  "child": {
+                    "type": "flex",
+                    "direction": "column",
+                    "gap": 12,
+                    "name": "card_2_stack",
+                    "min_children": 3,
+                    "max_children": 3,
+                    "children": [
+                      {
+                        "type": "vector",
+                        "shape": "polygon",
+                        "fill": {
+                          "color": "#EA7C00"
+                        },
+                        "points": [
+                          {
+                            "x": 0,
+                            "y": 0
+                          },
+                          {
+                            "x": 40,
+                            "y": 0
+                          },
+                          {
+                            "x": 40,
+                            "y": 4
+                          },
+                          {
+                            "x": 0,
+                            "y": 4
+                          }
+                        ],
+                        "closed": true
+                      },
+                      {
+                        "type": "text",
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "size": {
+                          "width": 320.0,
+                          "height": 40
+                        },
+                        "font": {
+                          "size": 22,
+                          "family": "Inter",
+                          "color": "#212121",
+                          "bold": true,
+                          "line_height": 1.15
+                        },
+                        "alignment": {
+                          "horizontal": "left",
+                          "vertical": "top"
+                        },
+                        "runs": [
+                          {
+                            "text": "Producto B"
+                          }
+                        ],
+                        "decorative": false,
+                        "name": "card_2_title",
+                        "max_length": 48,
+                        "min_length": 24
+                      },
+                      {
+                        "type": "text",
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "size": {
+                          "width": 320.0,
+                          "height": 270
+                        },
+                        "font": {
+                          "size": 16,
+                          "family": "Inter",
+                          "color": "#585858",
+                          "bold": false,
+                          "line_height": 1.15
+                        },
+                        "alignment": {
+                          "horizontal": "left",
+                          "vertical": "top"
+                        },
+                        "runs": [
+                          {
+                            "text": "Diferencial frente a competencia y siguiente palanca."
+                          }
+                        ],
+                        "decorative": false,
+                        "name": "card_2_body",
+                        "max_length": 180,
+                        "min_length": 90
+                      }
+                    ]
+                  }
+                },
+                {
+                  "type": "container",
+                  "size": {
+                    "width": 368.0,
+                    "height": 380
+                  },
+                  "fill": {
+                    "color": "#FFFFFF"
+                  },
+                  "stroke": {
+                    "color": "#E8E8E8",
+                    "width": 1
+                  },
+                  "border_radius": {
+                    "tl": 12,
+                    "tr": 12,
+                    "bl": 12,
+                    "br": 12
+                  },
+                  "shadow": {
+                    "color": "#000000",
+                    "blur": 12,
+                    "opacity": 0.06,
+                    "offset_x": 0,
+                    "offset_y": 4
+                  },
+                  "padding": {
+                    "top": 24,
+                    "right": 24,
+                    "bottom": 24,
+                    "left": 24
+                  },
+                  "child": {
+                    "type": "flex",
+                    "direction": "column",
+                    "gap": 12,
+                    "name": "card_3_stack",
+                    "min_children": 3,
+                    "max_children": 3,
+                    "children": [
+                      {
+                        "type": "vector",
+                        "shape": "polygon",
+                        "fill": {
+                          "color": "#EA7C00"
+                        },
+                        "points": [
+                          {
+                            "x": 0,
+                            "y": 0
+                          },
+                          {
+                            "x": 40,
+                            "y": 0
+                          },
+                          {
+                            "x": 40,
+                            "y": 4
+                          },
+                          {
+                            "x": 0,
+                            "y": 4
+                          }
+                        ],
+                        "closed": true
+                      },
+                      {
+                        "type": "text",
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "size": {
+                          "width": 320.0,
+                          "height": 40
+                        },
+                        "font": {
+                          "size": 22,
+                          "family": "Inter",
+                          "color": "#212121",
+                          "bold": true,
+                          "line_height": 1.15
+                        },
+                        "alignment": {
+                          "horizontal": "left",
+                          "vertical": "top"
+                        },
+                        "runs": [
+                          {
+                            "text": "Producto C"
+                          }
+                        ],
+                        "decorative": false,
+                        "name": "card_3_title",
+                        "max_length": 48,
+                        "min_length": 24
+                      },
+                      {
+                        "type": "text",
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "size": {
+                          "width": 320.0,
+                          "height": 270
+                        },
+                        "font": {
+                          "size": 16,
+                          "family": "Inter",
+                          "color": "#585858",
+                          "bold": false,
+                          "line_height": 1.15
+                        },
+                        "alignment": {
+                          "horizontal": "left",
+                          "vertical": "top"
+                        },
+                        "runs": [
+                          {
+                            "text": "Riesgo, dependencia y owner de la iniciativa."
+                          }
+                        ],
+                        "decorative": false,
+                        "name": "card_3_body",
+                        "max_length": 180,
+                        "min_length": 90
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cards_4",
+      "description": "Cuatro cards en 2x2 para un mapa compacto.",
+      "components": [
+        {
+          "id": "background",
+          "description": "Full-slide canvas that sets the brand surface.",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "elements": [
+            {
+              "type": "vector",
+              "shape": "polygon",
+              "fill": {
+                "color": "#FFFFFF"
+              },
+              "points": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 720
+                },
+                {
+                  "x": 0,
+                  "y": 720
+                }
+              ],
+              "closed": true
+            }
+          ]
+        },
+        {
+          "id": "accent_bar",
+          "description": "Thin brand accent strip along the top edge.",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "elements": [
+            {
+              "type": "vector",
+              "shape": "polygon",
+              "fill": {
+                "color": "#EA7C00"
+              },
+              "points": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 8
+                },
+                {
+                  "x": 0,
+                  "y": 8
+                }
+              ],
+              "closed": true
+            }
+          ]
+        },
+        {
+          "id": "header",
+          "description": "Eyebrow and slide title used on content slides.",
+          "position": {
+            "x": 64,
+            "y": 36
+          },
+          "elements": [
+            {
+              "type": "text",
+              "position": {
+                "x": 0,
+                "y": 0
+              },
+              "size": {
+                "width": 1150,
+                "height": 28
+              },
+              "font": {
+                "size": 16,
+                "family": "Inter",
+                "color": "#EA7C00",
+                "bold": true,
+                "line_height": 1.15
+              },
+              "alignment": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "runs": [
+                {
+                  "text": "Detalle"
+                }
+              ],
+              "decorative": false,
+              "name": "pre_title",
+              "max_length": 40,
+              "min_length": 20
+            },
+            {
+              "type": "text",
+              "position": {
+                "x": 0,
+                "y": 32
+              },
+              "size": {
+                "width": 1150,
+                "height": 56
+              },
+              "font": {
+                "size": 36,
+                "family": "Inter",
+                "color": "#212121",
+                "bold": true,
+                "line_height": 1.15
+              },
+              "alignment": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "runs": [
+                {
+                  "text": "Puntos clave del bloque"
+                }
+              ],
+              "decorative": false,
+              "name": "title",
+              "max_length": 60,
+              "min_length": 30
+            }
+          ]
+        },
+        {
+          "id": "cards",
+          "description": "Grid of 4 content cards.",
+          "position": {
+            "x": 64,
+            "y": 160
+          },
+          "elements": [
+            {
+              "type": "grid",
+              "size": {
+                "width": 1152,
+                "height": 430
+              },
+              "columns": 2,
+              "gap": 24,
+              "name": "content_cards",
+              "min_children": 4,
+              "max_children": 4,
+              "children": [
+                {
+                  "type": "container",
+                  "size": {
+                    "width": 564,
+                    "height": 200
+                  },
+                  "fill": {
+                    "color": "#FFFFFF"
+                  },
+                  "stroke": {
+                    "color": "#E8E8E8",
+                    "width": 1
+                  },
+                  "border_radius": {
+                    "tl": 12,
+                    "tr": 12,
+                    "bl": 12,
+                    "br": 12
+                  },
+                  "shadow": {
+                    "color": "#000000",
+                    "blur": 12,
+                    "opacity": 0.06,
+                    "offset_x": 0,
+                    "offset_y": 4
+                  },
+                  "padding": {
+                    "top": 24,
+                    "right": 24,
+                    "bottom": 24,
+                    "left": 24
+                  },
+                  "child": {
+                    "type": "flex",
+                    "direction": "column",
+                    "gap": 12,
+                    "name": "card_1_stack",
+                    "min_children": 3,
+                    "max_children": 3,
+                    "children": [
+                      {
+                        "type": "vector",
+                        "shape": "polygon",
+                        "fill": {
+                          "color": "#EA7C00"
+                        },
+                        "points": [
+                          {
+                            "x": 0,
+                            "y": 0
+                          },
+                          {
+                            "x": 40,
+                            "y": 0
+                          },
+                          {
+                            "x": 40,
+                            "y": 4
+                          },
+                          {
+                            "x": 0,
+                            "y": 4
+                          }
+                        ],
+                        "closed": true
+                      },
+                      {
+                        "type": "text",
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "size": {
+                          "width": 516,
+                          "height": 40
+                        },
+                        "font": {
+                          "size": 22,
+                          "family": "Inter",
+                          "color": "#212121",
+                          "bold": true,
+                          "line_height": 1.15
+                        },
+                        "alignment": {
+                          "horizontal": "left",
+                          "vertical": "top"
+                        },
+                        "runs": [
+                          {
+                            "text": "Producto A"
+                          }
+                        ],
+                        "decorative": false,
+                        "name": "card_1_title",
+                        "max_length": 48,
+                        "min_length": 24
+                      },
+                      {
+                        "type": "text",
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "size": {
+                          "width": 516,
+                          "height": 90
+                        },
+                        "font": {
+                          "size": 16,
+                          "family": "Inter",
+                          "color": "#585858",
+                          "bold": false,
+                          "line_height": 1.15
+                        },
+                        "alignment": {
+                          "horizontal": "left",
+                          "vertical": "top"
+                        },
+                        "runs": [
+                          {
+                            "text": "Propuesta, precio y canal principal para este bloque."
+                          }
+                        ],
+                        "decorative": false,
+                        "name": "card_1_body",
+                        "max_length": 180,
+                        "min_length": 90
+                      }
+                    ]
+                  }
+                },
+                {
+                  "type": "container",
+                  "size": {
+                    "width": 564,
+                    "height": 200
+                  },
+                  "fill": {
+                    "color": "#FFFFFF"
+                  },
+                  "stroke": {
+                    "color": "#E8E8E8",
+                    "width": 1
+                  },
+                  "border_radius": {
+                    "tl": 12,
+                    "tr": 12,
+                    "bl": 12,
+                    "br": 12
+                  },
+                  "shadow": {
+                    "color": "#000000",
+                    "blur": 12,
+                    "opacity": 0.06,
+                    "offset_x": 0,
+                    "offset_y": 4
+                  },
+                  "padding": {
+                    "top": 24,
+                    "right": 24,
+                    "bottom": 24,
+                    "left": 24
+                  },
+                  "child": {
+                    "type": "flex",
+                    "direction": "column",
+                    "gap": 12,
+                    "name": "card_2_stack",
+                    "min_children": 3,
+                    "max_children": 3,
+                    "children": [
+                      {
+                        "type": "vector",
+                        "shape": "polygon",
+                        "fill": {
+                          "color": "#EA7C00"
+                        },
+                        "points": [
+                          {
+                            "x": 0,
+                            "y": 0
+                          },
+                          {
+                            "x": 40,
+                            "y": 0
+                          },
+                          {
+                            "x": 40,
+                            "y": 4
+                          },
+                          {
+                            "x": 0,
+                            "y": 4
+                          }
+                        ],
+                        "closed": true
+                      },
+                      {
+                        "type": "text",
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "size": {
+                          "width": 516,
+                          "height": 40
+                        },
+                        "font": {
+                          "size": 22,
+                          "family": "Inter",
+                          "color": "#212121",
+                          "bold": true,
+                          "line_height": 1.15
+                        },
+                        "alignment": {
+                          "horizontal": "left",
+                          "vertical": "top"
+                        },
+                        "runs": [
+                          {
+                            "text": "Producto B"
+                          }
+                        ],
+                        "decorative": false,
+                        "name": "card_2_title",
+                        "max_length": 48,
+                        "min_length": 24
+                      },
+                      {
+                        "type": "text",
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "size": {
+                          "width": 516,
+                          "height": 90
+                        },
+                        "font": {
+                          "size": 16,
+                          "family": "Inter",
+                          "color": "#585858",
+                          "bold": false,
+                          "line_height": 1.15
+                        },
+                        "alignment": {
+                          "horizontal": "left",
+                          "vertical": "top"
+                        },
+                        "runs": [
+                          {
+                            "text": "Diferencial frente a competencia y siguiente palanca."
+                          }
+                        ],
+                        "decorative": false,
+                        "name": "card_2_body",
+                        "max_length": 180,
+                        "min_length": 90
+                      }
+                    ]
+                  }
+                },
+                {
+                  "type": "container",
+                  "size": {
+                    "width": 564,
+                    "height": 200
+                  },
+                  "fill": {
+                    "color": "#FFFFFF"
+                  },
+                  "stroke": {
+                    "color": "#E8E8E8",
+                    "width": 1
+                  },
+                  "border_radius": {
+                    "tl": 12,
+                    "tr": 12,
+                    "bl": 12,
+                    "br": 12
+                  },
+                  "shadow": {
+                    "color": "#000000",
+                    "blur": 12,
+                    "opacity": 0.06,
+                    "offset_x": 0,
+                    "offset_y": 4
+                  },
+                  "padding": {
+                    "top": 24,
+                    "right": 24,
+                    "bottom": 24,
+                    "left": 24
+                  },
+                  "child": {
+                    "type": "flex",
+                    "direction": "column",
+                    "gap": 12,
+                    "name": "card_3_stack",
+                    "min_children": 3,
+                    "max_children": 3,
+                    "children": [
+                      {
+                        "type": "vector",
+                        "shape": "polygon",
+                        "fill": {
+                          "color": "#EA7C00"
+                        },
+                        "points": [
+                          {
+                            "x": 0,
+                            "y": 0
+                          },
+                          {
+                            "x": 40,
+                            "y": 0
+                          },
+                          {
+                            "x": 40,
+                            "y": 4
+                          },
+                          {
+                            "x": 0,
+                            "y": 4
+                          }
+                        ],
+                        "closed": true
+                      },
+                      {
+                        "type": "text",
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "size": {
+                          "width": 516,
+                          "height": 40
+                        },
+                        "font": {
+                          "size": 22,
+                          "family": "Inter",
+                          "color": "#212121",
+                          "bold": true,
+                          "line_height": 1.15
+                        },
+                        "alignment": {
+                          "horizontal": "left",
+                          "vertical": "top"
+                        },
+                        "runs": [
+                          {
+                            "text": "Producto C"
+                          }
+                        ],
+                        "decorative": false,
+                        "name": "card_3_title",
+                        "max_length": 48,
+                        "min_length": 24
+                      },
+                      {
+                        "type": "text",
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "size": {
+                          "width": 516,
+                          "height": 90
+                        },
+                        "font": {
+                          "size": 16,
+                          "family": "Inter",
+                          "color": "#585858",
+                          "bold": false,
+                          "line_height": 1.15
+                        },
+                        "alignment": {
+                          "horizontal": "left",
+                          "vertical": "top"
+                        },
+                        "runs": [
+                          {
+                            "text": "Riesgo, dependencia y owner de la iniciativa."
+                          }
+                        ],
+                        "decorative": false,
+                        "name": "card_3_body",
+                        "max_length": 180,
+                        "min_length": 90
+                      }
+                    ]
+                  }
+                },
+                {
+                  "type": "container",
+                  "size": {
+                    "width": 564,
+                    "height": 200
+                  },
+                  "fill": {
+                    "color": "#FFFFFF"
+                  },
+                  "stroke": {
+                    "color": "#E8E8E8",
+                    "width": 1
+                  },
+                  "border_radius": {
+                    "tl": 12,
+                    "tr": 12,
+                    "bl": 12,
+                    "br": 12
+                  },
+                  "shadow": {
+                    "color": "#000000",
+                    "blur": 12,
+                    "opacity": 0.06,
+                    "offset_x": 0,
+                    "offset_y": 4
+                  },
+                  "padding": {
+                    "top": 24,
+                    "right": 24,
+                    "bottom": 24,
+                    "left": 24
+                  },
+                  "child": {
+                    "type": "flex",
+                    "direction": "column",
+                    "gap": 12,
+                    "name": "card_4_stack",
+                    "min_children": 3,
+                    "max_children": 3,
+                    "children": [
+                      {
+                        "type": "vector",
+                        "shape": "polygon",
+                        "fill": {
+                          "color": "#EA7C00"
+                        },
+                        "points": [
+                          {
+                            "x": 0,
+                            "y": 0
+                          },
+                          {
+                            "x": 40,
+                            "y": 0
+                          },
+                          {
+                            "x": 40,
+                            "y": 4
+                          },
+                          {
+                            "x": 0,
+                            "y": 4
+                          }
+                        ],
+                        "closed": true
+                      },
+                      {
+                        "type": "text",
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "size": {
+                          "width": 516,
+                          "height": 40
+                        },
+                        "font": {
+                          "size": 22,
+                          "family": "Inter",
+                          "color": "#212121",
+                          "bold": true,
+                          "line_height": 1.15
+                        },
+                        "alignment": {
+                          "horizontal": "left",
+                          "vertical": "top"
+                        },
+                        "runs": [
+                          {
+                            "text": "Producto D"
+                          }
+                        ],
+                        "decorative": false,
+                        "name": "card_4_title",
+                        "max_length": 48,
+                        "min_length": 24
+                      },
+                      {
+                        "type": "text",
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "size": {
+                          "width": 516,
+                          "height": 90
+                        },
+                        "font": {
+                          "size": 16,
+                          "family": "Inter",
+                          "color": "#585858",
+                          "bold": false,
+                          "line_height": 1.15
+                        },
+                        "alignment": {
+                          "horizontal": "left",
+                          "vertical": "top"
+                        },
+                        "runs": [
+                          {
+                            "text": "Aprendizaje del periodo y decisión pendiente."
+                          }
+                        ],
+                        "decorative": false,
+                        "name": "card_4_body",
+                        "max_length": 180,
+                        "min_length": 90
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "table",
+      "description": "Comparativa en tabla nativa (medios, competencia, mix). No uses HTML.",
+      "components": [
+        {
+          "id": "background",
+          "description": "Full-slide canvas that sets the brand surface.",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "elements": [
+            {
+              "type": "vector",
+              "shape": "polygon",
+              "fill": {
+                "color": "#FFFFFF"
+              },
+              "points": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 720
+                },
+                {
+                  "x": 0,
+                  "y": 720
+                }
+              ],
+              "closed": true
+            }
+          ]
+        },
+        {
+          "id": "accent_bar",
+          "description": "Thin brand accent strip along the top edge.",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "elements": [
+            {
+              "type": "vector",
+              "shape": "polygon",
+              "fill": {
+                "color": "#EA7C00"
+              },
+              "points": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 8
+                },
+                {
+                  "x": 0,
+                  "y": 8
+                }
+              ],
+              "closed": true
+            }
+          ]
+        },
+        {
+          "id": "header",
+          "description": "Eyebrow and slide title used on content slides.",
+          "position": {
+            "x": 64,
+            "y": 36
+          },
+          "elements": [
+            {
+              "type": "text",
+              "position": {
+                "x": 0,
+                "y": 0
+              },
+              "size": {
+                "width": 1150,
+                "height": 28
+              },
+              "font": {
+                "size": 16,
+                "family": "Inter",
+                "color": "#EA7C00",
+                "bold": true,
+                "line_height": 1.15
+              },
+              "alignment": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "runs": [
+                {
+                  "text": "Comparativa"
+                }
+              ],
+              "decorative": false,
+              "name": "pre_title",
+              "max_length": 40,
+              "min_length": 20
+            },
+            {
+              "type": "text",
+              "position": {
+                "x": 0,
+                "y": 32
+              },
+              "size": {
+                "width": 1150,
+                "height": 56
+              },
+              "font": {
+                "size": 36,
+                "family": "Inter",
+                "color": "#212121",
+                "bold": true,
+                "line_height": 1.15
+              },
+              "alignment": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "runs": [
+                {
+                  "text": "Inversión y rendimiento por medio"
+                }
+              ],
+              "decorative": false,
+              "name": "title",
+              "max_length": 60,
+              "min_length": 30
+            }
+          ]
+        },
+        {
+          "id": "table_block",
+          "description": "Native comparison table.",
+          "position": {
+            "x": 64,
+            "y": 160
+          },
+          "elements": [
+            {
+              "type": "table",
+              "position": {
+                "x": 0,
+                "y": 0
+              },
+              "size": {
+                "width": 1152,
+                "height": 460
+              },
+              "columns": [
+                {
+                  "color": {
+                    "color": "#EA7C00",
+                    "opacity": 1
+                  },
+                  "font": {
+                    "size": 15,
+                    "family": "Inter",
+                    "color": "#FFFFFF",
+                    "bold": true,
+                    "line_height": 1.2
+                  },
+                  "alignment": "left",
+                  "runs": [
+                    {
+                      "text": "Medio"
+                    }
+                  ]
+                },
+                {
+                  "color": {
+                    "color": "#EA7C00",
+                    "opacity": 1
+                  },
+                  "font": {
+                    "size": 15,
+                    "family": "Inter",
+                    "color": "#FFFFFF",
+                    "bold": true,
+                    "line_height": 1.2
+                  },
+                  "alignment": "left",
+                  "runs": [
+                    {
+                      "text": "Inversión"
+                    }
+                  ]
+                },
+                {
+                  "color": {
+                    "color": "#EA7C00",
+                    "opacity": 1
+                  },
+                  "font": {
+                    "size": 15,
+                    "family": "Inter",
+                    "color": "#FFFFFF",
+                    "bold": true,
+                    "line_height": 1.2
+                  },
+                  "alignment": "left",
+                  "runs": [
+                    {
+                      "text": "Alcance"
+                    }
+                  ]
+                },
+                {
+                  "color": {
+                    "color": "#EA7C00",
+                    "opacity": 1
+                  },
+                  "font": {
+                    "size": 15,
+                    "family": "Inter",
+                    "color": "#FFFFFF",
+                    "bold": true,
+                    "line_height": 1.2
+                  },
+                  "alignment": "left",
+                  "runs": [
+                    {
+                      "text": "CPA"
+                    }
+                  ]
+                }
+              ],
+              "rows": [
+                [
+                  {
+                    "color": {
+                      "color": "#FFFFFF",
+                      "opacity": 1
+                    },
+                    "font": {
+                      "size": 15,
+                      "family": "Inter",
+                      "color": "#212121",
+                      "bold": false,
+                      "line_height": 1.2
+                    },
+                    "alignment": "left",
+                    "runs": [
+                      {
+                        "text": "TV nacional"
+                      }
+                    ]
+                  },
+                  {
+                    "color": {
+                      "color": "#FFFFFF",
+                      "opacity": 1
+                    },
+                    "font": {
+                      "size": 15,
+                      "family": "Inter",
+                      "color": "#212121",
+                      "bold": false,
+                      "line_height": 1.2
+                    },
+                    "alignment": "left",
+                    "runs": [
+                      {
+                        "text": "€820k"
+                      }
+                    ]
+                  },
+                  {
+                    "color": {
+                      "color": "#FFFFFF",
+                      "opacity": 1
+                    },
+                    "font": {
+                      "size": 15,
+                      "family": "Inter",
+                      "color": "#212121",
+                      "bold": false,
+                      "line_height": 1.2
+                    },
+                    "alignment": "left",
+                    "runs": [
+                      {
+                        "text": "12.4M"
+                      }
+                    ]
+                  },
+                  {
+                    "color": {
+                      "color": "#FFFFFF",
+                      "opacity": 1
+                    },
+                    "font": {
+                      "size": 15,
+                      "family": "Inter",
+                      "color": "#212121",
+                      "bold": false,
+                      "line_height": 1.2
+                    },
+                    "alignment": "left",
+                    "runs": [
+                      {
+                        "text": "€4.10"
+                      }
+                    ]
+                  }
+                ],
+                [
+                  {
+                    "color": {
+                      "color": "#FFFFFF",
+                      "opacity": 1
+                    },
+                    "font": {
+                      "size": 15,
+                      "family": "Inter",
+                      "color": "#212121",
+                      "bold": false,
+                      "line_height": 1.2
+                    },
+                    "alignment": "left",
+                    "runs": [
+                      {
+                        "text": "Digital video"
+                      }
+                    ]
+                  },
+                  {
+                    "color": {
+                      "color": "#FFFFFF",
+                      "opacity": 1
+                    },
+                    "font": {
+                      "size": 15,
+                      "family": "Inter",
+                      "color": "#212121",
+                      "bold": false,
+                      "line_height": 1.2
+                    },
+                    "alignment": "left",
+                    "runs": [
+                      {
+                        "text": "€610k"
+                      }
+                    ]
+                  },
+                  {
+                    "color": {
+                      "color": "#FFFFFF",
+                      "opacity": 1
+                    },
+                    "font": {
+                      "size": 15,
+                      "family": "Inter",
+                      "color": "#212121",
+                      "bold": false,
+                      "line_height": 1.2
+                    },
+                    "alignment": "left",
+                    "runs": [
+                      {
+                        "text": "8.1M"
+                      }
+                    ]
+                  },
+                  {
+                    "color": {
+                      "color": "#FFFFFF",
+                      "opacity": 1
+                    },
+                    "font": {
+                      "size": 15,
+                      "family": "Inter",
+                      "color": "#212121",
+                      "bold": false,
+                      "line_height": 1.2
+                    },
+                    "alignment": "left",
+                    "runs": [
+                      {
+                        "text": "€3.40"
+                      }
+                    ]
+                  }
+                ],
+                [
+                  {
+                    "color": {
+                      "color": "#FFFFFF",
+                      "opacity": 1
+                    },
+                    "font": {
+                      "size": 15,
+                      "family": "Inter",
+                      "color": "#212121",
+                      "bold": false,
+                      "line_height": 1.2
+                    },
+                    "alignment": "left",
+                    "runs": [
+                      {
+                        "text": "Retail media"
+                      }
+                    ]
+                  },
+                  {
+                    "color": {
+                      "color": "#FFFFFF",
+                      "opacity": 1
+                    },
+                    "font": {
+                      "size": 15,
+                      "family": "Inter",
+                      "color": "#212121",
+                      "bold": false,
+                      "line_height": 1.2
+                    },
+                    "alignment": "left",
+                    "runs": [
+                      {
+                        "text": "€410k"
+                      }
+                    ]
+                  },
+                  {
+                    "color": {
+                      "color": "#FFFFFF",
+                      "opacity": 1
+                    },
+                    "font": {
+                      "size": 15,
+                      "family": "Inter",
+                      "color": "#212121",
+                      "bold": false,
+                      "line_height": 1.2
+                    },
+                    "alignment": "left",
+                    "runs": [
+                      {
+                        "text": "3.6M"
+                      }
+                    ]
+                  },
+                  {
+                    "color": {
+                      "color": "#FFFFFF",
+                      "opacity": 1
+                    },
+                    "font": {
+                      "size": 15,
+                      "family": "Inter",
+                      "color": "#212121",
+                      "bold": false,
+                      "line_height": 1.2
+                    },
+                    "alignment": "left",
+                    "runs": [
+                      {
+                        "text": "€2.80"
+                      }
+                    ]
+                  }
+                ],
+                [
+                  {
+                    "color": {
+                      "color": "#FFFFFF",
+                      "opacity": 1
+                    },
+                    "font": {
+                      "size": 15,
+                      "family": "Inter",
+                      "color": "#212121",
+                      "bold": false,
+                      "line_height": 1.2
+                    },
+                    "alignment": "left",
+                    "runs": [
+                      {
+                        "text": "OOH selectivo"
+                      }
+                    ]
+                  },
+                  {
+                    "color": {
+                      "color": "#FFFFFF",
+                      "opacity": 1
+                    },
+                    "font": {
+                      "size": 15,
+                      "family": "Inter",
+                      "color": "#212121",
+                      "bold": false,
+                      "line_height": 1.2
+                    },
+                    "alignment": "left",
+                    "runs": [
+                      {
+                        "text": "€180k"
+                      }
+                    ]
+                  },
+                  {
+                    "color": {
+                      "color": "#FFFFFF",
+                      "opacity": 1
+                    },
+                    "font": {
+                      "size": 15,
+                      "family": "Inter",
+                      "color": "#212121",
+                      "bold": false,
+                      "line_height": 1.2
+                    },
+                    "alignment": "left",
+                    "runs": [
+                      {
+                        "text": "2.1M"
+                      }
+                    ]
+                  },
+                  {
+                    "color": {
+                      "color": "#FFFFFF",
+                      "opacity": 1
+                    },
+                    "font": {
+                      "size": 15,
+                      "family": "Inter",
+                      "color": "#212121",
+                      "bold": false,
+                      "line_height": 1.2
+                    },
+                    "alignment": "left",
+                    "runs": [
+                      {
+                        "text": "€5.20"
+                      }
+                    ]
+                  }
+                ]
+              ],
+              "decorative": false,
+              "name": "comparison_table",
+              "min_columns": 3,
+              "max_columns": 5,
+              "min_rows": 4,
+              "max_rows": 8
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "table_stats",
+      "description": "Tabla nativa más fila de 3 stats. Típico de demografía o mix.",
+      "components": [
+        {
+          "id": "background",
+          "description": "Full-slide canvas that sets the brand surface.",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "elements": [
+            {
+              "type": "vector",
+              "shape": "polygon",
+              "fill": {
+                "color": "#F5F5F5"
+              },
+              "points": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 720
+                },
+                {
+                  "x": 0,
+                  "y": 720
+                }
+              ],
+              "closed": true
+            }
+          ]
+        },
+        {
+          "id": "accent_bar",
+          "description": "Thin brand accent strip along the top edge.",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "elements": [
+            {
+              "type": "vector",
+              "shape": "polygon",
+              "fill": {
+                "color": "#EA7C00"
+              },
+              "points": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 8
+                },
+                {
+                  "x": 0,
+                  "y": 8
+                }
+              ],
+              "closed": true
+            }
+          ]
+        },
+        {
+          "id": "header",
+          "description": "Eyebrow and slide title used on content slides.",
+          "position": {
+            "x": 64,
+            "y": 36
+          },
+          "elements": [
+            {
+              "type": "text",
+              "position": {
+                "x": 0,
+                "y": 0
+              },
+              "size": {
+                "width": 1150,
+                "height": 28
+              },
+              "font": {
+                "size": 16,
+                "family": "Inter",
+                "color": "#EA7C00",
+                "bold": true,
+                "line_height": 1.15
+              },
+              "alignment": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "runs": [
+                {
+                  "text": "Población"
+                }
+              ],
+              "decorative": false,
+              "name": "pre_title",
+              "max_length": 40,
+              "min_length": 20
+            },
+            {
+              "type": "text",
+              "position": {
+                "x": 0,
+                "y": 32
+              },
+              "size": {
+                "width": 1150,
+                "height": 56
+              },
+              "font": {
+                "size": 36,
+                "family": "Inter",
+                "color": "#212121",
+                "bold": true,
+                "line_height": 1.15
+              },
+              "alignment": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "runs": [
+                {
+                  "text": "Universo y crecimiento por cohorte"
+                }
+              ],
+              "decorative": false,
+              "name": "title",
+              "max_length": 60,
+              "min_length": 30
+            }
+          ]
+        },
+        {
+          "id": "table_block",
+          "description": "Demographic comparison table.",
+          "position": {
+            "x": 64,
+            "y": 150
+          },
+          "elements": [
+            {
+              "type": "table",
+              "position": {
+                "x": 0,
+                "y": 0
+              },
+              "size": {
+                "width": 1152,
+                "height": 300
+              },
+              "columns": [
+                {
+                  "color": {
+                    "color": "#EA7C00",
+                    "opacity": 1
+                  },
+                  "font": {
+                    "size": 15,
+                    "family": "Inter",
+                    "color": "#FFFFFF",
+                    "bold": true,
+                    "line_height": 1.2
+                  },
+                  "alignment": "left",
+                  "runs": [
+                    {
+                      "text": "Segmento"
+                    }
+                  ]
+                },
+                {
+                  "color": {
+                    "color": "#EA7C00",
+                    "opacity": 1
+                  },
+                  "font": {
+                    "size": 15,
+                    "family": "Inter",
+                    "color": "#FFFFFF",
+                    "bold": true,
+                    "line_height": 1.2
+                  },
+                  "alignment": "left",
+                  "runs": [
+                    {
+                      "text": "Población"
+                    }
+                  ]
+                },
+                {
+                  "color": {
+                    "color": "#EA7C00",
+                    "opacity": 1
+                  },
+                  "font": {
+                    "size": 15,
+                    "family": "Inter",
+                    "color": "#FFFFFF",
+                    "bold": true,
+                    "line_height": 1.2
+                  },
+                  "alignment": "left",
+                  "runs": [
+                    {
+                      "text": "Peso"
+                    }
+                  ]
+                },
+                {
+                  "color": {
+                    "color": "#EA7C00",
+                    "opacity": 1
+                  },
+                  "font": {
+                    "size": 15,
+                    "family": "Inter",
+                    "color": "#FFFFFF",
+                    "bold": true,
+                    "line_height": 1.2
+                  },
+                  "alignment": "left",
+                  "runs": [
+                    {
+                      "text": "Crecimiento"
+                    }
+                  ]
+                }
+              ],
+              "rows": [
+                [
+                  {
+                    "color": {
+                      "color": "#FFFFFF",
+                      "opacity": 1
+                    },
+                    "font": {
+                      "size": 15,
+                      "family": "Inter",
+                      "color": "#212121",
+                      "bold": false,
+                      "line_height": 1.2
+                    },
+                    "alignment": "left",
+                    "runs": [
+                      {
+                        "text": "18–34"
+                      }
+                    ]
+                  },
+                  {
+                    "color": {
+                      "color": "#FFFFFF",
+                      "opacity": 1
+                    },
+                    "font": {
+                      "size": 15,
+                      "family": "Inter",
+                      "color": "#212121",
+                      "bold": false,
+                      "line_height": 1.2
+                    },
+                    "alignment": "left",
+                    "runs": [
+                      {
+                        "text": "9.8M"
+                      }
+                    ]
+                  },
+                  {
+                    "color": {
+                      "color": "#FFFFFF",
+                      "opacity": 1
+                    },
+                    "font": {
+                      "size": 15,
+                      "family": "Inter",
+                      "color": "#212121",
+                      "bold": false,
+                      "line_height": 1.2
+                    },
+                    "alignment": "left",
+                    "runs": [
+                      {
+                        "text": "28%"
+                      }
+                    ]
+                  },
+                  {
+                    "color": {
+                      "color": "#FFFFFF",
+                      "opacity": 1
+                    },
+                    "font": {
+                      "size": 15,
+                      "family": "Inter",
+                      "color": "#212121",
+                      "bold": false,
+                      "line_height": 1.2
+                    },
+                    "alignment": "left",
+                    "runs": [
+                      {
+                        "text": "+1.2%"
+                      }
+                    ]
+                  }
+                ],
+                [
+                  {
+                    "color": {
+                      "color": "#FFFFFF",
+                      "opacity": 1
+                    },
+                    "font": {
+                      "size": 15,
+                      "family": "Inter",
+                      "color": "#212121",
+                      "bold": false,
+                      "line_height": 1.2
+                    },
+                    "alignment": "left",
+                    "runs": [
+                      {
+                        "text": "35–54"
+                      }
+                    ]
+                  },
+                  {
+                    "color": {
+                      "color": "#FFFFFF",
+                      "opacity": 1
+                    },
+                    "font": {
+                      "size": 15,
+                      "family": "Inter",
+                      "color": "#212121",
+                      "bold": false,
+                      "line_height": 1.2
+                    },
+                    "alignment": "left",
+                    "runs": [
+                      {
+                        "text": "12.1M"
+                      }
+                    ]
+                  },
+                  {
+                    "color": {
+                      "color": "#FFFFFF",
+                      "opacity": 1
+                    },
+                    "font": {
+                      "size": 15,
+                      "family": "Inter",
+                      "color": "#212121",
+                      "bold": false,
+                      "line_height": 1.2
+                    },
+                    "alignment": "left",
+                    "runs": [
+                      {
+                        "text": "35%"
+                      }
+                    ]
+                  },
+                  {
+                    "color": {
+                      "color": "#FFFFFF",
+                      "opacity": 1
+                    },
+                    "font": {
+                      "size": 15,
+                      "family": "Inter",
+                      "color": "#212121",
+                      "bold": false,
+                      "line_height": 1.2
+                    },
+                    "alignment": "left",
+                    "runs": [
+                      {
+                        "text": "+0.4%"
+                      }
+                    ]
+                  }
+                ],
+                [
+                  {
+                    "color": {
+                      "color": "#FFFFFF",
+                      "opacity": 1
+                    },
+                    "font": {
+                      "size": 15,
+                      "family": "Inter",
+                      "color": "#212121",
+                      "bold": false,
+                      "line_height": 1.2
+                    },
+                    "alignment": "left",
+                    "runs": [
+                      {
+                        "text": "55+"
+                      }
+                    ]
+                  },
+                  {
+                    "color": {
+                      "color": "#FFFFFF",
+                      "opacity": 1
+                    },
+                    "font": {
+                      "size": 15,
+                      "family": "Inter",
+                      "color": "#212121",
+                      "bold": false,
+                      "line_height": 1.2
+                    },
+                    "alignment": "left",
+                    "runs": [
+                      {
+                        "text": "12.6M"
+                      }
+                    ]
+                  },
+                  {
+                    "color": {
+                      "color": "#FFFFFF",
+                      "opacity": 1
+                    },
+                    "font": {
+                      "size": 15,
+                      "family": "Inter",
+                      "color": "#212121",
+                      "bold": false,
+                      "line_height": 1.2
+                    },
+                    "alignment": "left",
+                    "runs": [
+                      {
+                        "text": "37%"
+                      }
+                    ]
+                  },
+                  {
+                    "color": {
+                      "color": "#FFFFFF",
+                      "opacity": 1
+                    },
+                    "font": {
+                      "size": 15,
+                      "family": "Inter",
+                      "color": "#212121",
+                      "bold": false,
+                      "line_height": 1.2
+                    },
+                    "alignment": "left",
+                    "runs": [
+                      {
+                        "text": "+2.1%"
+                      }
+                    ]
+                  }
+                ]
+              ],
+              "decorative": false,
+              "name": "population_table",
+              "min_columns": 3,
+              "max_columns": 5,
+              "min_rows": 3,
+              "max_rows": 6
+            }
+          ]
+        },
+        {
+          "id": "stats_row",
+          "description": "Three supporting headline stats under the table.",
+          "position": {
+            "x": 64,
+            "y": 480
+          },
+          "elements": [
+            {
+              "type": "flex",
+              "size": {
+                "width": 1152,
+                "height": 180
+              },
+              "direction": "row",
+              "gap": 24,
+              "name": "support_stats",
+              "min_children": 2,
+              "max_children": 3,
+              "children": [
+                {
+                  "type": "container",
+                  "size": {
+                    "width": 368,
+                    "height": 180
+                  },
+                  "fill": {
+                    "color": "#FFFFFF"
+                  },
+                  "stroke": {
+                    "color": "#E8E8E8",
+                    "width": 1
+                  },
+                  "border_radius": {
+                    "tl": 12,
+                    "tr": 12,
+                    "bl": 12,
+                    "br": 12
+                  },
+                  "shadow": {
+                    "color": "#000000",
+                    "blur": 12,
+                    "opacity": 0.06,
+                    "offset_x": 0,
+                    "offset_y": 4
+                  },
+                  "padding": {
+                    "top": 28,
+                    "right": 24,
+                    "bottom": 24,
+                    "left": 24
+                  },
+                  "child": {
+                    "type": "flex",
+                    "direction": "column",
+                    "gap": 8,
+                    "name": "stat_1_stack",
+                    "min_children": 2,
+                    "max_children": 2,
+                    "children": [
+                      {
+                        "type": "text",
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "size": {
+                          "width": 320,
+                          "height": 64
+                        },
+                        "font": {
+                          "size": 48,
+                          "family": "Inter",
+                          "color": "#EA7C00",
+                          "bold": true,
+                          "line_height": 1.15
+                        },
+                        "alignment": {
+                          "horizontal": "left",
+                          "vertical": "top"
+                        },
+                        "runs": [
+                          {
+                            "text": "34.6M"
+                          }
+                        ],
+                        "decorative": false,
+                        "name": "stat_1_value",
+                        "max_length": 12,
+                        "min_length": 6
+                      },
+                      {
+                        "type": "text",
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "size": {
+                          "width": 320,
+                          "height": 40
+                        },
+                        "font": {
+                          "size": 16,
+                          "family": "Inter",
+                          "color": "#585858",
+                          "bold": false,
+                          "line_height": 1.15
+                        },
+                        "alignment": {
+                          "horizontal": "left",
+                          "vertical": "top"
+                        },
+                        "runs": [
+                          {
+                            "text": "Universo"
+                          }
+                        ],
+                        "decorative": false,
+                        "name": "stat_1_label",
+                        "max_length": 40,
+                        "min_length": 20
+                      }
+                    ]
+                  }
+                },
+                {
+                  "type": "container",
+                  "size": {
+                    "width": 368,
+                    "height": 180
+                  },
+                  "fill": {
+                    "color": "#FFFFFF"
+                  },
+                  "stroke": {
+                    "color": "#E8E8E8",
+                    "width": 1
+                  },
+                  "border_radius": {
+                    "tl": 12,
+                    "tr": 12,
+                    "bl": 12,
+                    "br": 12
+                  },
+                  "shadow": {
+                    "color": "#000000",
+                    "blur": 12,
+                    "opacity": 0.06,
+                    "offset_x": 0,
+                    "offset_y": 4
+                  },
+                  "padding": {
+                    "top": 28,
+                    "right": 24,
+                    "bottom": 24,
+                    "left": 24
+                  },
+                  "child": {
+                    "type": "flex",
+                    "direction": "column",
+                    "gap": 8,
+                    "name": "stat_2_stack",
+                    "min_children": 2,
+                    "max_children": 2,
+                    "children": [
+                      {
+                        "type": "text",
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "size": {
+                          "width": 320,
+                          "height": 64
+                        },
+                        "font": {
+                          "size": 48,
+                          "family": "Inter",
+                          "color": "#EA7C00",
+                          "bold": true,
+                          "line_height": 1.15
+                        },
+                        "alignment": {
+                          "horizontal": "left",
+                          "vertical": "top"
+                        },
+                        "runs": [
+                          {
+                            "text": "+1.1%"
+                          }
+                        ],
+                        "decorative": false,
+                        "name": "stat_2_value",
+                        "max_length": 12,
+                        "min_length": 6
+                      },
+                      {
+                        "type": "text",
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "size": {
+                          "width": 320,
+                          "height": 40
+                        },
+                        "font": {
+                          "size": 16,
+                          "family": "Inter",
+                          "color": "#585858",
+                          "bold": false,
+                          "line_height": 1.15
+                        },
+                        "alignment": {
+                          "horizontal": "left",
+                          "vertical": "top"
+                        },
+                        "runs": [
+                          {
+                            "text": "YoY"
+                          }
+                        ],
+                        "decorative": false,
+                        "name": "stat_2_label",
+                        "max_length": 40,
+                        "min_length": 20
+                      }
+                    ]
+                  }
+                },
+                {
+                  "type": "container",
+                  "size": {
+                    "width": 368,
+                    "height": 180
+                  },
+                  "fill": {
+                    "color": "#FFFFFF"
+                  },
+                  "stroke": {
+                    "color": "#E8E8E8",
+                    "width": 1
+                  },
+                  "border_radius": {
+                    "tl": 12,
+                    "tr": 12,
+                    "bl": 12,
+                    "br": 12
+                  },
+                  "shadow": {
+                    "color": "#000000",
+                    "blur": 12,
+                    "opacity": 0.06,
+                    "offset_x": 0,
+                    "offset_y": 4
+                  },
+                  "padding": {
+                    "top": 28,
+                    "right": 24,
+                    "bottom": 24,
+                    "left": 24
+                  },
+                  "child": {
+                    "type": "flex",
+                    "direction": "column",
+                    "gap": 8,
+                    "name": "stat_3_stack",
+                    "min_children": 2,
+                    "max_children": 2,
+                    "children": [
+                      {
+                        "type": "text",
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "size": {
+                          "width": 320,
+                          "height": 64
+                        },
+                        "font": {
+                          "size": 48,
+                          "family": "Inter",
+                          "color": "#EA7C00",
+                          "bold": true,
+                          "line_height": 1.15
+                        },
+                        "alignment": {
+                          "horizontal": "left",
+                          "vertical": "top"
+                        },
+                        "runs": [
+                          {
+                            "text": "3"
+                          }
+                        ],
+                        "decorative": false,
+                        "name": "stat_3_value",
+                        "max_length": 12,
+                        "min_length": 6
+                      },
+                      {
+                        "type": "text",
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "size": {
+                          "width": 320,
+                          "height": 40
+                        },
+                        "font": {
+                          "size": 16,
+                          "family": "Inter",
+                          "color": "#585858",
+                          "bold": false,
+                          "line_height": 1.15
+                        },
+                        "alignment": {
+                          "horizontal": "left",
+                          "vertical": "top"
+                        },
+                        "runs": [
+                          {
+                            "text": "Cohortes"
+                          }
+                        ],
+                        "decorative": false,
+                        "name": "stat_3_label",
+                        "max_length": 40,
+                        "min_length": 20
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bar_chart",
+      "description": "Gráfico de barras nativo (no SVG suelto) con título y nota.",
+      "components": [
+        {
+          "id": "background",
+          "description": "Full-slide canvas that sets the brand surface.",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "elements": [
+            {
+              "type": "vector",
+              "shape": "polygon",
+              "fill": {
+                "color": "#FFFFFF"
+              },
+              "points": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 720
+                },
+                {
+                  "x": 0,
+                  "y": 720
+                }
+              ],
+              "closed": true
+            }
+          ]
+        },
+        {
+          "id": "accent_bar",
+          "description": "Thin brand accent strip along the top edge.",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "elements": [
+            {
+              "type": "vector",
+              "shape": "polygon",
+              "fill": {
+                "color": "#EA7C00"
+              },
+              "points": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 8
+                },
+                {
+                  "x": 0,
+                  "y": 8
+                }
+              ],
+              "closed": true
+            }
+          ]
+        },
+        {
+          "id": "header",
+          "description": "Eyebrow and slide title used on content slides.",
+          "position": {
+            "x": 64,
+            "y": 36
+          },
+          "elements": [
+            {
+              "type": "text",
+              "position": {
+                "x": 0,
+                "y": 0
+              },
+              "size": {
+                "width": 1150,
+                "height": 28
+              },
+              "font": {
+                "size": 16,
+                "family": "Inter",
+                "color": "#EA7C00",
+                "bold": true,
+                "line_height": 1.15
+              },
+              "alignment": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "runs": [
+                {
+                  "text": "Evolución"
+                }
+              ],
+              "decorative": false,
+              "name": "pre_title",
+              "max_length": 40,
+              "min_length": 20
+            },
+            {
+              "type": "text",
+              "position": {
+                "x": 0,
+                "y": 32
+              },
+              "size": {
+                "width": 1150,
+                "height": 56
+              },
+              "font": {
+                "size": 36,
+                "family": "Inter",
+                "color": "#212121",
+                "bold": true,
+                "line_height": 1.15
+              },
+              "alignment": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "runs": [
+                {
+                  "text": "Inversión trimestral por canal"
+                }
+              ],
+              "decorative": false,
+              "name": "title",
+              "max_length": 60,
+              "min_length": 30
+            }
+          ]
+        },
+        {
+          "id": "chart_block",
+          "description": "Native bar chart for channel investment.",
+          "position": {
+            "x": 64,
+            "y": 150
+          },
+          "elements": [
+            {
+              "type": "chart",
+              "size": {
+                "width": 1152,
+                "height": 420
+              },
+              "chart_type": "bar",
+              "colors": [
+                "#EA7C00",
+                "#212D8A",
+                "#178347"
+              ],
+              "x_axis": true,
+              "y_axis": true,
+              "axis_color": "#9CA3AF",
+              "categories": [
+                "Q1",
+                "Q2",
+                "Q3",
+                "Q4"
+              ],
+              "series": [
+                {
+                  "name": "Digital",
+                  "values": [
+                    42,
+                    55,
+                    61,
+                    70
+                  ]
+                },
+                {
+                  "name": "Tradicional",
+                  "values": [
+                    38,
+                    33,
+                    29,
+                    24
+                  ]
+                }
+              ],
+              "data_labels": "top",
+              "legend": true,
+              "x_axis_grid": false,
+              "y_axis_grid": true,
+              "grid_color": "#E5E7EB",
+              "decorative": false,
+              "name": "investment_bars"
+            }
+          ]
+        },
+        {
+          "id": "chart_note",
+          "description": "Short source or reading note under the chart.",
+          "position": {
+            "x": 64,
+            "y": 590
+          },
+          "elements": [
+            {
+              "type": "text",
+              "position": {
+                "x": 0,
+                "y": 0
+              },
+              "size": {
+                "width": 1152,
+                "height": 40
+              },
+              "font": {
+                "size": 14,
+                "family": "Inter",
+                "color": "#585858",
+                "bold": false,
+                "line_height": 1.15
+              },
+              "alignment": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "runs": [
+                {
+                  "text": "Fuente interna. Barras nativas para que el export PPTX conserve el gráfico."
+                }
+              ],
+              "decorative": false,
+              "name": "caption",
+              "max_length": 140,
+              "min_length": 70
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "two_col",
+      "description": "Dos columnas: mercado vs nosotros, antes/después o problema/solución.",
+      "components": [
+        {
+          "id": "background",
+          "description": "Full-slide canvas that sets the brand surface.",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "elements": [
+            {
+              "type": "vector",
+              "shape": "polygon",
+              "fill": {
+                "color": "#FFFFFF"
+              },
+              "points": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 720
+                },
+                {
+                  "x": 0,
+                  "y": 720
+                }
+              ],
+              "closed": true
+            }
+          ]
+        },
+        {
+          "id": "accent_bar",
+          "description": "Thin brand accent strip along the top edge.",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "elements": [
+            {
+              "type": "vector",
+              "shape": "polygon",
+              "fill": {
+                "color": "#EA7C00"
+              },
+              "points": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 8
+                },
+                {
+                  "x": 0,
+                  "y": 8
+                }
+              ],
+              "closed": true
+            }
+          ]
+        },
+        {
+          "id": "header",
+          "description": "Eyebrow and slide title used on content slides.",
+          "position": {
+            "x": 64,
+            "y": 36
+          },
+          "elements": [
+            {
+              "type": "text",
+              "position": {
+                "x": 0,
+                "y": 0
+              },
+              "size": {
+                "width": 1150,
+                "height": 28
+              },
+              "font": {
+                "size": 16,
+                "family": "Inter",
+                "color": "#EA7C00",
+                "bold": true,
+                "line_height": 1.15
+              },
+              "alignment": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "runs": [
+                {
+                  "text": "Contraste"
+                }
+              ],
+              "decorative": false,
+              "name": "pre_title",
+              "max_length": 40,
+              "min_length": 20
+            },
+            {
+              "type": "text",
+              "position": {
+                "x": 0,
+                "y": 32
+              },
+              "size": {
+                "width": 1150,
+                "height": 56
+              },
+              "font": {
+                "size": 36,
+                "family": "Inter",
+                "color": "#212121",
+                "bold": true,
+                "line_height": 1.15
+              },
+              "alignment": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "runs": [
+                {
+                  "text": "Mercado frente a nuestra posición"
+                }
+              ],
+              "decorative": false,
+              "name": "title",
+              "max_length": 60,
+              "min_length": 30
+            }
+          ]
+        },
+        {
+          "id": "columns",
+          "description": "Side-by-side comparison cards.",
+          "position": {
+            "x": 64,
+            "y": 160
+          },
+          "elements": [
+            {
+              "type": "flex",
+              "size": {
+                "width": 1152,
+                "height": 430
+              },
+              "direction": "row",
+              "gap": 24,
+              "name": "two_columns",
+              "min_children": 2,
+              "max_children": 2,
+              "children": [
+                {
+                  "type": "container",
+                  "size": {
+                    "width": 552,
+                    "height": 430
+                  },
+                  "fill": {
+                    "color": "#FFFFFF"
+                  },
+                  "stroke": {
+                    "color": "#E8E8E8",
+                    "width": 1
+                  },
+                  "border_radius": {
+                    "tl": 12,
+                    "tr": 12,
+                    "bl": 12,
+                    "br": 12
+                  },
+                  "shadow": {
+                    "color": "#000000",
+                    "blur": 12,
+                    "opacity": 0.06,
+                    "offset_x": 0,
+                    "offset_y": 4
+                  },
+                  "padding": {
+                    "top": 24,
+                    "right": 24,
+                    "bottom": 24,
+                    "left": 24
+                  },
+                  "child": {
+                    "type": "flex",
+                    "direction": "column",
+                    "gap": 12,
+                    "name": "left_stack",
+                    "min_children": 3,
+                    "max_children": 3,
+                    "children": [
+                      {
+                        "type": "vector",
+                        "shape": "polygon",
+                        "fill": {
+                          "color": "#EA7C00"
+                        },
+                        "points": [
+                          {
+                            "x": 0,
+                            "y": 0
+                          },
+                          {
+                            "x": 40,
+                            "y": 0
+                          },
+                          {
+                            "x": 40,
+                            "y": 4
+                          },
+                          {
+                            "x": 0,
+                            "y": 4
+                          }
+                        ],
+                        "closed": true
+                      },
+                      {
+                        "type": "text",
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "size": {
+                          "width": 504,
+                          "height": 40
+                        },
+                        "font": {
+                          "size": 22,
+                          "family": "Inter",
+                          "color": "#212121",
+                          "bold": true,
+                          "line_height": 1.15
+                        },
+                        "alignment": {
+                          "horizontal": "left",
+                          "vertical": "top"
+                        },
+                        "runs": [
+                          {
+                            "text": "Mercado"
+                          }
+                        ],
+                        "decorative": false,
+                        "name": "left_title",
+                        "max_length": 48,
+                        "min_length": 24
+                      },
+                      {
+                        "type": "text",
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "size": {
+                          "width": 504,
+                          "height": 320
+                        },
+                        "font": {
+                          "size": 16,
+                          "family": "Inter",
+                          "color": "#585858",
+                          "bold": false,
+                          "line_height": 1.15
+                        },
+                        "alignment": {
+                          "horizontal": "left",
+                          "vertical": "top"
+                        },
+                        "runs": [
+                          {
+                            "text": "Qué hace el competidor, precios y huecos que deja."
+                          }
+                        ],
+                        "decorative": false,
+                        "name": "left_body",
+                        "max_length": 180,
+                        "min_length": 90
+                      }
+                    ]
+                  }
+                },
+                {
+                  "type": "container",
+                  "size": {
+                    "width": 552,
+                    "height": 430
+                  },
+                  "fill": {
+                    "color": "#FFFFFF"
+                  },
+                  "stroke": {
+                    "color": "#E8E8E8",
+                    "width": 1
+                  },
+                  "border_radius": {
+                    "tl": 12,
+                    "tr": 12,
+                    "bl": 12,
+                    "br": 12
+                  },
+                  "shadow": {
+                    "color": "#000000",
+                    "blur": 12,
+                    "opacity": 0.06,
+                    "offset_x": 0,
+                    "offset_y": 4
+                  },
+                  "padding": {
+                    "top": 24,
+                    "right": 24,
+                    "bottom": 24,
+                    "left": 24
+                  },
+                  "child": {
+                    "type": "flex",
+                    "direction": "column",
+                    "gap": 12,
+                    "name": "right_stack",
+                    "min_children": 3,
+                    "max_children": 3,
+                    "children": [
+                      {
+                        "type": "vector",
+                        "shape": "polygon",
+                        "fill": {
+                          "color": "#EA7C00"
+                        },
+                        "points": [
+                          {
+                            "x": 0,
+                            "y": 0
+                          },
+                          {
+                            "x": 40,
+                            "y": 0
+                          },
+                          {
+                            "x": 40,
+                            "y": 4
+                          },
+                          {
+                            "x": 0,
+                            "y": 4
+                          }
+                        ],
+                        "closed": true
+                      },
+                      {
+                        "type": "text",
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "size": {
+                          "width": 504,
+                          "height": 40
+                        },
+                        "font": {
+                          "size": 22,
+                          "family": "Inter",
+                          "color": "#212121",
+                          "bold": true,
+                          "line_height": 1.15
+                        },
+                        "alignment": {
+                          "horizontal": "left",
+                          "vertical": "top"
+                        },
+                        "runs": [
+                          {
+                            "text": "Nosotros"
+                          }
+                        ],
+                        "decorative": false,
+                        "name": "right_title",
+                        "max_length": 48,
+                        "min_length": 24
+                      },
+                      {
+                        "type": "text",
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "size": {
+                          "width": 504,
+                          "height": 320
+                        },
+                        "font": {
+                          "size": 16,
+                          "family": "Inter",
+                          "color": "#585858",
+                          "bold": false,
+                          "line_height": 1.15
+                        },
+                        "alignment": {
+                          "horizontal": "left",
+                          "vertical": "top"
+                        },
+                        "runs": [
+                          {
+                            "text": "Posición, oferta y la palanca que vamos a empujar."
+                          }
+                        ],
+                        "decorative": false,
+                        "name": "right_body",
+                        "max_length": 180,
+                        "min_length": 90
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bullets",
+      "description": "Lista con viñetas para roadmap, next steps o aprendizajes.",
+      "components": [
+        {
+          "id": "background",
+          "description": "Full-slide canvas that sets the brand surface.",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "elements": [
+            {
+              "type": "vector",
+              "shape": "polygon",
+              "fill": {
+                "color": "#FFFFFF"
+              },
+              "points": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 720
+                },
+                {
+                  "x": 0,
+                  "y": 720
+                }
+              ],
+              "closed": true
+            }
+          ]
+        },
+        {
+          "id": "accent_bar",
+          "description": "Thin brand accent strip along the top edge.",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "elements": [
+            {
+              "type": "vector",
+              "shape": "polygon",
+              "fill": {
+                "color": "#EA7C00"
+              },
+              "points": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 8
+                },
+                {
+                  "x": 0,
+                  "y": 8
+                }
+              ],
+              "closed": true
+            }
+          ]
+        },
+        {
+          "id": "header",
+          "description": "Eyebrow and slide title used on content slides.",
+          "position": {
+            "x": 64,
+            "y": 36
+          },
+          "elements": [
+            {
+              "type": "text",
+              "position": {
+                "x": 0,
+                "y": 0
+              },
+              "size": {
+                "width": 1150,
+                "height": 28
+              },
+              "font": {
+                "size": 16,
+                "family": "Inter",
+                "color": "#EA7C00",
+                "bold": true,
+                "line_height": 1.15
+              },
+              "alignment": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "runs": [
+                {
+                  "text": "Roadmap"
+                }
+              ],
+              "decorative": false,
+              "name": "pre_title",
+              "max_length": 40,
+              "min_length": 20
+            },
+            {
+              "type": "text",
+              "position": {
+                "x": 0,
+                "y": 32
+              },
+              "size": {
+                "width": 1150,
+                "height": 56
+              },
+              "font": {
+                "size": 36,
+                "family": "Inter",
+                "color": "#212121",
+                "bold": true,
+                "line_height": 1.15
+              },
+              "alignment": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "runs": [
+                {
+                  "text": "Próximos pasos y owners"
+                }
+              ],
+              "decorative": false,
+              "name": "title",
+              "max_length": 60,
+              "min_length": 30
+            }
+          ]
+        },
+        {
+          "id": "list_block",
+          "description": "Primary bullet list for sequential actions.",
+          "position": {
+            "x": 64,
+            "y": 160
+          },
+          "elements": [
+            {
+              "type": "text-list",
+              "size": {
+                "width": 1152,
+                "height": 460
+              },
+              "font": {
+                "size": 22,
+                "family": "Inter",
+                "color": "#212121",
+                "line_height": 1.4
+              },
+              "marker": "bullet",
+              "items": [
+                [
+                  {
+                    "text": "Cerrar mix digital antes del 15 del mes."
+                  }
+                ],
+                [
+                  {
+                    "text": "Reasignar un 8% de TV a retail media."
+                  }
+                ],
+                [
+                  {
+                    "text": "Lanzar test de creatividades en dos cohortes."
+                  }
+                ],
+                [
+                  {
+                    "text": "Revisar CPA de afiliación con el partner."
+                  }
+                ],
+                [
+                  {
+                    "text": "Preparar el cierre trimestral con finanzas."
+                  }
+                ]
+              ],
+              "decorative": false,
+              "name": "next_steps",
+              "min_items": 3,
+              "max_items": 6,
+              "min_item_length": 20,
+              "max_item_length": 90
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "quote",
+      "description": "Cita o insight destacado con atribución. Para learnings o voz de cliente.",
+      "components": [
+        {
+          "id": "background",
+          "description": "Full-slide canvas that sets the brand surface.",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "elements": [
+            {
+              "type": "vector",
+              "shape": "polygon",
+              "fill": {
+                "color": "#F5F5F5"
+              },
+              "points": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 720
+                },
+                {
+                  "x": 0,
+                  "y": 720
+                }
+              ],
+              "closed": true
+            }
+          ]
+        },
+        {
+          "id": "accent_bar",
+          "description": "Thin brand accent strip along the top edge.",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "elements": [
+            {
+              "type": "vector",
+              "shape": "polygon",
+              "fill": {
+                "color": "#EA7C00"
+              },
+              "points": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 8
+                },
+                {
+                  "x": 0,
+                  "y": 8
+                }
+              ],
+              "closed": true
+            }
+          ]
+        },
+        {
+          "id": "quote_block",
+          "description": "Large quote with attribution.",
+          "position": {
+            "x": 120,
+            "y": 180
+          },
+          "elements": [
+            {
+              "type": "vector",
+              "shape": "polygon",
+              "fill": {
+                "color": "#EA7C00"
+              },
+              "points": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 64,
+                  "y": 0
+                },
+                {
+                  "x": 64,
+                  "y": 6
+                },
+                {
+                  "x": 0,
+                  "y": 6
+                }
+              ],
+              "closed": true
+            },
+            {
+              "type": "text",
+              "position": {
+                "x": 0,
+                "y": 36
+              },
+              "size": {
+                "width": 1040,
+                "height": 220
+              },
+              "font": {
+                "size": 36,
+                "family": "Inter",
+                "color": "#212121",
+                "bold": true,
+                "line_height": 1.15
+              },
+              "alignment": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "runs": [
+                {
+                  "text": "El crecimiento no viene de más medios, viene de menos fricción en el punto de venta."
+                }
+              ],
+              "decorative": false,
+              "name": "quote",
+              "max_length": 200,
+              "min_length": 100
+            },
+            {
+              "type": "text",
+              "position": {
+                "x": 0,
+                "y": 280
+              },
+              "size": {
+                "width": 800,
+                "height": 40
+              },
+              "font": {
+                "size": 18,
+                "family": "Inter",
+                "color": "#585858",
+                "bold": false,
+                "line_height": 1.15
+              },
+              "alignment": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "runs": [
+                {
+                  "text": "Dirección de marketing  ·  Q3 review"
+                }
+              ],
+              "decorative": false,
+              "name": "attribution",
+              "max_length": 80,
+              "min_length": 40
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "close",
+      "description": "Cierre CTA a color: título, subtítulo y llamada a la acción.",
+      "components": [
+        {
+          "id": "background",
+          "description": "Full-slide canvas that sets the brand surface.",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "elements": [
+            {
+              "type": "vector",
+              "shape": "polygon",
+              "fill": {
+                "color": "#EA7C00"
+              },
+              "points": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 0
+                },
+                {
+                  "x": 1280,
+                  "y": 720
+                },
+                {
+                  "x": 0,
+                  "y": 720
+                }
+              ],
+              "closed": true
+            }
+          ]
+        },
+        {
+          "id": "close_copy",
+          "description": "Closing call to action on brand color.",
+          "position": {
+            "x": 80,
+            "y": 200
+          },
+          "elements": [
+            {
+              "type": "text",
+              "position": {
+                "x": 0,
+                "y": 0
+              },
+              "size": {
+                "width": 800,
+                "height": 28
+              },
+              "font": {
+                "size": 16,
+                "family": "Inter",
+                "color": "#FFFFFF",
+                "bold": true,
+                "line_height": 1.15
+              },
+              "alignment": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "runs": [
+                {
+                  "text": "Siguiente paso"
+                }
+              ],
+              "decorative": false,
+              "name": "close_kicker",
+              "max_length": 32,
+              "min_length": 16
+            },
+            {
+              "type": "text",
+              "position": {
+                "x": 0,
+                "y": 40
+              },
+              "size": {
+                "width": 1100,
+                "height": 120
+              },
+              "font": {
+                "size": 48,
+                "family": "Inter",
+                "color": "#FFFFFF",
+                "bold": true,
+                "line_height": 1.15
+              },
+              "alignment": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "runs": [
+                {
+                  "text": "Aprobamos el mix y arrancamos el test"
+                }
+              ],
+              "decorative": false,
+              "name": "close_title",
+              "max_length": 72,
+              "min_length": 36
+            },
+            {
+              "type": "text",
+              "position": {
+                "x": 0,
+                "y": 180
+              },
+              "size": {
+                "width": 900,
+                "height": 48
+              },
+              "font": {
+                "size": 22,
+                "family": "Inter",
+                "color": "#FFFFFF",
+                "bold": false,
+                "line_height": 1.15
+              },
+              "alignment": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "runs": [
+                {
+                  "text": "Reunión de kickoff · jueves 10:00"
+                }
+              ],
+              "decorative": false,
+              "name": "close_cta",
+              "max_length": 80,
+              "min_length": 40
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

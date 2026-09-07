@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from api.v1.auth.context import reset_current_owner_id, set_current_owner_id
 from models.sql.presentation import PresentationModel, PresentationVersion
+from models.sql.presentation_share import PresentationShare
 from models.sql.template_v2 import TemplateV2
 from models.sql.user import User
 from services import database as _database_events  # noqa: F401
@@ -18,6 +19,7 @@ def test_owned_queries_are_isolated_and_only_default_templates_are_shared():
         async with engine.begin() as connection:
             await connection.run_sync(User.__table__.create)
             await connection.run_sync(PresentationModel.__table__.create)
+            await connection.run_sync(PresentationShare.__table__.create)
             await connection.run_sync(TemplateV2.__table__.create)
 
         first_id, second_id = uuid.uuid4(), uuid.uuid4()

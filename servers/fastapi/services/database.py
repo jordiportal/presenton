@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     AsyncSession,
 )
-from sqlalchemy import event, or_
+from sqlalchemy import event, or_, select
 from sqlalchemy.orm import Session, with_loader_criteria
 from sqlmodel import SQLModel
 
@@ -20,6 +20,11 @@ from models.sql.key_value import KeyValueSqlModel
 from models.sql.ollama_pull_status import OllamaPullStatus
 from models.sql.presentation_layout_code import PresentationLayoutCodeModel
 from models.sql.presentation import PresentationModel
+from models.sql.presentation_collaboration import (  # noqa: F401
+    PresentationLease,
+    PresentationPresence,
+)
+from models.sql.presentation_share import PresentationShare  # noqa: F401
 from models.sql.template import TemplateModel
 from models.sql.template_create_info import TemplateCreateInfoModel
 from models.sql.template_v2 import TemplateV2
@@ -82,7 +87,32 @@ def _scope_owned_selects(execute_state) -> None:
         return
 
     statement = execute_state.statement
+    shared_ids = select(PresentationShare.presentation_id).where(
+        PresentationShare.shared_with_user_id == owner_id
+    )
+    statement = statement.options(
+        with_loader_criteria(
+            PresentationModel,
+            lambda row: or_(
+                row.owner_id == owner_id,
+                row.id.in_(shared_ids),
+            ),
+            include_aliases=True,
+        )
+    )
+    statement = statement.options(
+        with_loader_criteria(
+            SlideModel,
+            lambda row: or_(
+                row.owner_id == owner_id,
+                row.presentation.in_(shared_ids),
+            ),
+            include_aliases=True,
+        )
+    )
     for model in _STRICT_OWNER_MODELS:
+        if model in (PresentationModel, SlideModel):
+            continue
         statement = statement.options(
             with_loader_criteria(
                 model,
@@ -146,6 +176,9 @@ async def create_db_and_tables():
                         AccessToken.__table__,
                         ProviderSettings.__table__,
                         PresentonCloudProvider.__table__,
+                        PresentationLease.__table__,
+                        PresentationPresence.__table__,
+                        PresentationShare.__table__,
                     ],
                 )
             )

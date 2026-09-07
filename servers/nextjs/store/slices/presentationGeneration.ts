@@ -25,6 +25,8 @@ export interface PresentationData {
   components?: any;
   fonts?: any;
   structure?: any;
+  access_role?: "owner" | "editor" | "viewer";
+  owner_username?: string | null;
 }
 
 export interface ChatHtmlSelection {

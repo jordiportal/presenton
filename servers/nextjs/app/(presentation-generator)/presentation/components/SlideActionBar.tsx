@@ -41,6 +41,7 @@ import {
 } from "../../_shared/blank-slide";
 import NewSlide from "./NewSlide";
 import { MAX_NUMBER_OF_SLIDES } from "@/utils/presentationLimits";
+import { useCollaboration } from "../hooks/PresentationCollaborationContext";
 
 interface SlideActionBarProps {
   slide: any;
@@ -87,6 +88,7 @@ const SlideActionBar = ({
       state.presentationGeneration.presentationData
     )
   );
+  const { runStructureChange } = useCollaboration();
 
   const hasReachedSlideLimit = slideCount >= MAX_NUMBER_OF_SLIDES;
   const currentIndex = Number.isInteger(selectedSlide)
@@ -151,26 +153,28 @@ const SlideActionBar = ({
       isTemplateV2: isTemplateV2Slide,
     });
 
-    rememberSlides("ADD_BLANK_SLIDE");
-    dispatch(addNewSlide({ slideData: blankSlide, index: currentIndex }));
-    const insertedIndex = currentIndex + 1;
-    onSlideSelected(
-      insertedIndex,
-      isTemplateV2Slide
-        ? {
-            promptOverlaySlideId: slideId,
-            promptOverlayKind: "blank",
-          }
-        : undefined,
-    );
-    trackEvent(MixpanelEvent.Presentation_Slide_Added, {
-      pathname,
-      presentation_id: presentationId,
-      inserted_after_index: currentIndex,
-      template_id: templateId,
-      layout_id: BLANK_SLIDE_LAYOUT_ID,
-      source: "blank_action_bar",
-      is_template_v2: isTemplateV2Slide,
+    void runStructureChange(() => {
+      rememberSlides("ADD_BLANK_SLIDE");
+      dispatch(addNewSlide({ slideData: blankSlide, index: currentIndex }));
+      const insertedIndex = currentIndex + 1;
+      onSlideSelected(
+        insertedIndex,
+        isTemplateV2Slide
+          ? {
+              promptOverlaySlideId: slideId,
+              promptOverlayKind: "blank",
+            }
+          : undefined,
+      );
+      trackEvent(MixpanelEvent.Presentation_Slide_Added, {
+        pathname,
+        presentation_id: presentationId,
+        inserted_after_index: currentIndex,
+        template_id: templateId,
+        layout_id: BLANK_SLIDE_LAYOUT_ID,
+        source: "blank_action_bar",
+        is_template_v2: isTemplateV2Slide,
+      });
     });
   };
 
@@ -180,23 +184,25 @@ const SlideActionBar = ({
       return;
     }
 
-    rememberSlides("DUPLICATE_SLIDE");
-    dispatch(
-      duplicatePresentationSlide({
-        index: currentIndex,
-        slideId: uuidv4(),
-      })
-    );
-    const insertedIndex = currentIndex + 1;
-    onSlideSelected(insertedIndex);
-    trackEvent(MixpanelEvent.Presentation_Slide_Added, {
-      pathname,
-      presentation_id: presentationId,
-      inserted_after_index: currentIndex,
-      source: "duplicate_action_bar",
-      slide_id: slide?.id,
-      slide_index: currentIndex,
-      layout: slideLayout,
+    void runStructureChange(() => {
+      rememberSlides("DUPLICATE_SLIDE");
+      dispatch(
+        duplicatePresentationSlide({
+          index: currentIndex,
+          slideId: uuidv4(),
+        })
+      );
+      const insertedIndex = currentIndex + 1;
+      onSlideSelected(insertedIndex);
+      trackEvent(MixpanelEvent.Presentation_Slide_Added, {
+        pathname,
+        presentation_id: presentationId,
+        inserted_after_index: currentIndex,
+        source: "duplicate_action_bar",
+        slide_id: slide?.id,
+        slide_index: currentIndex,
+        layout: slideLayout,
+      });
     });
   };
 
@@ -205,16 +211,18 @@ const SlideActionBar = ({
       return;
     }
 
-    rememberSlides("MOVE_SLIDE");
-    dispatch(movePresentationSlide({ fromIndex: currentIndex, toIndex }));
-    onSlideSelected(toIndex);
-    trackEvent(MixpanelEvent.Presentation_Slides_Reordered, {
-      pathname,
-      presentation_id: presentationId,
-      from_index: currentIndex,
-      to_index: toIndex,
-      slide_count: slideCount,
-      source: "action_bar",
+    void runStructureChange(() => {
+      rememberSlides("MOVE_SLIDE");
+      dispatch(movePresentationSlide({ fromIndex: currentIndex, toIndex }));
+      onSlideSelected(toIndex);
+      trackEvent(MixpanelEvent.Presentation_Slides_Reordered, {
+        pathname,
+        presentation_id: presentationId,
+        from_index: currentIndex,
+        to_index: toIndex,
+        slide_count: slideCount,
+        source: "action_bar",
+      });
     });
   };
 
@@ -229,31 +237,35 @@ const SlideActionBar = ({
         isTemplateV2: isTemplateV2Slide,
       });
 
-      rememberSlides("DELETE_LAST_SLIDE");
-      dispatch(replaceSlidesWithBlankFallback({ slideData: blankSlide }));
-      onSlideSelected(0);
+      void runStructureChange(() => {
+        rememberSlides("DELETE_LAST_SLIDE");
+        dispatch(replaceSlidesWithBlankFallback({ slideData: blankSlide }));
+        onSlideSelected(0);
+        trackEvent(MixpanelEvent.Presentation_Slide_Deleted, {
+          pathname,
+          presentation_id: presentationId,
+          slide_id: slide?.id,
+          slide_index: currentIndex,
+          layout: slideLayout,
+          blank_fallback: true,
+          fallback_slide_id: slideId,
+        });
+      });
+      return;
+    }
+
+    const nextSelectedIndex = Math.min(currentIndex, slideCount - 2);
+    void runStructureChange(() => {
+      rememberSlides("DELETE_SLIDE");
+      dispatch(deletePresentationSlide(currentIndex));
+      onSlideSelected(nextSelectedIndex);
       trackEvent(MixpanelEvent.Presentation_Slide_Deleted, {
         pathname,
         presentation_id: presentationId,
         slide_id: slide?.id,
         slide_index: currentIndex,
         layout: slideLayout,
-        blank_fallback: true,
-        fallback_slide_id: slideId,
       });
-      return;
-    }
-
-    const nextSelectedIndex = Math.min(currentIndex, slideCount - 2);
-    rememberSlides("DELETE_SLIDE");
-    dispatch(deletePresentationSlide(currentIndex));
-    onSlideSelected(nextSelectedIndex);
-    trackEvent(MixpanelEvent.Presentation_Slide_Deleted, {
-      pathname,
-      presentation_id: presentationId,
-      slide_id: slide?.id,
-      slide_index: currentIndex,
-      layout: slideLayout,
     });
   };
 
@@ -272,7 +284,9 @@ const SlideActionBar = ({
       );
       return;
     }
-    setShowNewSlideSelection(true);
+    void runStructureChange(() => {
+      setShowNewSlideSelection(true);
+    });
   };
 
   const newSlideModal =
