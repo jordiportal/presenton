@@ -55,6 +55,7 @@ type TemplateV2SelectionToolbarProps = {
   onLayerAction: (action: ComponentLayerAction) => void;
   onGroupSelection: () => void;
   onTableChange: (element: TableSlideElement) => void;
+  onTableEdit: () => void;
   onUngroupComponent: () => void;
   onUngroupLayoutTarget: () => void;
 };
@@ -88,6 +89,7 @@ export function TemplateV2SelectionToolbar({
   onLayerAction,
   onGroupSelection,
   onTableChange,
+  onTableEdit,
   onUngroupComponent,
   onUngroupLayoutTarget,
 }: TemplateV2SelectionToolbarProps) {
@@ -152,6 +154,7 @@ export function TemplateV2SelectionToolbar({
       onInfographicEdit={layoutTarget ? onInfographicEdit : undefined}
       onChange={layoutTarget ? onLayoutChange : undefined}
       onTableChange={tableTarget ? onTableChange : undefined}
+      onTableEdit={tableTarget ? onTableEdit : undefined}
       selectedTableCell={selectedTableCell}
       ungroupAction={
         canUngroupLayoutTarget

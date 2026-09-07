@@ -295,6 +295,7 @@ export const infographicItems = [
 
 export const tableTypeItems = [
   { id: "simple-table", label: "Simple Table", icon: Table2 },
+  { id: "advanced-table", label: "Advanced Table", icon: Grid3X3 },
 ] satisfies PaletteItem[];
 
 export const imageItems = [

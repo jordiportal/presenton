@@ -831,21 +831,35 @@ function adaptTextList(raw: UnknownRecord): SlideElement {
 }
 
 function adaptTable(raw: UnknownRecord): SlideElement {
-  const columns = adaptTableCells(readArray(raw, "columns")).slice(0, 6);
+  const tableStyle =
+    readString(raw.table_style) === "advanced" ? "advanced" : "simple";
+  const isAdvanced =
+    tableStyle === "advanced" || readString(raw.name) === "advanced_table";
+  const maxColumns = isAdvanced
+    ? (readNumber(raw, "max_columns") ?? 16)
+    : 6;
+  const maxRows = isAdvanced ? (readNumber(raw, "max_rows") ?? 24) : 8;
+  const columns = adaptTableCells(readArray(raw, "columns")).slice(
+    0,
+    maxColumns,
+  );
   const rows = readArray(raw, "rows")
-    .map((row) => adaptTableCells(Array.isArray(row) ? row : []))
+    .map((row) =>
+      adaptTableCells(Array.isArray(row) ? row : []).slice(0, maxColumns),
+    )
     .filter((row) => row.length > 0)
-    .slice(0, 7);
+    .slice(0, Math.max(0, maxRows - 1));
 
   return {
     ...baseElement(raw),
     type: "table",
     font: adaptFont(readRecord(raw, "font")),
+    table_style: isAdvanced ? "advanced" : tableStyle,
     columns,
     rows: rows.length > 0 ? rows : [columns],
-    max_columns: readNumber(raw, "max_columns"),
+    max_columns: readNumber(raw, "max_columns") ?? maxColumns,
     min_columns: readNumber(raw, "min_columns"),
-    max_rows: readNumber(raw, "max_rows"),
+    max_rows: readNumber(raw, "max_rows") ?? maxRows,
     min_rows: readNumber(raw, "min_rows"),
   };
 }

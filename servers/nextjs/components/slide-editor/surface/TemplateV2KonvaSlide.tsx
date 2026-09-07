@@ -52,6 +52,8 @@ import {
 } from "@/components/slide-editor/state/state";
 import { ElementToolbar } from "@/components/slide-editor/toolbar/ElementToolbar";
 import { ChartDataEditorPopover } from "@/components/slide-editor/charts/ChartEditorContent";
+import { TableDataEditorPopover } from "@/components/slide-editor/tables/TableDataEditor";
+import { isAdvancedTable } from "@/components/slide-editor/tables/table-style";
 import { InfographicDataEditorPopover } from "@/components/slide-editor/infographics/InfographicEditorContent";
 import { InfographicItemToolbar } from "@/components/slide-editor/infographics/InfographicItemToolbar";
 import { InfographicPlainTextEditor } from "@/components/slide-editor/infographics/InfographicPlainTextEditor";
@@ -508,6 +510,8 @@ function TemplateV2KonvaSlideComponent({
     useState(false);
   const [chartEditorSelection, setChartEditorSelection] =
     useState<ElementSelection | null>(null);
+  const [tableEditorSelection, setTableEditorSelection] =
+    useState<ElementSelection | null>(null);
   const [infographicEditorSelection, setInfographicEditorSelection] =
     useState<ElementSelection | null>(null);
 
@@ -770,6 +774,7 @@ function TemplateV2KonvaSlideComponent({
     iconEditorSelection ||
     infographicCanvasSelection ||
     chartEditorSelection ||
+    tableEditorSelection ||
     infographicEditorSelection ||
     selectedTableCell ||
     editingTableCell,
@@ -807,6 +812,9 @@ function TemplateV2KonvaSlideComponent({
     : null;
   const chartEditorElement = chartEditorSelection
     ? getElementAtSelection(uiDraft, chartEditorSelection)
+    : null;
+  const tableEditorElement = tableEditorSelection
+    ? getElementAtSelection(uiDraft, tableEditorSelection)
     : null;
   const infographicEditorElement = infographicEditorSelection
     ? getElementAtSelection(uiDraft, infographicEditorSelection)
@@ -995,6 +1003,7 @@ function TemplateV2KonvaSlideComponent({
     setInfographicCanvasSelection(null);
     setIsInfographicIconEditorOpen(false);
     setChartEditorSelection(null);
+    setTableEditorSelection(null);
     setInfographicEditorSelection(null);
     undoStackRef.current = [];
     redoStackRef.current = [];
@@ -1150,6 +1159,7 @@ function TemplateV2KonvaSlideComponent({
       setInfographicCanvasSelection(null);
       setIsInfographicIconEditorOpen(false);
       setChartEditorSelection(null);
+      setTableEditorSelection(null);
       setInfographicEditorSelection(null);
       if (options?.clearActiveSurface) {
         clearSurface();
@@ -1715,6 +1725,10 @@ function TemplateV2KonvaSlideComponent({
     setChartEditorSelection(null);
   }, []);
 
+  const closeTableEditor = useCallback(() => {
+    setTableEditorSelection(null);
+  }, []);
+
   const closeInfographicEditor = useCallback(() => {
     setInfographicEditorSelection(null);
   }, []);
@@ -1739,11 +1753,13 @@ function TemplateV2KonvaSlideComponent({
       setInfographicCanvasSelection(null);
       setIsInfographicIconEditorOpen(false);
       closeChartEditor();
+      closeTableEditor();
     },
     [
       clearInlineEdit,
       clearTableCellSelection,
       closeChartEditor,
+      closeTableEditor,
       commitUi,
       editorAnalyticsProps,
     ],
@@ -1773,10 +1789,12 @@ function TemplateV2KonvaSlideComponent({
     setInfographicCanvasSelection(null);
     setIsInfographicIconEditorOpen(false);
     closeChartEditor();
+    closeTableEditor();
   }, [
     clearInlineEdit,
     clearTableCellSelection,
     closeChartEditor,
+    closeTableEditor,
     commitUi,
     editorAnalyticsProps,
     selection,
@@ -2205,6 +2223,7 @@ function TemplateV2KonvaSlideComponent({
     setVectorEditSelection(null);
     setIconEditorSelection(null);
     setChartEditorSelection(null);
+    setTableEditorSelection(null);
     return true;
   }, [
     activateSurface,
@@ -2476,6 +2495,7 @@ function TemplateV2KonvaSlideComponent({
       setInfographicCanvasSelection(null);
       setIsInfographicIconEditorOpen(false);
       setInfographicEditorSelection(null);
+      setTableEditorSelection(null);
       setChartEditorSelection(elementSelection);
     },
     [activateSurface, clearInlineEdit],
@@ -2496,9 +2516,33 @@ function TemplateV2KonvaSlideComponent({
       setInfographicCanvasSelection(null);
       setIsInfographicIconEditorOpen(false);
       setChartEditorSelection(null);
+      setTableEditorSelection(null);
       setInfographicEditorSelection(elementSelection);
     },
     [activateSurface, clearInlineEdit],
+  );
+
+  const openTableEditor = useCallback(
+    (elementSelection: ElementSelection) => {
+      const element = getElementAtSelection(
+        currentUiRef.current,
+        elementSelection,
+      );
+      if (!element || readString(element.type) !== "table") return;
+      if (!isAdvancedTable(element)) return;
+      activateSurface(elementSelection);
+      setSelection(elementSelection);
+      clearInlineEdit();
+      clearTableCellEditing();
+      setVectorEditSelection(null);
+      setIconEditorSelection(null);
+      setInfographicCanvasSelection(null);
+      setIsInfographicIconEditorOpen(false);
+      setInfographicEditorSelection(null);
+      setChartEditorSelection(null);
+      setTableEditorSelection(elementSelection);
+    },
+    [activateSurface, clearInlineEdit, clearTableCellEditing],
   );
 
   const openInfographicCanvasTarget = useCallback(
@@ -2518,6 +2562,7 @@ function TemplateV2KonvaSlideComponent({
       setVectorEditSelection(null);
       setIconEditorSelection(null);
       setChartEditorSelection(null);
+      setTableEditorSelection(null);
       setInfographicEditorSelection(null);
       setIsInfographicIconEditorOpen(false);
       restoreInfographicCanvasTextNode();
@@ -2733,6 +2778,10 @@ function TemplateV2KonvaSlideComponent({
         openChartEditor(elementSelection);
         return;
       }
+      if (type === "table" && isAdvancedTable(element)) {
+        openTableEditor(elementSelection);
+        return;
+      }
       if (isVectorType(type)) {
         activateSurface(elementSelection);
         setSelection(elementSelection);
@@ -2741,6 +2790,7 @@ function TemplateV2KonvaSlideComponent({
         clearInlineEdit();
         setIconEditorSelection(null);
         setChartEditorSelection(null);
+        setTableEditorSelection(null);
         setVectorEditSelection(
           canEditVectorPointsForSelection(currentUiRef.current, elementSelection)
             ? elementSelection
@@ -2757,6 +2807,7 @@ function TemplateV2KonvaSlideComponent({
       clearTableCellSelection,
       openChartEditor,
       openInlineEditor,
+      openTableEditor,
     ],
   );
 
@@ -3173,6 +3224,11 @@ function TemplateV2KonvaSlideComponent({
         onLayerAction={reorderSelectedComponentLayer}
         onGroupSelection={groupSelectedComponents}
         onTableChange={applyTableToolbarElementChange}
+        onTableEdit={() => {
+          if (tableToolbarTarget) {
+            openTableEditor(tableToolbarTarget.selection);
+          }
+        }}
         onUngroupComponent={ungroupSelectedComponent}
         onUngroupLayoutTarget={ungroupLayoutTargetComponent}
       /> : null}
@@ -3340,6 +3396,27 @@ function TemplateV2KonvaSlideComponent({
             )
           }
           onClose={closeChartEditor}
+        />
+      ) : null}
+      {isEditMode &&
+        tableEditorSelection &&
+        tableEditorElement &&
+        readString(tableEditorElement.type) === "table" ? (
+        <TableDataEditorPopover
+          key={keyForSelection(tableEditorSelection)}
+          table={tableEditorElement as TableSlideElement}
+          tablePath={keyForSelection(tableEditorSelection)}
+          onChange={(next) =>
+            updateElement(tableEditorSelection, (element) => ({
+              ...element,
+              columns: next.columns,
+              rows: next.rows,
+              table_style: next.table_style ?? element.table_style,
+              max_columns: next.max_columns ?? element.max_columns,
+              max_rows: next.max_rows ?? element.max_rows,
+            }))
+          }
+          onClose={closeTableEditor}
         />
       ) : null}
       {isEditMode &&

@@ -7,6 +7,7 @@ import {
   ChevronRight,
   Columns3,
   MoreVertical,
+  Pencil,
   Plus,
   Rows3,
   Settings,
@@ -36,6 +37,13 @@ import {
   FloatingToolbarPanel,
   type FloatingToolbarBox,
 } from "@/components/slide-editor/toolbar/FloatingToolbar";
+import { TableDataEditorPopover } from "@/components/slide-editor/tables/TableDataEditor";
+import {
+  isAdvancedTable,
+  tableColumnLimit,
+  tableRowLimit,
+} from "@/components/slide-editor/tables/table-style";
+import { inlineStyles } from "@/components/slide-editor/toolbar/inlineStyles";
 
 type TableCellAlignment = NonNullable<TableCell["alignment"]>;
 
@@ -51,11 +59,13 @@ export function TableToolbarControls({
   index,
   selectedCell,
   onChange,
+  onEdit,
 }: {
   element: TableSlideElement;
   index: number;
   selectedCell: TableCellSelection | null;
   onChange: (index: number, element: TableSlideElement) => void;
+  onEdit?: () => void;
 }) {
   const [tableMenuOpen, setTableMenuOpen] = useState(false);
   const colorInputRef = useRef<HTMLInputElement | null>(null);
@@ -89,8 +99,8 @@ export function TableToolbarControls({
         : activeCellAlignment === "justify"
           ? AlignJustify
           : AlignLeft;
-  const canAddRow = rows.length < 8;
-  const canAddColumn = columnCount < 6;
+  const canAddRow = rows.length < tableRowLimit(element);
+  const canAddColumn = columnCount < tableColumnLimit(element);
   const canDeleteRow = rows.length > 2;
   const canDeleteColumn = columnCount > 1;
   const canMoveColumnLeft = activeColumn > 0;
@@ -236,6 +246,23 @@ export function TableToolbarControls({
 
   return (
     <div ref={toolbarRef} style={tableControlsStyle}>
+      {onEdit && isAdvancedTable(element) ? (
+        <>
+          <button
+            type="button"
+            aria-label="Edit table data"
+            title="Edit data"
+            style={inlineStyles.iconButton}
+            onClick={() => {
+              setTableMenuOpen(false);
+              onEdit();
+            }}
+          >
+            <Pencil size={16} strokeWidth={2} />
+          </button>
+          <Divider />
+        </>
+      ) : null}
       <button
         type="button"
         aria-label="Cell background color"
@@ -334,29 +361,42 @@ export function TableToolbar({
   onChange: (index: number, element: TableSlideElement) => void;
 }) {
   const box = elementBox(element);
+  const [editorOpen, setEditorOpen] = useState(false);
+  const advanced = isAdvancedTable(element);
 
   return (
-    <FloatingToolbar
-      anchorBox={
-        anchorBox ?? {
-          x: box.x * scale,
-          y: box.y * scale,
-          width: box.w * scale,
-          height: box.h * scale,
+    <>
+      <FloatingToolbar
+        anchorBox={
+          anchorBox ?? {
+            x: box.x * scale,
+            y: box.y * scale,
+            width: box.w * scale,
+            height: box.h * scale,
+          }
         }
-      }
-      fallbackWidth={290}
-      inlineEditIgnore
-    >
-      <div style={standaloneToolbarStyle}>
-        <TableToolbarControls
-          element={element}
-          index={index}
-          selectedCell={selectedCell}
-          onChange={onChange}
+        fallbackWidth={290}
+        inlineEditIgnore
+      >
+        <div style={standaloneToolbarStyle}>
+          <TableToolbarControls
+            element={element}
+            index={index}
+            selectedCell={selectedCell}
+            onChange={onChange}
+            onEdit={advanced ? () => setEditorOpen(true) : undefined}
+          />
+        </div>
+      </FloatingToolbar>
+      {editorOpen ? (
+        <TableDataEditorPopover
+          table={element}
+          tablePath={`table-${index}`}
+          onChange={(next) => onChange(index, next)}
+          onClose={() => setEditorOpen(false)}
         />
-      </div>
-    </FloatingToolbar>
+      ) : null}
+    </>
   );
 }
 

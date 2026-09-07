@@ -490,9 +490,12 @@ export type TableCell = {
   runs: TextRun[];
 };
 
+export type TableStyle = "simple" | "advanced";
+
 export type TableElement = ElementBase & {
   type: "table";
   font?: Font | null;
+  table_style?: TableStyle | null;
   columns: TableCell[];
   rows: TableCell[][];
   max_columns?: number | null;

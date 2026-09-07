@@ -1584,10 +1584,59 @@ function makeSimpleTableElement(): SlideElement {
     max_rows: 8,
     decorative: false,
     name: "simple_table",
+    table_style: "simple",
+  };
+}
+
+function makeAdvancedTableElement(): SlideElement {
+  const baseFont: Font = {
+    family: "Inter",
+    size: 13,
+    color: "#344054",
+    line_height: 1.2,
+  };
+  const headerFont: Font = {
+    ...baseFont,
+    color: "#101323",
+    bold: true,
+  };
+  const headerFill: Fill = { color: "#F2F4F7", opacity: 1 };
+  const bodyFill: Fill = { color: "#FFFFFF", opacity: 1 };
+  const header = (text: string) =>
+    makeTableCell({ text, font: headerFont, color: headerFill });
+  const cell = (text: string) =>
+    makeTableCell({ text, font: baseFont, color: bodyFill });
+
+  return {
+    type: "table",
+    position: { x: 80, y: 118 },
+    size: { width: 1120, height: 320 },
+    table_style: "advanced",
+    columns: [
+      header("Region"),
+      header("Q1"),
+      header("Q2"),
+      header("Q3"),
+      header("Q4"),
+      header("YoY"),
+    ],
+    rows: [
+      [cell("North America"), cell("128"), cell("142"), cell("151"), cell("166"), cell("+12%")],
+      [cell("EMEA"), cell("96"), cell("101"), cell("118"), cell("124"), cell("+9%")],
+      [cell("APAC"), cell("74"), cell("88"), cell("93"), cell("109"), cell("+18%")],
+      [cell("LATAM"), cell("31"), cell("36"), cell("41"), cell("47"), cell("+21%")],
+    ],
+    min_columns: 2,
+    max_columns: 16,
+    min_rows: 2,
+    max_rows: 24,
+    decorative: false,
+    name: "advanced_table",
   };
 }
 
 function createDefaultTableInsertElements(kind?: string): SlideElement[] {
+  if (kind === "advanced-table") return [makeAdvancedTableElement()];
   return kind === "simple-table" ? [makeSimpleTableElement()] : [];
 }
 

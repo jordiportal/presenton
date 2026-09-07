@@ -105,6 +105,7 @@ type TemplateV2LayoutToolbarProps = {
   onChartEdit?: () => void;
   onInfographicEdit?: () => void;
   onTableChange?: (element: TableSlideElement) => void;
+  onTableEdit?: () => void;
   selectedTableCell?: { rowIndex: number; colIndex: number } | null;
   position?: { left: number; top: number };
   componentActions?: TemplateV2SelectionComponentActions | null;
@@ -304,6 +305,7 @@ export function TemplateV2LayoutToolbar({
   onChartEdit,
   onInfographicEdit,
   onTableChange,
+  onTableEdit,
   selectedTableCell,
   position,
   componentActions,
@@ -437,6 +439,14 @@ export function TemplateV2LayoutToolbar({
                 : null
             }
             onChange={(_index, element) => onTableChange(element)}
+            onEdit={
+              onTableEdit
+                ? () => {
+                    setOpenPanel(null);
+                    onTableEdit();
+                  }
+                : undefined
+            }
           />
         ) : null}
         {componentActions ? (
