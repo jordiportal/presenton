@@ -16,6 +16,7 @@ import {
   MousePointer2,
   Sparkles,
   Share2,
+  MessageSquarePlus,
 } from "lucide-react";
 import { askBrain } from "@/utils/brain-bridge";
 import React, { useEffect, useRef, useState } from "react";
@@ -64,6 +65,7 @@ import {
   collaborationHolderLabel,
   type CollaborationPresence,
 } from "../../services/api/collaboration";
+import { useNotes } from "../hooks/PresentationNotesContext";
 
 const MAX_EXPORT_TITLE_LENGTH = 40;
 
@@ -146,6 +148,9 @@ const PresentationHeader = ({
       ? presentationData.access_role
       : "owner";
   const canManageSharing = accessRole === "owner" && !embed && !isStreaming;
+  const notes = useNotes();
+  const canUseNotes = Boolean(presentationData) && !isStreaming;
+  const canWriteNotes = canUseNotes && accessRole !== "viewer";
 
   useEffect(() => {
     if (isEditingTitle) {
@@ -682,6 +687,54 @@ const PresentationHeader = ({
             <span className="hidden rounded-full border border-[#E4E4E8] bg-white px-3 py-1 font-syne text-xs text-[#667085] sm:inline">
               Shared by {presentationData.owner_username}
             </span>
+          ) : null}
+          {canUseNotes ? (
+            <div className="flex items-center gap-1.5">
+              <ToolTip
+                content={
+                  notes.visible
+                    ? "Hide collaboration notes"
+                    : "Show collaboration notes"
+                }
+              >
+                <button
+                  type="button"
+                  onClick={notes.toggleVisible}
+                  aria-pressed={notes.visible}
+                  className={cn(
+                    "inline-flex h-[38px] items-center gap-2 rounded-xl border px-3 font-syne text-xs font-semibold shadow-sm transition",
+                    notes.visible
+                      ? "border-[#CEC6FF] bg-[#F3F0FF] text-[#5141E5]"
+                      : "border-[#E4E4E8] bg-white text-[#3D3D48] hover:border-[#D7D2F5] hover:bg-[#FAF9FF] hover:text-[#5141E5]",
+                  )}
+                >
+                  <MessageSquarePlus className="h-3.5 w-3.5" />
+                  Notes
+                  {notes.unresolvedTotal > 0 ? (
+                    <span className="inline-flex min-w-4 items-center justify-center rounded-full bg-[#F79009] px-1 text-[10px] font-semibold leading-4 text-white">
+                      {notes.unresolvedTotal}
+                    </span>
+                  ) : null}
+                </button>
+              </ToolTip>
+              {canWriteNotes && notes.visible ? (
+                <ToolTip content="Add a note on this slide">
+                  <button
+                    type="button"
+                    onClick={notes.startPlacing}
+                    aria-pressed={notes.placing}
+                    className={cn(
+                      "inline-flex h-[38px] items-center rounded-xl border px-3 font-syne text-xs font-semibold shadow-sm transition",
+                      notes.placing
+                        ? "border-[#CEC6FF] bg-[#F3F0FF] text-[#5141E5]"
+                        : "border-[#E4E4E8] bg-white text-[#3D3D48] hover:border-[#D7D2F5] hover:bg-[#FAF9FF] hover:text-[#5141E5]",
+                    )}
+                  >
+                    Add
+                  </button>
+                </ToolTip>
+              ) : null}
+            </div>
           ) : null}
           {canManageSharing ? (
             <ToolTip content="Share with another user">

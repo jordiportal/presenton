@@ -25,6 +25,7 @@ from models.sql.presentation_collaboration import (  # noqa: F401
     PresentationPresence,
 )
 from models.sql.presentation_share import PresentationShare  # noqa: F401
+from models.sql.presentation_note import PresentationNote  # noqa: F401
 from models.sql.template import TemplateModel
 from models.sql.template_create_info import TemplateCreateInfoModel
 from models.sql.template_v2 import TemplateV2

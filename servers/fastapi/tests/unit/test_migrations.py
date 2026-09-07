@@ -849,3 +849,57 @@ def test_upgrade_from_previous_head_adds_template_v2_theme(tmp_path):
         assert "theme" in template_columns
     finally:
         engine.dispose()
+
+
+def test_upgrade_from_shares_adds_presentation_notes(tmp_path):
+    database_url = f"sqlite:///{tmp_path / 'presentation-notes.db'}"
+    engine = create_engine(database_url)
+    try:
+        with engine.begin() as connection:
+            connection.execute(
+                text("CREATE TABLE presentations (id CHAR(32) NOT NULL PRIMARY KEY)")
+            )
+            connection.execute(
+                text('CREATE TABLE user (id CHAR(32) NOT NULL PRIMARY KEY)')
+            )
+            connection.execute(
+                text("CREATE TABLE alembic_version (version_num VARCHAR(32) NOT NULL)")
+            )
+            connection.execute(
+                text("INSERT INTO alembic_version (version_num) VALUES (:revision)"),
+                {"revision": migrations.REVISION_PRESENTATION_SHARES},
+            )
+
+        command.upgrade(_alembic_config(database_url), "head")
+
+        with engine.connect() as connection:
+            version = connection.execute(
+                text("SELECT version_num FROM alembic_version")
+            ).scalar_one()
+            tables = {
+                row[0]
+                for row in connection.execute(
+                    text("SELECT name FROM sqlite_master WHERE type='table'")
+                )
+            }
+            note_columns = {
+                row[1]
+                for row in connection.execute(
+                    text("PRAGMA table_info(presentation_notes)")
+                )
+            }
+
+        assert version == migrations.REVISION_HEAD
+        assert "presentation_notes" in tables
+        assert {
+            "id",
+            "presentation_id",
+            "slide_id",
+            "parent_id",
+            "author_user_id",
+            "author_username",
+            "body",
+            "resolved_at",
+        }.issubset(note_columns)
+    finally:
+        engine.dispose()

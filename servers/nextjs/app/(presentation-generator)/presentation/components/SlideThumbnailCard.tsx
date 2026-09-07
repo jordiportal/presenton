@@ -1,5 +1,6 @@
 import React, { forwardRef, memo, useCallback } from "react";
 import type { Slide } from "../../types/slide";
+import { cn } from "@/lib/utils";
 import { useNearViewport } from "@/app/hooks/useNearViewport";
 import { V1ContentRender } from "../../components/V1ContentRender";
 import SmartHtmlSlide from "../../components/SmartHtmlSlide";
@@ -16,6 +17,7 @@ interface SlideThumbnailCardProps extends React.HTMLAttributes<HTMLDivElement> {
   presentationVersion?: unknown;
   holderLabel?: string | null;
   holderInitial?: string | null;
+  noteCount?: number;
 }
 
 const THUMBNAIL_WIDTH = 110;
@@ -34,6 +36,7 @@ const SlideThumbnailCardComponent = forwardRef<
       presentationVersion,
       holderLabel,
       holderInitial,
+      noteCount = 0,
       className = "",
       style,
       ...props
@@ -154,6 +157,18 @@ const SlideThumbnailCardComponent = forwardRef<
               {holderInitial}
             </div>
           ) : null}
+          {noteCount > 0 ? (
+            <div
+              className={cn(
+                "absolute z-10 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#F79009] px-1 text-[9px] font-semibold leading-none text-white shadow-sm",
+                holderInitial ? "right-1 top-5" : "right-1 top-1",
+              )}
+              title={`${noteCount} open ${noteCount === 1 ? "note" : "notes"}`}
+              data-slide-note-count={noteCount}
+            >
+              {noteCount}
+            </div>
+          ) : null}
         </div>
       </div>
     );
@@ -173,7 +188,8 @@ export const SlideThumbnailCard = memo(
     previous.className === next.className &&
     previous.style === next.style &&
     previous.holderLabel === next.holderLabel &&
-    previous.holderInitial === next.holderInitial
+    previous.holderInitial === next.holderInitial &&
+    previous.noteCount === next.noteCount
 );
 
 SlideThumbnailCard.displayName = "Memo(SlideThumbnailCard)";

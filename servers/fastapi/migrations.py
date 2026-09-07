@@ -35,7 +35,8 @@ REVISION_SMART_MODE_BACKFILL = "d2f4a6b8c0e1"
 REVISION_TEMPLATE_V2_THEME = "e4c7a9b2d6f1"
 REVISION_PRESENTATION_COLLABORATION = "f5b8c1d2e3a4"
 REVISION_PRESENTATION_SHARES = "a6c2d3e4f5b7"
-REVISION_HEAD = REVISION_PRESENTATION_SHARES
+REVISION_PRESENTATION_NOTES = "b7e4f5a6c8d9"
+REVISION_HEAD = REVISION_PRESENTATION_NOTES
 
 
 async def migrate_database_on_startup() -> None:
@@ -139,6 +140,8 @@ def _infer_revision_from_schema(
         for table in owned_tables
     )
     if "provider_settings" in tables and "user" in tables and ownership_ready:
+        if "presentation_notes" in tables:
+            return REVISION_PRESENTATION_NOTES
         if "presentation_shares" in tables:
             return REVISION_PRESENTATION_SHARES
         if "presentation_leases" in tables and "presentation_presence" in tables:

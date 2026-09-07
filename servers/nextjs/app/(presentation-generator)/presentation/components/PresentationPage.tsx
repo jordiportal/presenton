@@ -33,7 +33,10 @@ import {
   useAutoSave,
   usePresentationCollaboration,
   PresentationCollaborationProvider,
+  usePresentationNotes,
+  PresentationNotesProvider,
 } from "../hooks";
+import { SlideNotesOverlay } from "./SlideNotesOverlay";
 import { PresentationPageProps } from "../types";
 import { isTruthyEmbedFlag } from "@/utils/embed";
 import { isBrainPresentonMessage } from "@/utils/brain-bridge";
@@ -314,6 +317,24 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
   });
   const slideEditingDisabled =
     editingDisabled || !collaboration.canEditCurrent;
+  const notes = usePresentationNotes({
+    presentationId: presentation_id,
+    slideId: collaborationSlideId,
+    enabled:
+      Boolean(presentation_id) &&
+      !loading &&
+      !error &&
+      !isStreaming &&
+      !isPresentMode,
+    canWrite,
+  });
+
+  const cancelNoteDraft = notes.cancelPlacing;
+  const clearSelectedNote = notes.selectNote;
+  useEffect(() => {
+    cancelNoteDraft();
+    clearSelectedNote(null);
+  }, [collaborationSlideId, cancelNoteDraft, clearSelectedNote]);
 
   // Auto-save functionality.
   // Pause while the chat assistant is mutating the deck: the assistant edits
@@ -896,6 +917,7 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
 
   return (
     <PresentationCollaborationProvider value={collaboration}>
+    <PresentationNotesProvider value={notes}>
     <div className="h-dvh overflow-hidden font-syne">
       <OverlayLoader
         show={loadingState.isLoading}
@@ -1007,6 +1029,23 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
                     updatingSlideIndex !== null &&
                     activeSlideIndex === updatingSlideIndex
                   }
+                  notesOverlay={
+                    <SlideNotesOverlay
+                      notes={notes.notesOnSlide}
+                      visible={notes.visible}
+                      placing={notes.placing}
+                      selectedId={notes.selectedId}
+                      draft={notes.draft}
+                      canWrite={notes.canWrite}
+                      onPlace={notes.placeDraft}
+                      onSelect={notes.selectNote}
+                      onCancelDraft={notes.cancelPlacing}
+                      onCreate={notes.createNote}
+                      onReply={notes.replyToNote}
+                      onResolve={notes.resolveNote}
+                      onDelete={notes.deleteNote}
+                    />
+                  }
                 />
               </div>
             )}
@@ -1106,6 +1145,7 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
         </div>
       </div>
     </div>
+    </PresentationNotesProvider>
     </PresentationCollaborationProvider>
   );
 };

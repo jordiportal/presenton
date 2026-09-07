@@ -28,6 +28,7 @@ const SlideScale = ({
   onBlankPromptOverlayDismiss,
   showTemplatePromptOverlay = false,
   onTemplatePromptOverlayDismiss,
+  overlay = null,
 }: {
   slide: any;
   presentationId?: string;
@@ -48,6 +49,7 @@ const SlideScale = ({
   onBlankPromptOverlayDismiss?: () => void;
   showTemplatePromptOverlay?: boolean;
   onTemplatePromptOverlayDismiss?: () => void;
+  overlay?: React.ReactNode;
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [box, setBox] = useState({ w: 0, h: 0 });
@@ -176,6 +178,7 @@ const SlideScale = ({
                 aria-hidden="true"
               />
             )}
+            {overlay}
           </div>
         </div>
       {/* </div> */}

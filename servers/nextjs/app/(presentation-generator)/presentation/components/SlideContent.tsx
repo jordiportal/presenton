@@ -31,6 +31,7 @@ interface SlideContentProps {
   isStreaming?: boolean | null;
   fitToContainer?: boolean;
   lockedBy?: { holder_name?: string | null } | null;
+  notesOverlay?: React.ReactNode;
 }
 
 const SlideContent = ({
@@ -51,6 +52,7 @@ const SlideContent = ({
   isStreaming = false,
   fitToContainer = false,
   lockedBy = null,
+  notesOverlay = null,
 }: SlideContentProps) => {
   const canEditSlide = !editingDisabled && isStreaming !== true && !lockedBy;
   const lockLabel = lockedBy
@@ -91,7 +93,7 @@ const SlideContent = ({
         >
           {lockLabel ? (
             <div
-              className="absolute inset-0 z-[85] flex items-start justify-center rounded-[14px] bg-white/45 pt-6 font-syne"
+              className="pointer-events-none absolute inset-0 z-[85] flex items-start justify-center rounded-[14px] bg-white/45 pt-6 font-syne"
               data-collaboration-locked="true"
               aria-live="polite"
             >
@@ -138,6 +140,7 @@ const SlideContent = ({
             onBlankPromptOverlayDismiss={onBlankPromptOverlayDismiss}
             showTemplatePromptOverlay={showTemplatePromptOverlay}
             onTemplatePromptOverlayDismiss={onTemplatePromptOverlayDismiss}
+            overlay={notesOverlay}
           />
         </div>
         <div
@@ -175,5 +178,6 @@ export default memo(
     previous.editingDisabled === next.editingDisabled &&
     previous.isStreaming === next.isStreaming &&
     previous.fitToContainer === next.fitToContainer &&
-    previous.lockedBy === next.lockedBy,
+    previous.lockedBy === next.lockedBy &&
+    previous.notesOverlay === next.notesOverlay,
 );

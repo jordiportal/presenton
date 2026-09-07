@@ -7,3 +7,8 @@ export {
   PresentationCollaborationProvider,
   useCollaboration,
 } from './PresentationCollaborationContext';
+export { usePresentationNotes } from './usePresentationNotes';
+export {
+  PresentationNotesProvider,
+  useNotes,
+} from './PresentationNotesContext';

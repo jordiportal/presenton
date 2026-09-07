@@ -15,6 +15,7 @@ interface SortableSlideProps {
     onSlideClick: (index: any) => void;
     fonts?: unknown;
     presentationVersion?: unknown;
+    noteCount?: number;
 }
 
 export const SortableSlide = memo(function SortableSlide({
@@ -24,6 +25,7 @@ export const SortableSlide = memo(function SortableSlide({
     onSlideClick,
     fonts,
     presentationVersion,
+    noteCount = 0,
 }: SortableSlideProps) {
     const lastClickTime = useRef(0);
     const { presenceForSlide } = useCollaboration();
@@ -68,6 +70,7 @@ export const SortableSlide = memo(function SortableSlide({
             presentationVersion={presentationVersion}
             holderLabel={holder ? collaborationHolderLabel(holder) : null}
             holderInitial={holder ? collaborationHolderInitial(holder) : null}
+            noteCount={noteCount}
             style={style}
             {...attributes}
             {...listeners}
@@ -81,5 +84,6 @@ export const SortableSlide = memo(function SortableSlide({
     previous.fonts === next.fonts &&
     previous.presentationVersion === next.presentationVersion &&
     (previous.selectedSlide === previous.index) ===
-    (next.selectedSlide === next.index)
+    (next.selectedSlide === next.index) &&
+    previous.noteCount === next.noteCount
 );

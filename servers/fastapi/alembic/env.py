@@ -27,6 +27,7 @@ from models.sql.presentation_collaboration import (  # noqa: F401, E402
     PresentationPresence,
 )
 from models.sql.presentation_share import PresentationShare  # noqa: F401, E402
+from models.sql.presentation_note import PresentationNote  # noqa: F401, E402
 from models.sql.presentation_layout_code import (  # noqa: F401, E402
     PresentationLayoutCodeModel,
 )

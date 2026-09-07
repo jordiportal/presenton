@@ -37,6 +37,7 @@ import {
 } from "../../_shared/blank-slide";
 import { MAX_NUMBER_OF_SLIDES } from "@/utils/presentationLimits";
 import { useCollaboration } from "../hooks/PresentationCollaborationContext";
+import { useNotes } from "../hooks/PresentationNotesContext";
 import {
   collaborationHolderInitial,
   collaborationHolderLabel,
@@ -74,6 +75,7 @@ const SidePanel = ({
   const dispatch = useDispatch();
   const { runStructureChange, canChangeStructure, presenceForSlide } =
     useCollaboration();
+  const { countForSlide } = useNotes();
 
   const lastSlideIndex = presentationData?.slides?.length
     ? presentationData.slides.length - 1
@@ -299,6 +301,9 @@ const SidePanel = ({
                     holderInitial={
                       holder ? collaborationHolderInitial(holder) : null
                     }
+                    noteCount={countForSlide(
+                      typeof slide.id === "string" ? slide.id : null,
+                    )}
                     onClick={() => onSlideClick(index)}
                   />
                   );
@@ -325,6 +330,9 @@ const SidePanel = ({
                           selectedSlide={selectedSlide}
                           fonts={presentationData.fonts}
                           presentationVersion={presentationData.version}
+                          noteCount={countForSlide(
+                            typeof slide.id === "string" ? slide.id : null,
+                          )}
                           onSlideClick={onSlideClick}
                         />
                       )
