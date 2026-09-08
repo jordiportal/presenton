@@ -233,6 +233,16 @@ function normalizeTemplateV2AssetUrls(value: unknown): unknown {
       normalized.data = resolveBackendAssetUrl(source);
     }
   }
+  if (readString(normalized.type) === "video") {
+    const source = readString(normalized.src);
+    if (source) {
+      normalized.src = resolveBackendAssetUrl(source);
+    }
+    const poster = readString(normalized.poster);
+    if (poster) {
+      normalized.poster = resolveBackendAssetUrl(poster);
+    }
+  }
 
   return normalized;
 }
@@ -491,6 +501,8 @@ function renderItem(item: JsonRecord, mode: RenderMode): string {
       return renderInfographic(item, mode);
     case "filter":
       return renderFilter(item, mode);
+    case "video":
+      return renderVideo(item, mode);
     default:
       if (Array.isArray(item.children)) return renderGroup(item, mode);
       if (readRecordOrNull(item.child)) return renderContainer(item, mode);
@@ -558,6 +570,14 @@ function renderFilter(item: JsonRecord, mode: RenderMode): string {
       .join("")}</div>`;
   }
   return `<div style="${frameStyle(item, mode)}display:flex;flex-direction:column;justify-content:flex-end;padding:6px 8px;border:1px solid #E4E7EC;border-radius:18px;background:#fff;"><div style="font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#667085;margin-bottom:4px;">${label}</div>${controls}</div>`;
+}
+
+function renderVideo(item: JsonRecord, mode: RenderMode): string {
+  const poster = readString(item.poster);
+  const posterImg = poster
+    ? `<img alt="" src="${escapeAttribute(poster)}" style="width:100%;height:100%;object-fit:cover;">`
+    : "";
+  return `<div style="${frameStyle(item, mode)}position:relative;overflow:hidden;border-radius:12px;background:#111827;">${posterImg}<span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;"><span style="display:flex;width:48px;height:48px;align-items:center;justify-content:center;border-radius:999px;background:rgba(0,0,0,.55);color:#fff;font-size:18px;">▶</span></span></div>`;
 }
 
 function renderImage(item: JsonRecord, mode: RenderMode): string {

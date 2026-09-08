@@ -8,6 +8,7 @@ import {
   runBundledPresentationExport,
 } from "@/lib/run-bundled-presentation-export";
 import { authStatusForRequest } from "@/lib/server-auth-role";
+import { embedExportVideos } from "@/lib/embed-export-videos";
 
 function isValidFormat(value: unknown): value is BundledPresentationExportFormat {
   return value === "pdf" || value === "pptx";
@@ -146,6 +147,20 @@ export async function POST(req: NextRequest) {
       unscopedOutPath,
       auth.user_id
     );
+    if (format === "pptx") {
+      try {
+        await embedExportVideos({
+          presentationId: id.trim(),
+          pptxPath: outPath,
+          cookieHeader,
+        });
+      } catch (embedError) {
+        console.error(
+          "[export-presentation:pptx] video embed failed; keeping visual export",
+          embedError,
+        );
+      }
+    }
 
     return NextResponse.json({
       success: true,

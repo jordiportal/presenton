@@ -9,6 +9,7 @@ import {
   createElementInsertElements,
   createFilterInsertElements,
   createImageInsertContent,
+  createVideoInsertElements,
   createInfographicInsertElements,
   createTableInsertElements,
   createTextInsertElements,
@@ -1021,6 +1022,26 @@ const GroupLayoutPreview = ({
     [activeLayoutIndex, insertEditorContent, templateId, templateTheme],
   );
 
+  const handleVideoItemSelect = useCallback(
+    (item: PaletteItem) => {
+      if (
+        !insertEditorElements(
+          createVideoInsertElements(item.id, templateTheme),
+          item.label,
+        )
+      ) {
+        return;
+      }
+      track(ANALYTICS_EVENTS.EDITOR_PALETTE_ITEM_INSERTED, {
+        template_id: templateId,
+        category: "videos",
+        item_id: item.id,
+        layout_index: activeLayoutIndex,
+      });
+    },
+    [activeLayoutIndex, insertEditorElements, templateId, templateTheme],
+  );
+
   const handleElementItemSelect = useCallback(
     (item: PaletteItem) => {
       if (
@@ -1372,6 +1393,7 @@ const GroupLayoutPreview = ({
                 onInfographicItemSelect={handleInfographicItemSelect}
                 onElementItemSelect={handleElementItemSelect}
                 onImageItemSelect={handleImageItemSelect}
+                onVideoItemSelect={handleVideoItemSelect}
                 onTableItemSelect={handleTableItemSelect}
                 onFilterItemSelect={handleFilterItemSelect}
                 onTextItemSelect={handleTextItemSelect}

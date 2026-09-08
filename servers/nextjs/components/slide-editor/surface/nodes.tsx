@@ -2412,6 +2412,20 @@ function RawElementVisual({
       </Group>
     );
   }
+  if (type === "video") {
+    return (
+      <Group listening={interactive}>
+        <Rect
+          width={width}
+          height={height}
+          fill="#111827"
+          stroke="#E4E7EC"
+          strokeWidth={1}
+          cornerRadius={12}
+        />
+      </Group>
+    );
+  }
   return null;
 }
 

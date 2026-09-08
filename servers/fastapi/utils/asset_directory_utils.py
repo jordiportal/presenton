@@ -200,6 +200,39 @@ def get_images_directory():
     return _owned_directory("images")
 
 
+def get_videos_directory():
+    return _owned_directory("videos")
+
+
+def filesystem_video_path_to_app_data_url(path_or_url: str) -> str:
+    if not path_or_url or not isinstance(path_or_url, str):
+        return path_or_url
+    stripped = path_or_url.strip()
+    if stripped.startswith(("http://", "https://", "data:", "blob:")):
+        return stripped
+    if stripped.startswith(("/app_data/", "/static/")):
+        return absolute_fastapi_asset_url(stripped)
+    app_data = get_app_data_directory_env()
+    if not app_data:
+        return stripped
+    videos_root = os.path.normpath(os.path.join(app_data, "videos"))
+    try:
+        abs_video = os.path.normpath(os.path.abspath(stripped))
+        abs_root = os.path.normpath(os.path.abspath(videos_root))
+    except (OSError, ValueError):
+        return stripped
+    try:
+        common = os.path.commonpath([abs_root, abs_video])
+    except ValueError:
+        return stripped
+    if os.path.normcase(common) != os.path.normcase(abs_root):
+        return stripped
+    rel = os.path.relpath(abs_video, abs_root)
+    if rel.startswith(".."):
+        return stripped
+    return absolute_fastapi_asset_url("/app_data/videos/" + rel.replace(os.sep, "/"))
+
+
 def get_exports_directory():
     return _owned_directory("exports")
 

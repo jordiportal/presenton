@@ -1686,6 +1686,27 @@ function createDefaultFilterInsertElements(kind?: string): SlideElement[] {
   return filterKind ? [makeFilterElement(filterKind)] : [];
 }
 
+function makeVideoElement(): SlideElement {
+  return {
+    type: "video",
+    position: { x: 280, y: 158 },
+    size: { width: 720, height: 405 },
+    src: null,
+    provider: "file",
+    video_id: null,
+    poster: null,
+    autoplay: false,
+    loop: false,
+    muted: false,
+    decorative: false,
+    name: "video",
+  };
+}
+
+function createDefaultVideoInsertElements(kind?: string): SlideElement[] {
+  return kind === "video" || kind === "video-url" ? [makeVideoElement()] : [];
+}
+
 function makeImageElement({
   x,
   y,
@@ -2824,6 +2845,13 @@ export function createFilterInsertElements(
   theme: TemplateTheme = DEFAULT_TEMPLATE_THEME,
 ): SlideElement[] {
   return themeElements(createDefaultFilterInsertElements(kind), theme);
+}
+
+export function createVideoInsertElements(
+  kind?: string,
+  theme: TemplateTheme = DEFAULT_TEMPLATE_THEME,
+): SlideElement[] {
+  return themeElements(createDefaultVideoInsertElements(kind), theme);
 }
 
 export function createImageInsertContent(

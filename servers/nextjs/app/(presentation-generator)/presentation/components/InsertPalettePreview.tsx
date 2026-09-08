@@ -6,6 +6,7 @@ import {
   createElementInsertElements,
   createFilterInsertElements,
   createImageInsertContent,
+  createVideoInsertElements,
   createInfographicInsertElements,
   createTableInsertElements,
   createTextInsertElements,
@@ -25,6 +26,7 @@ export type InsertPalettePreviewKind =
   | "table"
   | "filter"
   | "image"
+  | "video"
   | "element";
 
 type PreviewElement = NonNullable<EditorInsertContent["elements"]>[number];
@@ -40,6 +42,7 @@ const PREVIEW_FIT: Record<
   table: { maxScale: 0.55, padding: { x: 0.05, y: 0.1 } },
   filter: { maxScale: 0.72, padding: { x: 0.04, y: 0.16 } },
   image: { maxScale: 0.6, padding: { x: 0.07, y: 0.08 } },
+  video: { maxScale: 0.55, padding: { x: 0.07, y: 0.08 } },
   element: { maxScale: 0.62, padding: { x: 0.18, y: 0.14 } },
 };
 
@@ -61,6 +64,8 @@ function createPreviewContent(
       return { elements: createFilterInsertElements(itemId, theme) };
     case "image":
       return createImageInsertContent(itemId, theme);
+    case "video":
+      return { elements: createVideoInsertElements(itemId, theme) };
     case "element":
       return { elements: createElementInsertElements(itemId, theme) };
   }

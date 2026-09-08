@@ -723,6 +723,8 @@ function adaptElement(value: unknown): SlideElement | null {
       return adaptTable(raw);
     case "filter":
       return adaptFilter(raw);
+    case "video":
+      return adaptVideo(raw);
     case "vector":
       return adaptVector(raw);
     case "chart":
@@ -899,6 +901,22 @@ function adaptFilter(raw: UnknownRecord): SlideElement {
     options,
     selected: readArray(raw, "selected").map(String).filter(Boolean),
     accent: readString(raw.accent),
+  };
+}
+
+function adaptVideo(raw: UnknownRecord): SlideElement {
+  const provider =
+    readEnum(raw, ["file", "youtube", "vimeo", "url"], "provider") ?? "file";
+  return {
+    ...baseElement(raw),
+    type: "video",
+    src: readString(raw.src),
+    provider: provider as "file" | "youtube" | "vimeo" | "url",
+    video_id: readString(raw.video_id),
+    poster: readString(raw.poster),
+    autoplay: Boolean(raw.autoplay),
+    loop: Boolean(raw.loop),
+    muted: Boolean(raw.muted),
   };
 }
 

@@ -2,6 +2,7 @@ import asyncio
 import copy
 from datetime import datetime
 import json
+import os
 import logging
 import random
 import re
@@ -29,6 +30,12 @@ from enums.webhook_event import WebhookEvent
 from models.api_error_model import APIErrorModel
 from models.generate_presentation_request import GeneratePresentationRequest
 from models.presentation_and_path import PresentationPathAndEditPath
+from services.pptx_video_embed import embed_presentation_videos
+from utils.asset_directory_utils import (
+    get_exports_directory,
+    resolve_app_path_to_filesystem,
+)
+from utils.get_env import get_app_data_directory_env, get_temp_directory_env
 from models.presentation_from_template import EditPresentationRequest
 from models.presentation_outline_model import (
     PresentationOutlineModel,
@@ -1581,6 +1588,64 @@ async def export_existing_presentation(
     return PresentationPathAndEditPath(
         **presentation_and_path.model_dump(),
         edit_path=f"/presentation?id={presentation.id}",
+    )
+
+
+class EmbedExportVideosRequest(BaseModel):
+    path: str
+
+
+@PRESENTATION_ROUTER.post("/{id}/export/embed-videos")
+async def embed_export_videos(
+    id: uuid.UUID,
+    payload: EmbedExportVideosRequest,
+    sql_session: AsyncSession = Depends(get_async_session),
+):
+    presentation = await sql_session.get(PresentationModel, id)
+    if not presentation:
+        raise HTTPException(404, "Presentation not found")
+    pptx_path = _resolve_export_pptx_path(payload.path)
+    try:
+        embedded = await embed_presentation_videos(pptx_path, id)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to embed videos into PPTX: {exc}",
+        ) from exc
+    return {"embedded": embedded, "path": pptx_path}
+
+
+def _resolve_export_pptx_path(path_or_url: str) -> str:
+    raw = (path_or_url or "").strip()
+    if not raw:
+        raise HTTPException(status_code=400, detail="Export path is required")
+    resolved = resolve_app_path_to_filesystem(raw)
+    if not resolved and os.path.isfile(raw):
+        resolved = os.path.realpath(raw)
+    if not resolved or not os.path.isfile(resolved):
+        raise HTTPException(status_code=404, detail="Exported PPTX was not found")
+    if not resolved.lower().endswith(".pptx"):
+        raise HTTPException(status_code=400, detail="Export path must be a PPTX file")
+    app_data = get_app_data_directory_env()
+    allowed_roots = []
+    if app_data:
+        allowed_roots.append(os.path.realpath(os.path.join(app_data, "exports")))
+    temp_dir = (get_temp_directory_env() or "").strip()
+    if temp_dir:
+        allowed_roots.append(os.path.realpath(temp_dir))
+    try:
+        allowed_roots.append(os.path.realpath(get_exports_directory()))
+    except Exception:
+        pass
+    real = os.path.realpath(resolved)
+    for root in allowed_roots:
+        try:
+            if os.path.commonpath([real, root]) == root:
+                return real
+        except ValueError:
+            continue
+    raise HTTPException(
+        status_code=403, detail="Export path is outside the exports directory"
     )
 
 

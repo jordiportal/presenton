@@ -52,6 +52,25 @@ export async function stopActiveExportProcesses(): Promise<void> {
   );
 }
 
+async function embedVideosInExportedPptx(
+  presentationId: string,
+  pptxPath: string
+): Promise<void> {
+  const base = (process.env.NEXT_PUBLIC_FAST_API || "").replace(/\/+$/, "");
+  if (!base) return;
+  const response = await fetch(
+    `${base}/api/v1/ppt/presentation/${presentationId}/export/embed-videos`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path: pptxPath }),
+    }
+  );
+  if (!response.ok) {
+    throw new Error(`embed-videos ${response.status}: ${await response.text()}`);
+  }
+}
+
 export function setupExportHandlers() {
   ipcMain.handle("export-presentation", async (_, id: string, title: string, exportAs: "pptx" | "pdf") => {
     let exportTempDir: string | undefined;
@@ -145,6 +164,14 @@ export function setupExportHandlers() {
 
       if (!exportFilePath) {
         return { success: false, message: "Export finished but output file was not found." };
+      }
+
+      if (exportAs === "pptx") {
+        try {
+          await embedVideosInExportedPptx(id, exportFilePath);
+        } catch (embedError) {
+          safeError("[Export] Video embed failed; keeping visual PPTX:", embedError);
+        }
       }
 
       const destinationPath = path.join(getDownloadsDir(), path.basename(exportFilePath));

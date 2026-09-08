@@ -57,6 +57,7 @@ import {
   ListMinus,
   Search,
   Sigma,
+  Video,
   X,
   Zap,
 } from "lucide-react";
@@ -72,6 +73,7 @@ import {
   createElementInsertElements,
   createFilterInsertElements,
   createImageInsertContent,
+  createVideoInsertElements,
   createInfographicInsertElements,
   createTableInsertElements,
   createTextInsertElements,
@@ -122,6 +124,7 @@ type ActionId =
   | "tables"
   | "filters"
   | "images"
+  | "videos"
   | "elements";
 
 type ActionItem = {
@@ -221,6 +224,7 @@ const insertActions: ActionItem[] = [
   { id: "tables", label: "Tables", icon: Rows3 },
   { id: "filters", label: "Filtros", icon: Filter },
   { id: "images", label: "Images", icon: Image },
+  { id: "videos", label: "Vídeos", icon: Video },
   { id: "elements", label: "Elements", icon: Shapes },
 ];
 
@@ -233,6 +237,7 @@ const actionIconSrc: Record<ActionId, string> = {
   tables: "/figma/presentation-actions/tables.svg",
   filters: "/figma/presentation-actions/filters.svg",
   images: "/figma/presentation-actions/images.svg",
+  videos: "/figma/presentation-actions/videos.svg",
   elements: "/figma/presentation-actions/elements.svg",
 };
 
@@ -316,6 +321,11 @@ export const imageItems = [
   { id: "image", label: "Image", icon: Image },
   { id: "image-text", label: "Image + Text", icon: Columns2 },
   { id: "image-grid", label: "Image Grid", icon: Grid3X3 },
+] satisfies PaletteItem[];
+
+export const videoItems = [
+  { id: "video", label: "Vídeo", icon: Video },
+  { id: "video-url", label: "YouTube / URL", icon: Play },
 ] satisfies PaletteItem[];
 
 const elementIconById: Record<ElementInsertKind, LucideIcon> = {
@@ -1295,6 +1305,7 @@ function ActionsPanel({
   onInfographicItemSelect,
   onElementItemSelect,
   onImageItemSelect,
+  onVideoItemSelect,
   onTableItemSelect,
   onFilterItemSelect,
   onTextItemSelect,
@@ -1318,6 +1329,7 @@ function ActionsPanel({
   onInfographicItemSelect: (item: PaletteItem) => void;
   onElementItemSelect: (item: PaletteItem) => void;
   onImageItemSelect: (item: PaletteItem) => void;
+  onVideoItemSelect: (item: PaletteItem) => void;
   onTableItemSelect: (item: PaletteItem) => void;
   onFilterItemSelect: (item: PaletteItem) => void;
   onTextItemSelect: (item: PaletteItem) => void;
@@ -1415,6 +1427,16 @@ function ActionsPanel({
           groups={[{ label: "Add", items: imageItems }]}
           onItemSelect={onImageItemSelect}
           previewKind="image"
+          theme={templateTheme}
+        />
+      )}
+      {!aiOnly && activeAction === "videos" && (
+        <InsertPanel
+          disabled={editingDisabled}
+          title="Vídeos"
+          groups={[{ label: "Añadir", items: videoItems }]}
+          onItemSelect={onVideoItemSelect}
+          previewKind="video"
           theme={templateTheme}
         />
       )}
@@ -1702,6 +1724,23 @@ const PresentationActions = (props: PresentationActionsProps) => {
     }
   };
 
+  const handleVideoItemSelect = (item: PaletteItem) => {
+    if (
+      insertEditorElements(
+        createVideoInsertElements(item.id, templateTheme),
+        item.label,
+      )
+    ) {
+      trackEvent(MixpanelEvent.Editor_Insert_Palette_Item_Selected, {
+        presentation_id: props.presentationId,
+        category: "videos",
+        item_id: item.id,
+        item_label: item.label,
+        slide_index: props.currentSlide,
+      });
+    }
+  };
+
   const handleElementItemSelect = (item: PaletteItem) => {
     if (
       insertEditorElements(
@@ -1813,6 +1852,7 @@ const PresentationActions = (props: PresentationActionsProps) => {
           onInfographicItemSelect={handleInfographicItemSelect}
           onElementItemSelect={handleElementItemSelect}
           onImageItemSelect={handleImageItemSelect}
+          onVideoItemSelect={handleVideoItemSelect}
           onTableItemSelect={handleTableItemSelect}
           onFilterItemSelect={handleFilterItemSelect}
           onTextItemSelect={handleTextItemSelect}

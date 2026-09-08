@@ -564,6 +564,22 @@ class Filter(BaseModel):
     name: str = "filter"
 
 
+class Video(BaseModel):
+    type: Literal["video"]
+    position: Optional[Position] = None
+    size: Optional[Size] = None
+    rotation: Optional[float] = None
+    src: Optional[str] = None
+    provider: Literal["file", "youtube", "vimeo", "url"] = "file"
+    video_id: Optional[str] = None
+    poster: Optional[str] = None
+    autoplay: bool = False
+    loop: bool = False
+    muted: bool = False
+    decorative: bool = False
+    name: str = "video"
+
+
 SlideElement: TypeAlias = Annotated[
     Union[
         Text,
@@ -575,6 +591,7 @@ SlideElement: TypeAlias = Annotated[
         Chart,
         Infographic,
         Filter,
+        Video,
         Flex,
         Grid,
         Group,
@@ -597,6 +614,7 @@ __all__ = [
     "Fill",
     "Filter",
     "FilterOption",
+    "Video",
     "Flex",
     "FlexDirection",
     "Font",

@@ -245,6 +245,11 @@ function toBackendServedPath(rawPath: string): string {
     return `/app_data${normalized.slice(imagesIdx)}`;
   }
 
+  const videosIdx = normalized.lastIndexOf("/videos/");
+  if (videosIdx !== -1) {
+    return `/app_data${normalized.slice(videosIdx)}`;
+  }
+
   const uploadsIdx = normalized.lastIndexOf("/uploads/");
   if (uploadsIdx !== -1) {
     return `/app_data${normalized.slice(uploadsIdx)}`;
@@ -373,7 +378,7 @@ function isAssetLikeString(value: string): boolean {
     normalizedPath.startsWith("./") ||
     normalizedPath.startsWith("../") ||
     /^[A-Za-z]:\//.test(normalizedPath) ||
-    /^(?:static|app_data|images|uploads|fonts)\//.test(normalizedPath);
+    /^(?:static|app_data|images|videos|uploads|fonts)\//.test(normalizedPath);
 
   if (!startsLikePath) return false;
 

@@ -15,6 +15,7 @@ export type PanelMode =
   | "tables"
   | "filters"
   | "images"
+  | "videos"
   | "elements"
   | "schema"
   | "layouts";

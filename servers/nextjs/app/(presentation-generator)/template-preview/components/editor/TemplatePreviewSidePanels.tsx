@@ -16,6 +16,7 @@ import {
   Shapes,
   Sparkles,
   Type,
+  Video,
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
@@ -28,6 +29,7 @@ import {
   chartTypeItems,
   elementItemGroups,
   imageItems,
+  videoItems,
   filterTypeItems,
   infographicItems,
   tableTypeItems,
@@ -75,6 +77,7 @@ const insertNavItems: Array<{
   { id: "tables", label: "Tables", Icon: Rows3 },
   { id: "filters", label: "Filtros", Icon: Filter },
   { id: "images", label: "Images", Icon: ImageIcon },
+  { id: "videos", label: "Vídeos", Icon: Video },
   { id: "elements", label: "Elements", Icon: Shapes },
 ];
 
@@ -177,6 +180,7 @@ export function TemplateInsertPanel({
   onInfographicItemSelect,
   onElementItemSelect,
   onImageItemSelect,
+  onVideoItemSelect,
   onTableItemSelect,
   onFilterItemSelect,
   onTextItemSelect,
@@ -190,6 +194,7 @@ export function TemplateInsertPanel({
   onInfographicItemSelect: (item: PaletteItem) => void;
   onElementItemSelect: (item: PaletteItem) => void;
   onImageItemSelect: (item: PaletteItem) => void;
+  onVideoItemSelect: (item: PaletteItem) => void;
   onTableItemSelect: (item: PaletteItem) => void;
   onFilterItemSelect: (item: PaletteItem) => void;
   onTextItemSelect: (item: PaletteItem) => void;
@@ -266,6 +271,14 @@ export function TemplateInsertPanel({
           groups={[{ label: "Add", items: imageItems }]}
           onItemSelect={onImageItemSelect}
           previewKind="image"
+          theme={templateTheme}
+        />
+      ) : activePanel === "videos" ? (
+        <InsertPanel
+          title="Vídeos"
+          groups={[{ label: "Añadir", items: videoItems }]}
+          onItemSelect={onVideoItemSelect}
+          previewKind="video"
           theme={templateTheme}
         />
       ) : activePanel === "elements" ? (

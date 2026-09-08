@@ -14,6 +14,7 @@ from templates.v2.models.elements import (
     TextList,
     Vector,
     VectorShape,
+    Video,
 )
 from templates.v2.models.layouts import RawSlideLayout
 
@@ -663,3 +664,29 @@ def test_flow_layout_children_can_omit_geometry():
     grid = flex.children[0]
     assert flex.position is None
     assert grid.size is None
+
+
+def test_video_element_accepts_empty_placeholder_and_youtube():
+    placeholder = Video.model_validate(
+        {
+            "type": "video",
+            "name": "video",
+            "position": {"x": 80, "y": 80},
+            "size": {"width": 720, "height": 405},
+        }
+    )
+    assert placeholder.src is None
+    assert placeholder.provider == "file"
+
+    youtube = Video.model_validate(
+        {
+            "type": "video",
+            "name": "video",
+            "provider": "youtube",
+            "video_id": "dQw4w9wgGcQ",
+            "src": "https://www.youtube.com/embed/dQw4w9wgGcQ",
+            "poster": "https://img.youtube.com/vi/dQw4w9wgGcQ/hqdefault.jpg",
+        }
+    )
+    assert youtube.provider == "youtube"
+    assert youtube.video_id == "dQw4w9wgGcQ"

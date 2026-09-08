@@ -9,6 +9,7 @@ from pathvalidate import sanitize_filename
 from models.presentation_and_path import PresentationAndPath
 from utils.filename_utils import safe_export_basename
 from services.export_task_service import EXPORT_TASK_SERVICE
+from services.pptx_video_embed import embed_presentation_videos
 from utils.runtime_limits import log_memory
 
 
@@ -63,6 +64,22 @@ async def export_presentation(
         fastapi_url=fastapi_url,
         cookie_header=cookie_header,
     )
+    if export_as == "pptx":
+        try:
+            embedded = await embed_presentation_videos(
+                export_result.path, presentation_id
+            )
+            if embedded:
+                LOGGER.info(
+                    "Embedded %s local video(s) into PPTX %s",
+                    embedded,
+                    export_result.path,
+                )
+        except Exception:
+            LOGGER.exception(
+                "PPTX video embed failed; keeping visual export for %s",
+                presentation_id,
+            )
     log_memory(
         LOGGER,
         "presentation.export.finish",

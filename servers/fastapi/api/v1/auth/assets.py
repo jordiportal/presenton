@@ -4,6 +4,7 @@ import uuid
 
 PRIVATE_APP_DATA_ROOTS = {
     "images",
+    "videos",
     "exports",
     "uploads",
     "pptx-to-html",

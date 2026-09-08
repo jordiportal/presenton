@@ -535,6 +535,19 @@ export type FilterElement = ElementBase & {
   accent?: string | null;
 };
 
+export type VideoProvider = "file" | "youtube" | "vimeo" | "url";
+
+export type VideoElement = ElementBase & {
+  type: "video";
+  src?: string | null;
+  provider?: VideoProvider | null;
+  video_id?: string | null;
+  poster?: string | null;
+  autoplay?: boolean | null;
+  loop?: boolean | null;
+  muted?: boolean | null;
+};
+
 export type TableElement = ElementBase & {
   type: "table";
   font?: Font | null;
@@ -668,6 +681,7 @@ export type SlideElement =
   | ChartElement
   | InfographicElement
   | FilterElement
+  | VideoElement
   | FlexElement
   | GridElement
   | GroupElement;

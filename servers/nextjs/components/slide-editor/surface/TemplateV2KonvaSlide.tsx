@@ -62,7 +62,10 @@ import {
   slideFilterBindings,
 } from "@/components/slide-editor/filters/apply-slide-filters";
 import { isFilterElement } from "@/components/slide-editor/filters/filter-model";
-import type { FilterElement } from "@/components/slide-editor/types";
+import type { FilterElement, VideoElement } from "@/components/slide-editor/types";
+import { VideoEditorPopover } from "@/components/slide-editor/videos/VideoEditor";
+import { VideoOverlay } from "@/components/slide-editor/videos/VideoOverlay";
+import { isVideoElement } from "@/components/slide-editor/videos/video-model";
 import { InfographicDataEditorPopover } from "@/components/slide-editor/infographics/InfographicEditorContent";
 import { InfographicItemToolbar } from "@/components/slide-editor/infographics/InfographicItemToolbar";
 import { InfographicPlainTextEditor } from "@/components/slide-editor/infographics/InfographicPlainTextEditor";
@@ -523,6 +526,8 @@ function TemplateV2KonvaSlideComponent({
     useState<ElementSelection | null>(null);
   const [filterEditorSelection, setFilterEditorSelection] =
     useState<ElementSelection | null>(null);
+  const [videoEditorSelection, setVideoEditorSelection] =
+    useState<ElementSelection | null>(null);
   const [infographicEditorSelection, setInfographicEditorSelection] =
     useState<ElementSelection | null>(null);
   const filterRefreshRef = useRef(0);
@@ -830,6 +835,9 @@ function TemplateV2KonvaSlideComponent({
     : null;
   const filterEditorElement = filterEditorSelection
     ? getElementAtSelection(uiDraft, filterEditorSelection)
+    : null;
+  const videoEditorElement = videoEditorSelection
+    ? getElementAtSelection(uiDraft, videoEditorSelection)
     : null;
   const infographicEditorElement = infographicEditorSelection
     ? getElementAtSelection(uiDraft, infographicEditorSelection)
@@ -1746,6 +1754,10 @@ function TemplateV2KonvaSlideComponent({
 
   const closeFilterEditor = useCallback(() => {
     setFilterEditorSelection(null);
+  }, []);
+
+  const closeVideoEditor = useCallback(() => {
+    setVideoEditorSelection(null);
   }, []);
 
   const commitLiveUi = useCallback(
@@ -3257,6 +3269,18 @@ function TemplateV2KonvaSlideComponent({
           }}
         />
       ) : null}
+      {isRenderActive && uiDraft ? (
+        <VideoOverlay
+          isEditMode={isEditMode}
+          nodeRefs={nodeRefs}
+          revision={fontLoadState.revision}
+          ui={uiDraft}
+          onOpenEditor={(selection) => {
+            if (!isEditMode) return;
+            setVideoEditorSelection(selection);
+          }}
+        />
+      ) : null}
       {!infographicCanvasSelection ? <TemplateV2SelectionToolbar
         anchorBox={floatingToolbarAnchorBox}
         canUngroupComponent={canUngroupSelectedComponent}
@@ -3528,6 +3552,25 @@ function TemplateV2KonvaSlideComponent({
             }, 0);
           }}
           onClose={closeFilterEditor}
+        />
+      ) : null}
+      {isEditMode &&
+        videoEditorSelection &&
+        videoEditorElement &&
+        isVideoElement(videoEditorElement) ? (
+        <VideoEditorPopover
+          key={keyForSelection(videoEditorSelection)}
+          video={videoEditorElement as VideoElement}
+          onChange={(next) => {
+            updateElement(videoEditorSelection, (element) => ({
+              ...element,
+              ...next,
+              type: "video",
+              position: element.position,
+              size: element.size,
+            }));
+          }}
+          onClose={closeVideoEditor}
         />
       ) : null}
       {isEditMode &&
