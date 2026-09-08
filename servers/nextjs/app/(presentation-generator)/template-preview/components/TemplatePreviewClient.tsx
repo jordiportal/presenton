@@ -7,6 +7,7 @@ import type { TemplateV2Layout } from "@/components/slide-editor/importing/templ
 import {
   createChartInsertElements,
   createElementInsertElements,
+  createFilterInsertElements,
   createImageInsertContent,
   createInfographicInsertElements,
   createTableInsertElements,
@@ -980,6 +981,26 @@ const GroupLayoutPreview = ({
     [activeLayoutIndex, insertEditorElements, templateId, templateTheme],
   );
 
+  const handleFilterItemSelect = useCallback(
+    (item: PaletteItem) => {
+      if (
+        !insertEditorElements(
+          createFilterInsertElements(item.id, templateTheme),
+          item.label,
+        )
+      ) {
+        return;
+      }
+      track(ANALYTICS_EVENTS.EDITOR_PALETTE_ITEM_INSERTED, {
+        template_id: templateId,
+        category: "filters",
+        item_id: item.id,
+        layout_index: activeLayoutIndex,
+      });
+    },
+    [activeLayoutIndex, insertEditorElements, templateId, templateTheme],
+  );
+
   const handleImageItemSelect = useCallback(
     (item: PaletteItem) => {
       if (
@@ -1352,6 +1373,7 @@ const GroupLayoutPreview = ({
                 onElementItemSelect={handleElementItemSelect}
                 onImageItemSelect={handleImageItemSelect}
                 onTableItemSelect={handleTableItemSelect}
+                onFilterItemSelect={handleFilterItemSelect}
                 onTextItemSelect={handleTextItemSelect}
                 template={template}
                 templateId={templateId}

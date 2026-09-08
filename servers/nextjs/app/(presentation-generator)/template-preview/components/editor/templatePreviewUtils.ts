@@ -13,6 +13,7 @@ export type PanelMode =
   | "charts"
   | "infographics"
   | "tables"
+  | "filters"
   | "images"
   | "elements"
   | "schema"

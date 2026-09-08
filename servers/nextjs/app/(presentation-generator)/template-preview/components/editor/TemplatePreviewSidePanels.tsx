@@ -5,6 +5,7 @@ import {
   ArrowUp,
   BarChart3,
   Edit3,
+  Filter,
   Image as ImageIcon,
   Info,
   List,
@@ -27,6 +28,7 @@ import {
   chartTypeItems,
   elementItemGroups,
   imageItems,
+  filterTypeItems,
   infographicItems,
   tableTypeItems,
   textItems,
@@ -71,6 +73,7 @@ const insertNavItems: Array<{
   { id: "charts", label: "Charts", Icon: BarChart3 },
   { id: "infographics", label: "Infographics", Icon: Sparkles },
   { id: "tables", label: "Tables", Icon: Rows3 },
+  { id: "filters", label: "Filtros", Icon: Filter },
   { id: "images", label: "Images", Icon: ImageIcon },
   { id: "elements", label: "Elements", Icon: Shapes },
 ];
@@ -175,6 +178,7 @@ export function TemplateInsertPanel({
   onElementItemSelect,
   onImageItemSelect,
   onTableItemSelect,
+  onFilterItemSelect,
   onTextItemSelect,
   template,
   templateId,
@@ -187,6 +191,7 @@ export function TemplateInsertPanel({
   onElementItemSelect: (item: PaletteItem) => void;
   onImageItemSelect: (item: PaletteItem) => void;
   onTableItemSelect: (item: PaletteItem) => void;
+  onFilterItemSelect: (item: PaletteItem) => void;
   onTextItemSelect: (item: PaletteItem) => void;
   template: unknown;
   templateId: string;
@@ -230,6 +235,29 @@ export function TemplateInsertPanel({
           groups={[{ label: "Table Type", items: tableTypeItems }]}
           onItemSelect={onTableItemSelect}
           previewKind="table"
+          theme={templateTheme}
+        />
+      ) : activePanel === "filters" ? (
+        <InsertPanel
+          title="Filtros"
+          groups={[
+            {
+              label: "Tiempo",
+              items: filterTypeItems.filter(
+                (item) =>
+                  item.id === "filter-temporal" || item.id === "filter-year",
+              ),
+            },
+            {
+              label: "Dimensión",
+              items: filterTypeItems.filter(
+                (item) =>
+                  item.id !== "filter-temporal" && item.id !== "filter-year",
+              ),
+            },
+          ]}
+          onItemSelect={onFilterItemSelect}
+          previewKind="filter"
           theme={templateTheme}
         />
       ) : activePanel === "images" ? (

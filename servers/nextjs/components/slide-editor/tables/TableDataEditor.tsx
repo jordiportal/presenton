@@ -16,7 +16,10 @@ import {
   tableRowsAsStrings,
 } from "@/components/slide-editor/model/element-model";
 import { Kh7QueryPanel } from "@/components/slide-editor/data/Kh7QueryPanel";
+import { tableGridFromExecute } from "@/app/(presentation-generator)/services/api/kh7";
 import {
+  ADVANCED_TABLE_MAX_COLUMNS,
+  ADVANCED_TABLE_MAX_ROWS,
   tableColumnLimit,
   tableRowLimit,
 } from "@/components/slide-editor/tables/table-style";
@@ -171,14 +174,39 @@ function TableDataModal({
                   <Kh7QueryPanel
                     binding={draft.data_binding}
                     onApply={(result, nextBinding) => {
-                      const columns = result.table.columns;
-                      const body = result.table.rows.map((row) =>
-                        row.map((cell) => (cell == null ? "" : String(cell))),
-                      );
-                      setDraft((current) => ({
-                        ...setTableRowsFromStrings(current, [columns, ...body]),
-                        data_binding: nextBinding,
-                      }));
+                      const grid = tableGridFromExecute(result);
+                      setDraft((current) => {
+                        const next = setTableRowsFromStrings(current, [
+                          grid.columns,
+                          ...grid.rows,
+                        ]);
+                        const rowCount = grid.rows.length + 1;
+                        const columnCount = Math.max(1, grid.columns.length);
+                        return {
+                          ...next,
+                          data_binding: nextBinding,
+                          max_columns: Math.max(
+                            tableColumnLimit(current),
+                            columnCount,
+                            ADVANCED_TABLE_MAX_COLUMNS,
+                          ),
+                          max_rows: Math.max(
+                            tableRowLimit(current),
+                            rowCount,
+                            ADVANCED_TABLE_MAX_ROWS,
+                          ),
+                          size: {
+                            width: current.size?.width ?? 1120,
+                            height: Math.min(
+                              620,
+                              Math.max(
+                                current.size?.height ?? 320,
+                                28 + rowCount * 24,
+                              ),
+                            ),
+                          },
+                        };
+                      });
                     }}
                   />
                 </div>

@@ -54,6 +54,53 @@ export type Kh7ExecuteResponse = {
   row_count: number;
 };
 
+export type Kh7TableGrid = {
+  columns: string[];
+  rows: string[][];
+};
+
+export function tableGridFromExecute(result: Kh7ExecuteResponse): Kh7TableGrid {
+  const categories = result.chart?.categories ?? [];
+  const series = result.chart?.series ?? [];
+  if (categories.length > 0 && series.length > 0) {
+    const axis =
+      result.table?.columns?.[0] != null && result.table.columns[0] !== ""
+        ? String(result.table.columns[0])
+        : "Categoría";
+    return {
+      columns: [axis, ...series.map((item) => item.name)],
+      rows: categories.map((category, index) => [
+        String(category ?? ""),
+        ...series.map((item) => formatTableCell(item.values?.[index])),
+      ]),
+    };
+  }
+
+  const columns = (result.table?.columns ?? []).map((item) => String(item ?? ""));
+  const body = (result.table?.rows ?? []).map((row) =>
+    (Array.isArray(row) ? row : []).map((cell) => formatTableCell(cell)),
+  );
+  if (
+    body[0] &&
+    columns.length > 0 &&
+    body[0].length === columns.length &&
+    body[0].every((cell, index) => cell === columns[index])
+  ) {
+    return { columns, rows: body.slice(1) };
+  }
+  return { columns, rows: body };
+}
+
+function formatTableCell(value: unknown): string {
+  if (value == null) return "";
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return Number.isInteger(value)
+      ? String(value)
+      : String(Math.round(value * 100) / 100);
+  }
+  return String(value);
+}
+
 export class Kh7Api {
   static async status(): Promise<{ configured: boolean; source?: "kh7" | "mock" }> {
     const response = await fetch(getApiUrl("/api/v1/ppt/kh7/status"), {

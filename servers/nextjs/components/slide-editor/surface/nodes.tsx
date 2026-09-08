@@ -2398,6 +2398,20 @@ function RawElementVisual({
       </InfographicMainUngroupedContext.Provider>
     );
   }
+  if (type === "filter") {
+    return (
+      <Group listening={interactive}>
+        <Rect
+          width={width}
+          height={height}
+          fill="#FFFFFF"
+          stroke="#E4E7EC"
+          strokeWidth={1}
+          cornerRadius={18}
+        />
+      </Group>
+    );
+  }
   return null;
 }
 

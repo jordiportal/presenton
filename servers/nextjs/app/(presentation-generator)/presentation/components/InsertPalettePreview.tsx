@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import {
   createChartInsertElements,
   createElementInsertElements,
+  createFilterInsertElements,
   createImageInsertContent,
   createInfographicInsertElements,
   createTableInsertElements,
@@ -22,6 +23,7 @@ export type InsertPalettePreviewKind =
   | "chart"
   | "infographic"
   | "table"
+  | "filter"
   | "image"
   | "element";
 
@@ -36,6 +38,7 @@ const PREVIEW_FIT: Record<
   chart: { maxScale: 0.55, padding: { x: 0.07, y: 0.09 } },
   infographic: { maxScale: 0.55, padding: { x: 0.06, y: 0.07 } },
   table: { maxScale: 0.55, padding: { x: 0.05, y: 0.1 } },
+  filter: { maxScale: 0.72, padding: { x: 0.04, y: 0.16 } },
   image: { maxScale: 0.6, padding: { x: 0.07, y: 0.08 } },
   element: { maxScale: 0.62, padding: { x: 0.18, y: 0.14 } },
 };
@@ -54,6 +57,8 @@ function createPreviewContent(
       return { elements: createInfographicInsertElements(itemId, theme) };
     case "table":
       return { elements: createTableInsertElements(itemId, theme) };
+    case "filter":
+      return { elements: createFilterInsertElements(itemId, theme) };
     case "image":
       return createImageInsertContent(itemId, theme);
     case "element":

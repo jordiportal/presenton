@@ -511,6 +511,30 @@ export type DataBinding = {
   fetched_at?: string | null;
 };
 
+export type FilterWidgetKind =
+  | "temporal"
+  | "year"
+  | "radio"
+  | "multi"
+  | "dropdown"
+  | "search";
+
+export type FilterOption = {
+  code: string;
+  caption: string;
+};
+
+export type FilterElement = ElementBase & {
+  type: "filter";
+  filter_kind: FilterWidgetKind;
+  label?: string | null;
+  source?: string | null;
+  dimension?: string | null;
+  options?: FilterOption[] | null;
+  selected: string[];
+  accent?: string | null;
+};
+
 export type TableElement = ElementBase & {
   type: "table";
   font?: Font | null;
@@ -643,6 +667,7 @@ export type SlideElement =
   | SvgElement
   | ChartElement
   | InfographicElement
+  | FilterElement
   | FlexElement
   | GridElement
   | GroupElement;

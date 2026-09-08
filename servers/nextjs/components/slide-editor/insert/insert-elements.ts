@@ -8,6 +8,7 @@ import { measureMathLatex } from "@/lib/math";
 import type {
   ChartType,
   Fill,
+  FilterWidgetKind,
   Font,
   InfographicType,
   Marker,
@@ -15,6 +16,12 @@ import type {
   Stroke,
   TableCell,
 } from "@/components/slide-editor/types";
+import {
+  DEFAULT_YEARS,
+  MONTH_SHORT,
+  defaultDimensionForKind,
+  filterKindLabel,
+} from "@/components/slide-editor/filters/filter-model";
 import { INFOGRAPHIC_EXAMPLE_ICON_URLS } from "@/components/slide-editor/infographics/infographic-icons";
 import { fitInfographicElementToData } from "@/components/slide-editor/infographics/infographic-sizing";
 import {
@@ -1640,6 +1647,45 @@ function createDefaultTableInsertElements(kind?: string): SlideElement[] {
   return kind === "simple-table" ? [makeSimpleTableElement()] : [];
 }
 
+function makeFilterElement(kind: FilterWidgetKind): SlideElement {
+  const temporal = kind === "temporal";
+  const year = kind === "year";
+  return {
+    type: "filter",
+    position: { x: temporal ? 80 : 80, y: 72 },
+    size: {
+      width: temporal ? 1120 : year ? 280 : kind === "search" ? 360 : 720,
+      height: kind === "search" ? 72 : 64,
+    },
+    filter_kind: kind,
+    label: filterKindLabel(kind),
+    source: null,
+    dimension: defaultDimensionForKind(kind) || null,
+    options: temporal
+      ? MONTH_SHORT.map((item) => ({ ...item }))
+      : year
+        ? DEFAULT_YEARS.map((item) => ({ ...item }))
+        : [],
+    selected: temporal ? ["09"] : year ? ["2026"] : [],
+    accent: "F97316",
+    decorative: false,
+    name: `filter_${kind}`,
+  };
+}
+
+function createDefaultFilterInsertElements(kind?: string): SlideElement[] {
+  const map: Record<string, FilterWidgetKind> = {
+    "filter-temporal": "temporal",
+    "filter-year": "year",
+    "filter-radio": "radio",
+    "filter-multi": "multi",
+    "filter-dropdown": "dropdown",
+    "filter-search": "search",
+  };
+  const filterKind = kind ? map[kind] : undefined;
+  return filterKind ? [makeFilterElement(filterKind)] : [];
+}
+
 function makeImageElement({
   x,
   y,
@@ -2771,6 +2817,13 @@ export function createTableInsertElements(
   theme: TemplateTheme = DEFAULT_TEMPLATE_THEME,
 ): SlideElement[] {
   return themeElements(createDefaultTableInsertElements(kind), theme);
+}
+
+export function createFilterInsertElements(
+  kind?: string,
+  theme: TemplateTheme = DEFAULT_TEMPLATE_THEME,
+): SlideElement[] {
+  return themeElements(createDefaultFilterInsertElements(kind), theme);
 }
 
 export function createImageInsertContent(

@@ -542,6 +542,28 @@ class Group(BaseModel):
     name: str
 
 
+class FilterOption(BaseModel):
+    code: str
+    caption: str
+
+
+class Filter(BaseModel):
+    type: Literal["filter"]
+    position: Optional[Position] = None
+    size: Optional[Size] = None
+    filter_kind: Literal[
+        "temporal", "year", "radio", "multi", "dropdown", "search"
+    ]
+    label: Optional[str] = None
+    source: Optional[str] = None
+    dimension: Optional[str] = None
+    options: Optional[list[FilterOption]] = None
+    selected: list[str] = Field(default_factory=list)
+    accent: Optional[str] = None
+    decorative: bool = False
+    name: str = "filter"
+
+
 SlideElement: TypeAlias = Annotated[
     Union[
         Text,
@@ -552,6 +574,7 @@ SlideElement: TypeAlias = Annotated[
         Vector,
         Chart,
         Infographic,
+        Filter,
         Flex,
         Grid,
         Group,
@@ -572,6 +595,8 @@ __all__ = [
     "ChartType",
     "Container",
     "Fill",
+    "Filter",
+    "FilterOption",
     "Flex",
     "FlexDirection",
     "Font",

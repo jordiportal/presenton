@@ -489,11 +489,75 @@ function renderItem(item: JsonRecord, mode: RenderMode): string {
       return renderChart(item, mode);
     case "infographic":
       return renderInfographic(item, mode);
+    case "filter":
+      return renderFilter(item, mode);
     default:
       if (Array.isArray(item.children)) return renderGroup(item, mode);
       if (readRecordOrNull(item.child)) return renderContainer(item, mode);
       return "";
   }
+}
+
+function renderFilter(item: JsonRecord, mode: RenderMode): string {
+  const kind = readString(item.filter_kind) ?? "multi";
+  const selected = new Set(readArray(item.selected).map(String));
+  const options = readArray(item.options).map((value) => {
+    const record = readRecordOrNull(value) ?? {};
+    return {
+      code: readString(record.code) ?? String(value ?? ""),
+      caption: readString(record.caption) ?? readString(record.code) ?? "",
+    };
+  });
+  const accent = normalizeChartColor(readString(item.accent)) || "#F97316";
+  const label = escapeHtml(readString(item.label) ?? "Filtro");
+  let controls = "";
+  if (kind === "temporal") {
+    const months = [
+      ["01", "ene"],
+      ["02", "feb"],
+      ["03", "mar"],
+      ["04", "abr"],
+      ["05", "may"],
+      ["06", "jun"],
+      ["07", "jul"],
+      ["08", "ago"],
+      ["09", "sep"],
+      ["10", "oct"],
+      ["11", "nov"],
+      ["12", "dic"],
+    ];
+    controls = `<div style="display:flex;height:28px;overflow:hidden;border:1px solid #D0D5DD;border-radius:999px;background:#fff;">${months
+      .map(([code, caption], index) => {
+        const active = [...selected].some((value) => String(value).endsWith(code));
+        return `<span style="flex:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;text-transform:uppercase;border-left:${
+          index ? "1px solid #E4E7EC" : "0"
+        };background:${active ? accent : "transparent"};color:${
+          active ? "#fff" : "#344054"
+        };">${caption}</span>`;
+      })
+      .join("")}</div>`;
+  } else if (kind === "year") {
+    controls = `<div style="display:flex;gap:6px;">${options
+      .map((option) => {
+        const active = selected.has(option.code);
+        return `<span style="display:inline-flex;align-items:center;height:28px;padding:0 12px;border-radius:999px;font-size:12px;font-weight:600;background:${
+          active ? "#111827" : "#F2F4F7"
+        };color:${active ? "#fff" : "#344054"};">${escapeHtml(option.caption)}</span>`;
+      })
+      .join("")}</div>`;
+  } else {
+    controls = `<div style="display:flex;flex-wrap:wrap;gap:6px;">${options
+      .map((option) => {
+        const active = selected.has(option.code);
+        return `<span style="display:inline-flex;align-items:center;height:26px;padding:0 10px;border-radius:999px;font-size:11px;font-weight:600;border:1px solid ${
+          active ? "transparent" : "#D0D5DD"
+        };background:${active ? accent : "#fff"};color:${
+          active ? "#fff" : "#344054"
+        };">${escapeHtml(option.caption || option.code)}</span>`;
+      })
+      .join("")}</div>`;
+  }
+  return `<div style="${frameStyle(item, mode)}display:flex;flex-direction:column;justify-content:flex-end;padding:6px 8px;border:1px solid #E4E7EC;border-radius:18px;background:#fff;"><div style="font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#667085;margin-bottom:4px;">${label}</div>${controls}</div>`;
 }
 
 function renderImage(item: JsonRecord, mode: RenderMode): string {

@@ -23,6 +23,7 @@ import {
   Columns2,
   Diamond,
   Droplet,
+  Filter,
   Flag,
   Gauge,
   Grid3X3,
@@ -69,6 +70,7 @@ import {
   ELEMENT_INSERT_GROUPS,
   createChartInsertElements,
   createElementInsertElements,
+  createFilterInsertElements,
   createImageInsertContent,
   createInfographicInsertElements,
   createTableInsertElements,
@@ -118,6 +120,7 @@ type ActionId =
   | "charts"
   | "infographics"
   | "tables"
+  | "filters"
   | "images"
   | "elements";
 
@@ -216,6 +219,7 @@ const insertActions: ActionItem[] = [
   { id: "charts", label: "Charts", icon: BarChart3 },
   { id: "infographics", label: "Infographics", icon: Shapes },
   { id: "tables", label: "Tables", icon: Rows3 },
+  { id: "filters", label: "Filtros", icon: Filter },
   { id: "images", label: "Images", icon: Image },
   { id: "elements", label: "Elements", icon: Shapes },
 ];
@@ -227,6 +231,7 @@ const actionIconSrc: Record<ActionId, string> = {
   charts: "/figma/presentation-actions/charts.svg",
   infographics: "/figma/presentation-actions/infographics.svg",
   tables: "/figma/presentation-actions/tables.svg",
+  filters: "/figma/presentation-actions/filters.svg",
   images: "/figma/presentation-actions/images.svg",
   elements: "/figma/presentation-actions/elements.svg",
 };
@@ -296,6 +301,15 @@ export const infographicItems = [
 export const tableTypeItems = [
   { id: "simple-table", label: "Simple Table", icon: Table2 },
   { id: "advanced-table", label: "Advanced Table", icon: Grid3X3 },
+] satisfies PaletteItem[];
+
+export const filterTypeItems = [
+  { id: "filter-temporal", label: "Meses", icon: Filter },
+  { id: "filter-year", label: "Año", icon: Filter },
+  { id: "filter-radio", label: "Radial", icon: Filter },
+  { id: "filter-multi", label: "Multiselector", icon: Filter },
+  { id: "filter-dropdown", label: "Desplegable", icon: Filter },
+  { id: "filter-search", label: "Filtro libre", icon: Search },
 ] satisfies PaletteItem[];
 
 export const imageItems = [
@@ -1282,6 +1296,7 @@ function ActionsPanel({
   onElementItemSelect,
   onImageItemSelect,
   onTableItemSelect,
+  onFilterItemSelect,
   onTextItemSelect,
   presentationData,
   presentationId,
@@ -1304,6 +1319,7 @@ function ActionsPanel({
   onElementItemSelect: (item: PaletteItem) => void;
   onImageItemSelect: (item: PaletteItem) => void;
   onTableItemSelect: (item: PaletteItem) => void;
+  onFilterItemSelect: (item: PaletteItem) => void;
   onTextItemSelect: (item: PaletteItem) => void;
   presentationData?: unknown;
   presentationId: string;
@@ -1364,6 +1380,31 @@ function ActionsPanel({
           groups={[{ label: "Table Type", items: tableTypeItems }]}
           onItemSelect={onTableItemSelect}
           previewKind="table"
+          theme={templateTheme}
+        />
+      )}
+      {!aiOnly && activeAction === "filters" && (
+        <InsertPanel
+          disabled={editingDisabled}
+          title="Filtros"
+          groups={[
+            {
+              label: "Tiempo",
+              items: filterTypeItems.filter(
+                (item) =>
+                  item.id === "filter-temporal" || item.id === "filter-year",
+              ),
+            },
+            {
+              label: "Dimensión",
+              items: filterTypeItems.filter(
+                (item) =>
+                  item.id !== "filter-temporal" && item.id !== "filter-year",
+              ),
+            },
+          ]}
+          onItemSelect={onFilterItemSelect}
+          previewKind="filter"
           theme={templateTheme}
         />
       )}
@@ -1627,6 +1668,23 @@ const PresentationActions = (props: PresentationActionsProps) => {
     }
   };
 
+  const handleFilterItemSelect = (item: PaletteItem) => {
+    if (
+      insertEditorElements(
+        createFilterInsertElements(item.id, templateTheme),
+        item.label,
+      )
+    ) {
+      trackEvent(MixpanelEvent.Editor_Insert_Palette_Item_Selected, {
+        presentation_id: props.presentationId,
+        category: "filters",
+        item_id: item.id,
+        item_label: item.label,
+        slide_index: props.currentSlide,
+      });
+    }
+  };
+
   const handleImageItemSelect = (item: PaletteItem) => {
     if (
       insertEditorContent(
@@ -1756,6 +1814,7 @@ const PresentationActions = (props: PresentationActionsProps) => {
           onElementItemSelect={handleElementItemSelect}
           onImageItemSelect={handleImageItemSelect}
           onTableItemSelect={handleTableItemSelect}
+          onFilterItemSelect={handleFilterItemSelect}
           onTextItemSelect={handleTextItemSelect}
           presentationData={presentationData}
           presentationId={props.presentationId}

@@ -7,10 +7,13 @@ import {
   type Alignment,
   type BorderRadius,
   type ChartSeries,
+  type DataBinding,
   type DataLabelPosition,
   type Deck,
   type DesignVariable,
   type Fill,
+  type FilterOption,
+  type FilterWidgetKind,
   type Font,
   type GroupElement,
   type InfographicData,
@@ -718,6 +721,8 @@ function adaptElement(value: unknown): SlideElement | null {
       return adaptTextList(raw);
     case "table":
       return adaptTable(raw);
+    case "filter":
+      return adaptFilter(raw);
     case "vector":
       return adaptVector(raw);
     case "chart":
@@ -861,6 +866,39 @@ function adaptTable(raw: UnknownRecord): SlideElement {
     min_columns: readNumber(raw, "min_columns"),
     max_rows: readNumber(raw, "max_rows") ?? maxRows,
     min_rows: readNumber(raw, "min_rows"),
+    data_binding: adaptDataBinding(raw.data_binding),
+  };
+}
+
+function adaptFilter(raw: UnknownRecord): SlideElement {
+  const kind =
+    readEnum(
+      raw,
+      ["temporal", "year", "radio", "multi", "dropdown", "search"],
+      "filter_kind",
+    ) ?? "multi";
+  const options = readArray(raw, "options")
+    .map((item) => {
+      const record = asRecord(item);
+      if (!record) return null;
+      const code = readString(record.code);
+      if (!code) return null;
+      return {
+        code,
+        caption: readString(record.caption) ?? code,
+      } satisfies FilterOption;
+    })
+    .filter((item): item is FilterOption => Boolean(item));
+  return {
+    ...baseElement(raw),
+    type: "filter",
+    filter_kind: kind as FilterWidgetKind,
+    label: readString(raw.label),
+    source: readString(raw.source),
+    dimension: readString(raw.dimension),
+    options,
+    selected: readArray(raw, "selected").map(String).filter(Boolean),
+    accent: readString(raw.accent),
   };
 }
 
@@ -1035,6 +1073,7 @@ function adaptChart(raw: UnknownRecord): SlideElement {
     categories,
     series: supportedSeries,
     source: truncateString(readString(raw.source) ?? "", 120) || null,
+    data_binding: adaptDataBinding(raw.data_binding),
   };
 }
 
@@ -2037,6 +2076,45 @@ function isFullSlideFilledShape(
     bounds.height === EDITOR_STAGE_HEIGHT &&
     Boolean(element.fill?.color)
   );
+}
+
+function adaptDataBinding(value: unknown): DataBinding | null {
+  const raw = asRecord(value);
+  if (!raw) return null;
+  const source = readString(raw.source);
+  const queryId = readString(raw.query_id);
+  if ((source !== "kh7" && source !== "mock") || !queryId) return null;
+  return {
+    source,
+    query_id: queryId,
+    query_name: readString(raw.query_name),
+    dimensions: readArray(raw, "dimensions").map(String).filter(Boolean),
+    column_dimensions: readArray(raw, "column_dimensions")
+      .map(String)
+      .filter(Boolean),
+    measures: readArray(raw, "measures").map(String).filter(Boolean),
+    filters: readArray(raw, "filters")
+      .map((item) => {
+        const record = asRecord(item);
+        if (!record) return null;
+        const dimension =
+          readString(record.dimension) ?? readString(record.column);
+        if (!dimension) return null;
+        const values = Array.isArray(record.values)
+          ? record.values.map(String)
+          : record.value == null
+            ? []
+            : [String(record.value)];
+        return {
+          dimension,
+          column: dimension,
+          operator: readString(record.operator) ?? "in",
+          values,
+        };
+      })
+      .filter((item): item is NonNullable<typeof item> => Boolean(item)),
+    fetched_at: readString(raw.fetched_at),
+  };
 }
 
 function titleFromLayout(layout: TemplateV2Layout, index: number) {

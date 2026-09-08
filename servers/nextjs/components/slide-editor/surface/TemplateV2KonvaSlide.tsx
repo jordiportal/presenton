@@ -54,6 +54,15 @@ import { ElementToolbar } from "@/components/slide-editor/toolbar/ElementToolbar
 import { ChartDataEditorPopover } from "@/components/slide-editor/charts/ChartEditorContent";
 import { TableDataEditorPopover } from "@/components/slide-editor/tables/TableDataEditor";
 import { isAdvancedTable } from "@/components/slide-editor/tables/table-style";
+import { FilterEditorPopover } from "@/components/slide-editor/filters/FilterEditor";
+import { FilterOverlay } from "@/components/slide-editor/filters/FilterOverlay";
+import {
+  collectBoundTargets,
+  refreshBoundTargets,
+  slideFilterBindings,
+} from "@/components/slide-editor/filters/apply-slide-filters";
+import { isFilterElement } from "@/components/slide-editor/filters/filter-model";
+import type { FilterElement } from "@/components/slide-editor/types";
 import { InfographicDataEditorPopover } from "@/components/slide-editor/infographics/InfographicEditorContent";
 import { InfographicItemToolbar } from "@/components/slide-editor/infographics/InfographicItemToolbar";
 import { InfographicPlainTextEditor } from "@/components/slide-editor/infographics/InfographicPlainTextEditor";
@@ -512,8 +521,11 @@ function TemplateV2KonvaSlideComponent({
     useState<ElementSelection | null>(null);
   const [tableEditorSelection, setTableEditorSelection] =
     useState<ElementSelection | null>(null);
+  const [filterEditorSelection, setFilterEditorSelection] =
+    useState<ElementSelection | null>(null);
   const [infographicEditorSelection, setInfographicEditorSelection] =
     useState<ElementSelection | null>(null);
+  const filterRefreshRef = useRef(0);
 
   const restoreInfographicCanvasTextNode = useCallback(() => {
     const node = infographicCanvasTextNodeRef.current;
@@ -815,6 +827,9 @@ function TemplateV2KonvaSlideComponent({
     : null;
   const tableEditorElement = tableEditorSelection
     ? getElementAtSelection(uiDraft, tableEditorSelection)
+    : null;
+  const filterEditorElement = filterEditorSelection
+    ? getElementAtSelection(uiDraft, filterEditorSelection)
     : null;
   const infographicEditorElement = infographicEditorSelection
     ? getElementAtSelection(uiDraft, infographicEditorSelection)
@@ -1728,6 +1743,42 @@ function TemplateV2KonvaSlideComponent({
   const closeTableEditor = useCallback(() => {
     setTableEditorSelection(null);
   }, []);
+
+  const closeFilterEditor = useCallback(() => {
+    setFilterEditorSelection(null);
+  }, []);
+
+  const commitLiveUi = useCallback(
+    (nextUi: RawUi, persist: boolean) => {
+      if (nextUi === currentUiRef.current) return;
+      currentUiRef.current = nextUi;
+      setUiDraft(nextUi);
+      if (!persist) return;
+      onLayoutChange?.(nextUi as TemplateV2Layout);
+      dispatch(
+        updateSlideUi({
+          index: surfaceSlideIndex ?? slideIndex,
+          ui: nextUi as Record<string, unknown>,
+        }),
+      );
+    },
+    [dispatch, onLayoutChange, slideIndex, surfaceSlideIndex],
+  );
+
+  const refreshSlideBindings = useCallback(
+    async (sourceUi: RawUi) => {
+      const token = ++filterRefreshRef.current;
+      const nextUi = await refreshBoundTargets(
+        sourceUi,
+        slideFilterBindings(sourceUi),
+      );
+      if (token !== filterRefreshRef.current) return;
+      if (nextUi === sourceUi) return;
+      if (isEditMode) commitUi(nextUi, false);
+      else commitLiveUi(nextUi, false);
+    },
+    [commitLiveUi, commitUi, isEditMode],
+  );
 
   const closeInfographicEditor = useCallback(() => {
     setInfographicEditorSelection(null);
@@ -2782,6 +2833,10 @@ function TemplateV2KonvaSlideComponent({
         openTableEditor(elementSelection);
         return;
       }
+      if (type === "filter") {
+        setFilterEditorSelection(elementSelection);
+        return;
+      }
       if (isVectorType(type)) {
         activateSurface(elementSelection);
         setSelection(elementSelection);
@@ -3180,6 +3235,28 @@ function TemplateV2KonvaSlideComponent({
           ui={uiDraft}
         />
       ) : null}
+      {isRenderActive && uiDraft ? (
+        <FilterOverlay
+          isEditMode={isEditMode}
+          nodeRefs={nodeRefs}
+          revision={fontLoadState.revision}
+          ui={uiDraft}
+          onOpenEditor={(selection) => {
+            if (!isEditMode) return;
+            setFilterEditorSelection(selection);
+          }}
+          onSelectedChange={(selection, selected) => {
+            const nextUi = updateElementInUi(
+              currentUiRef.current,
+              selection,
+              (element) => ({ ...element, selected }),
+            );
+            if (isEditMode) commitUi(nextUi);
+            else commitLiveUi(nextUi, false);
+            void refreshSlideBindings(nextUi);
+          }}
+        />
+      ) : null}
       {!infographicCanvasSelection ? <TemplateV2SelectionToolbar
         anchorBox={floatingToolbarAnchorBox}
         canUngroupComponent={canUngroupSelectedComponent}
@@ -3414,9 +3491,43 @@ function TemplateV2KonvaSlideComponent({
               table_style: next.table_style ?? element.table_style,
               max_columns: next.max_columns ?? element.max_columns,
               max_rows: next.max_rows ?? element.max_rows,
+              data_binding: next.data_binding,
+              size: next.size ?? element.size,
             }))
           }
           onClose={closeTableEditor}
+        />
+      ) : null}
+      {isEditMode &&
+        filterEditorSelection &&
+        filterEditorElement &&
+        isFilterElement(filterEditorElement) ? (
+        <FilterEditorPopover
+          key={keyForSelection(filterEditorSelection)}
+          filter={
+            {
+              ...filterEditorElement,
+              source:
+                filterEditorElement.source ||
+                collectBoundTargets(uiDraft).find((item) =>
+                  readString(item.element.data_binding?.query_id),
+                )?.element.data_binding?.query_id ||
+                filterEditorElement.source,
+            } as FilterElement
+          }
+          onChange={(next) => {
+            updateElement(filterEditorSelection, (element) => ({
+              ...element,
+              ...next,
+              type: "filter",
+              position: element.position,
+              size: element.size,
+            }));
+            window.setTimeout(() => {
+              void refreshSlideBindings(currentUiRef.current);
+            }, 0);
+          }}
+          onClose={closeFilterEditor}
         />
       ) : null}
       {isEditMode &&

@@ -54,6 +54,36 @@ def test_mock_execute_assigns_axes(monkeypatch):
         "Venta Neta",
         "Unidades",
     ]
+    assert result["table"]["columns"] == ["Región", "Venta Neta", "Unidades"]
+    assert len(result["table"]["rows"]) == 4
+    assert result["table"]["rows"][0][0] == "Europa"
+
+
+def test_mock_table_is_pivoted_not_cartesian(monkeypatch):
+    monkeypatch.delenv("KH7_BI_URL", raising=False)
+    monkeypatch.delenv("KH7_BI_SERVICE_KEY", raising=False)
+    result = asyncio.run(
+        execute_cube(
+            CubeExecuteRequest(
+                source="ventas/ventas_por_segmento",
+                dimensions=["ZREGION"],
+                column_dimensions=["ZSEGMEN"],
+                measures=["ZVNETAEST"],
+                filters=[],
+            )
+        )
+    )
+    assert result["chart"]["categories"] == [
+        "Europa",
+        "Norteamérica",
+        "Latinoamérica",
+        "Asia-Pacífico",
+    ]
+    assert result["table"]["columns"][0] == "Región"
+    assert len(result["table"]["rows"]) == 4
+    assert all(row[0] != result["table"]["columns"][0] for row in result["table"]["rows"])
+    assert "Segmento" not in result["table"]["columns"]
+    assert any("Nacional" in name for name in result["table"]["columns"][1:])
 
 
 def test_mock_year_filter_without_year_on_axis(monkeypatch):

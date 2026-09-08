@@ -167,10 +167,25 @@ DIMENSION_VALUES: dict[str, dict[str, list[dict[str, str]]]] = {
             {"code": "2026", "caption": "2026"},
         ],
         "0CALMONTH": [
-            {"code": "202601", "caption": "Enero 2026"},
-            {"code": "202602", "caption": "Febrero 2026"},
-            {"code": "202603", "caption": "Marzo 2026"},
-            {"code": "202604", "caption": "Abril 2026"},
+            {"code": f"{year}{month:02d}", "caption": f"{name} {year}"}
+            for year in ("2025", "2026")
+            for month, name in enumerate(
+                (
+                    "Enero",
+                    "Febrero",
+                    "Marzo",
+                    "Abril",
+                    "Mayo",
+                    "Junio",
+                    "Julio",
+                    "Agosto",
+                    "Septiembre",
+                    "Octubre",
+                    "Noviembre",
+                    "Diciembre",
+                ),
+                start=1,
+            )
         ],
         "0CALWEEK": [
             {"code": "202601", "caption": "Sem 01"},
@@ -200,10 +215,25 @@ DIMENSION_VALUES: dict[str, dict[str, list[dict[str, str]]]] = {
             {"code": "ONL", "caption": "Online"},
         ],
         "0CALMONTH": [
-            {"code": "202601", "caption": "Enero 2026"},
-            {"code": "202602", "caption": "Febrero 2026"},
-            {"code": "202603", "caption": "Marzo 2026"},
-            {"code": "202604", "caption": "Abril 2026"},
+            {"code": f"{year}{month:02d}", "caption": f"{name} {year}"}
+            for year in ("2025", "2026")
+            for month, name in enumerate(
+                (
+                    "Enero",
+                    "Febrero",
+                    "Marzo",
+                    "Abril",
+                    "Mayo",
+                    "Junio",
+                    "Julio",
+                    "Agosto",
+                    "Septiembre",
+                    "Octubre",
+                    "Noviembre",
+                    "Diciembre",
+                ),
+                start=1,
+            )
         ],
     },
     "produccion/produccion_mensual": {
@@ -432,8 +462,15 @@ def _to_chart(
                 series_map[name][index[cat]] += float(row.get(measure) or 0)
         series = [{"name": name, "values": series_map[name]} for name in series_keys]
 
-    table_cols = row_caps + col_caps + measure_caps
-    table_rows = [[row.get(col, "") for col in table_cols] for row in rows]
+    # Same grid the chart uses: one row per category, one column per series.
+    # The long-form cartesian (row × desglose) made tables look duplicated and
+    # overflowed the 24-row advanced-table cap.
+    axis_label = " · ".join(row_caps) or "Categoría"
+    table_cols = [axis_label, *[item["name"] for item in series]]
+    table_rows = [
+        [categories[index], *[item["values"][index] for item in series]]
+        for index in range(len(categories))
+    ]
     return {
         "categories": categories,
         "series": series,
