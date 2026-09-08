@@ -12,12 +12,25 @@ import {
 import { notify } from "@/components/ui/sonner";
 import { sanitizeAnalyticsError } from "@/utils/analytics";
 import { MixpanelEvent, trackEvent } from "@/utils/mixpanel";
+import {
+  abortKeycloakCodeExchange,
+  cleanOAuthParamsFromUrl,
+  consumePkceVerifierForCode,
+  finishKeycloakCodeExchange,
+  isKeycloakConfigReady,
+  keycloakRedirectUri,
+  readOAuthAuthorizationCode,
+  readOAuthRedirectError,
+  startKeycloakLogin,
+  type KeycloakPublicConfig,
+} from "@/utils/keycloak-login";
 
 type AuthStatus = {
   configured: boolean;
   authenticated: boolean;
   username: string | null;
   role?: "admin" | "user" | null;
+  keycloak?: KeycloakPublicConfig | null;
 };
 
 const initialStatus: AuthStatus = {
@@ -36,7 +49,13 @@ export default function AuthGate() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const isSetupMode = useMemo(() => !status.configured, [status.configured]);
+  const keycloakReady = isKeycloakConfigReady(status.keycloak);
+  const isSetupMode = useMemo(
+    () => !status.configured && !keycloakReady,
+    [keycloakReady, status.configured]
+  );
+  const showLocalLogin = status.configured;
+  const showSetupForm = !status.configured && !keycloakReady;
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -63,7 +82,7 @@ export default function AuthGate() {
       return;
     }
 
-    void refreshStatus();
+    void bootAuth();
   }, []);
 
   useEffect(() => {
@@ -99,6 +118,126 @@ export default function AuthGate() {
     }
   }, [isLoading, status.authenticated, status.configured]);
 
+  const applyStatus = (data: Partial<AuthStatus>): AuthStatus => ({
+    configured: Boolean(data.configured),
+    authenticated: Boolean(data.authenticated),
+    username: data.username ?? null,
+    role: data.role ?? null,
+    keycloak: data.keycloak ?? null,
+  });
+
+  const bootAuth = async () => {
+    const oauthError = readOAuthRedirectError();
+    if (oauthError) {
+      cleanOAuthParamsFromUrl();
+      notify.error("Sign-in failed", oauthError);
+      await refreshStatus();
+      return;
+    }
+
+    const code = readOAuthAuthorizationCode();
+    if (code) {
+      await completeKeycloakSignIn(code);
+      return;
+    }
+
+    await refreshStatus();
+  };
+
+  const completeKeycloakSignIn = async (code: string) => {
+    setIsLoading(true);
+    const verifier = consumePkceVerifierForCode(code);
+    cleanOAuthParamsFromUrl();
+    if (!verifier) {
+      notify.error(
+        "Sign-in failed",
+        "The SSO session expired. Please try signing in again."
+      );
+      await refreshStatus();
+      return;
+    }
+
+    trackEvent(MixpanelEvent.Auth_SignIn_Started, {
+      method: "keycloak",
+    });
+    try {
+      const response = await fetch(
+        getApiUrl("/api/v1/auth/oauth/keycloak/code"),
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            code,
+            redirect_uri: keycloakRedirectUri(),
+            code_verifier: verifier,
+          }),
+        }
+      );
+      const payload = await response.json();
+      if (!response.ok) {
+        abortKeycloakCodeExchange();
+        const detail = formatFastApiDetail(payload?.detail);
+        trackEvent(MixpanelEvent.Auth_SignIn_Failed, {
+          method: "keycloak",
+          status_code: response.status,
+          error_message: sanitizeAnalyticsError(detail, "Sign-in failed"),
+        });
+        notify.error(
+          "Sign-in failed",
+          detail || "SSO could not complete. Please try again."
+        );
+        await refreshStatus();
+        return;
+      }
+
+      finishKeycloakCodeExchange();
+      const nextStatus = applyStatus(payload as AuthStatus);
+      setStatus(nextStatus);
+      trackEvent(MixpanelEvent.Auth_SignIn_Completed, {
+        method: "keycloak",
+        role: nextStatus.role ?? null,
+      });
+      notify.success("Signed in", "Welcome back. Loading your workspace.");
+    } catch (submitError) {
+      abortKeycloakCodeExchange();
+      console.error(submitError);
+      trackEvent(MixpanelEvent.Auth_SignIn_Failed, {
+        method: "keycloak",
+        status_code: null,
+        error_message: sanitizeAnalyticsError(submitError, "Login unavailable"),
+      });
+      notify.error(
+        "Login unavailable",
+        "The login service is unavailable right now. Please try again in a moment."
+      );
+      await refreshStatus();
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleKeycloakClick = async () => {
+    if (!isKeycloakConfigReady(status.keycloak)) {
+      notify.error("SSO unavailable", "Keycloak is not configured on this instance.");
+      return;
+    }
+    setIsSubmitting(true);
+    trackEvent(MixpanelEvent.Auth_SignIn_Started, { method: "keycloak" });
+    try {
+      await startKeycloakLogin(status.keycloak);
+    } catch (startError) {
+      console.error(startError);
+      setIsSubmitting(false);
+      notify.error(
+        "SSO unavailable",
+        "Could not start the organization sign-in. Please try again."
+      );
+    }
+  };
+
   const refreshStatus = async () => {
     setIsLoading(true);
 
@@ -119,13 +258,9 @@ export default function AuthGate() {
         authenticated: Boolean(data.authenticated),
         auth_disabled: false,
         role: data.role ?? null,
+        keycloak_enabled: Boolean(data.keycloak?.enabled),
       });
-      setStatus({
-        configured: Boolean(data.configured),
-        authenticated: Boolean(data.authenticated),
-        username: data.username ?? null,
-        role: data.role ?? null,
-      });
+      setStatus(applyStatus(data));
     } catch (fetchError) {
       console.error(fetchError);
       trackEvent(MixpanelEvent.Auth_Status_Checked, {
@@ -359,10 +494,33 @@ export default function AuthGate() {
         <p className="max-w-md text-sm leading-relaxed text-[#6B7280]">
           {isSetupMode
             ? "One-time setup for this deployment. You will use the same username and password on future visits."
-            : "This deployment is protected. Enter your credentials to open the app."}
+            : keycloakReady
+              ? "This deployment is protected. Sign in with your organization account, or use a local username and password."
+              : "This deployment is protected. Enter your credentials to open the app."}
         </p>
 
-        <form onSubmit={handleSubmit} className="mt-7 space-y-5">
+        {keycloakReady ? (
+          <div className="mt-7 space-y-4">
+            <button
+              type="button"
+              onClick={() => void handleKeycloakClick()}
+              disabled={isSubmitting}
+              className="w-full rounded-[58px] border border-[#EDEEEF] bg-[#7C51F8] px-5 py-3 font-syne text-xs font-semibold text-white transition hover:bg-[#6d46e6] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isSubmitting ? "Redirecting…" : "Continue with SSO"}
+            </button>
+            {showLocalLogin || showSetupForm ? (
+              <div className="flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">
+                <span className="h-px flex-1 bg-[#EDEEEF]" />
+                or local account
+                <span className="h-px flex-1 bg-[#EDEEEF]" />
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+
+        {showSetupForm || showLocalLogin ? (
+        <form onSubmit={handleSubmit} className={keycloakReady ? "mt-4 space-y-5" : "mt-7 space-y-5"}>
           <div className="space-y-2">
             <label htmlFor="username" className="block text-sm font-medium text-[#374151]">
               Username
@@ -437,7 +595,11 @@ export default function AuthGate() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full rounded-[58px] border border-[#EDEEEF] bg-[#7C51F8] px-5 py-3 font-syne text-xs font-semibold text-white transition hover:bg-[#6d46e6] disabled:cursor-not-allowed disabled:opacity-60"
+            className={
+              keycloakReady
+                ? "w-full rounded-[58px] border border-[#E1E1E5] bg-white px-5 py-3 font-syne text-xs font-semibold text-[#191919] transition hover:bg-[#F4F3FF] disabled:cursor-not-allowed disabled:opacity-60"
+                : "w-full rounded-[58px] border border-[#EDEEEF] bg-[#7C51F8] px-5 py-3 font-syne text-xs font-semibold text-white transition hover:bg-[#6d46e6] disabled:cursor-not-allowed disabled:opacity-60"
+            }
           >
             {isSubmitting
               ? isSetupMode
@@ -448,6 +610,7 @@ export default function AuthGate() {
                 : "Sign in"}
           </button>
         </form>
+        ) : null}
       </section>
     </main>
   );

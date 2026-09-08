@@ -291,3 +291,97 @@ def test_embed_jwt_reads_masked_runtime_config(monkeypatch, tmp_path):
     assert payload["config"]["CUSTOM_MODEL"] == "kimi"
     assert payload["config"]["CUSTOM_LLM_API_KEY"] == "__configured__"
     asyncio.run(engine.dispose())
+
+
+_PKCE_VERIFIER = "a" * 43
+
+
+def test_oauth_config_and_code_exchange_are_off_by_default(monkeypatch, tmp_path):
+    monkeypatch.setenv("USER_CONFIG_PATH", str(tmp_path / "userConfig.json"))
+    monkeypatch.delenv("KEYCLOAK_ENABLED", raising=False)
+    client, engine = _build_client(tmp_path)
+
+    config = client.get("/api/v1/auth/oauth/config")
+    status = client.get("/api/v1/auth/status")
+    denied = client.post(
+        "/api/v1/auth/oauth/keycloak/code",
+        json={
+            "code": "unused",
+            "redirect_uri": "http://localhost:5001",
+            "code_verifier": _PKCE_VERIFIER,
+        },
+    )
+
+    assert config.status_code == 200
+    assert config.json()["keycloak"]["enabled"] is False
+    assert status.status_code == 200
+    assert status.json()["keycloak"]["enabled"] is False
+    assert denied.status_code == 403
+    asyncio.run(engine.dispose())
+
+
+def test_keycloak_code_exchange_provisions_first_user_as_admin(monkeypatch, tmp_path):
+    from unittest.mock import AsyncMock, patch
+
+    from api.v1.auth.keycloak import KeycloakClaims
+
+    monkeypatch.setenv("USER_CONFIG_PATH", str(tmp_path / "userConfig.json"))
+    monkeypatch.setenv("KEYCLOAK_ENABLED", "true")
+    monkeypatch.setenv("KEYCLOAK_BASE_URL", "http://localhost:8080")
+    monkeypatch.setenv("KEYCLOAK_REALM", "brain")
+    monkeypatch.setenv("KEYCLOAK_CLIENT_ID", "presenton")
+    monkeypatch.delenv("DISABLE_AUTH", raising=False)
+
+    client, engine = _build_client(tmp_path)
+    claims_ada = KeycloakClaims(user_id="ada@kh7.com", name="Ada", sub="ada-1")
+    claims_bob = KeycloakClaims(user_id="bob@kh7.com", name="Bob", sub="bob-1")
+
+    with (
+        patch(
+            "api.v1.auth.router.exchange_authorization_code",
+            new_callable=AsyncMock,
+            return_value={"id_token": "id", "access_token": "at"},
+        ),
+        patch(
+            "api.v1.auth.router.keycloak_validator.validate_oidc_tokens",
+            new_callable=AsyncMock,
+            side_effect=[claims_ada, claims_ada, claims_bob],
+        ),
+    ):
+        first = client.post(
+            "/api/v1/auth/oauth/keycloak/code",
+            json={
+                "code": "code-ada",
+                "redirect_uri": "http://localhost:5001",
+                "code_verifier": _PKCE_VERIFIER,
+            },
+        )
+        again = client.post(
+            "/api/v1/auth/oauth/keycloak/code",
+            json={
+                "code": "code-ada-2",
+                "redirect_uri": "http://localhost:5001",
+                "code_verifier": _PKCE_VERIFIER,
+            },
+        )
+        second = client.post(
+            "/api/v1/auth/oauth/keycloak/code",
+            json={
+                "code": "code-bob",
+                "redirect_uri": "http://localhost:5001",
+                "code_verifier": _PKCE_VERIFIER,
+            },
+        )
+
+    assert first.status_code == 200
+    assert first.json()["username"] == "ada@kh7.com"
+    assert first.json()["role"] == "admin"
+    assert first.json()["authenticated"] is True
+    assert SESSION_COOKIE_NAME in first.cookies
+    assert again.status_code == 200
+    assert again.json()["username"] == "ada@kh7.com"
+    assert again.json()["role"] == "admin"
+    assert second.status_code == 200
+    assert second.json()["username"] == "bob@kh7.com"
+    assert second.json()["role"] == "user"
+    asyncio.run(engine.dispose())

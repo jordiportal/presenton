@@ -36,8 +36,10 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
         "/api/v1/auth/setup",
         "/api/v1/auth/login",
         "/api/v1/auth/logout",
+        "/api/v1/auth/oauth/config",
+        "/api/v1/auth/oauth/keycloak/code",
     }
-    _PUBLIC_AUTH_PREFIXES: tuple[str, ...] = ()
+    _PUBLIC_AUTH_PREFIXES: tuple[str, ...] = ("/api/v1/auth/oauth/",)
     _PUBLIC_APP_DATA_PREFIXES = (
         "/app_data/fonts/",
         "/app_data/templates/",

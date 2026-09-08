@@ -519,6 +519,29 @@ Usernames must contain at least 3 characters, and new passwords must contain at 
 | **AUTH_OVERRIDE_FROM_ENV**=[true/false] | Replace the primary administrator's credentials from the environment on the next startup. Use this for a deployment-managed credential rotation. |
 | **RESET_AUTH**=[true/false] | Recover access to the existing primary administrator without replacing the account or its data. |
 
+##### Keycloak SSO (same realm as Brain)
+
+Off by default. When enabled, the login screen offers **Continue with SSO** and
+exchanges the OIDC authorization code on the server (PKCE), then issues the usual
+`presenton_session` cookie. Local username/password remains available as a fallback.
+The Brain embed JWT (`iss=brain`) is unchanged.
+
+Create a public Keycloak client (for example `presenton`) in the same realm as Brain,
+or reuse `brain-gui` and add Presenton's origin as a valid redirect URI
+(`http://localhost:5001` in development).
+
+| Variable | Purpose |
+| --- | --- |
+| **KEYCLOAK_ENABLED**=[true/false] | Activates the SSO button and the `/api/v1/auth/oauth/keycloak/code` exchange. |
+| **KEYCLOAK_BASE_URL** | Keycloak URL as seen from FastAPI (JWKS and token endpoint). |
+| **KEYCLOAK_PUBLIC_BASE_URL** | Keycloak URL as seen from the browser. Defaults to `KEYCLOAK_BASE_URL`. |
+| **KEYCLOAK_REALM** | OIDC realm (the same realm Brain uses). |
+| **KEYCLOAK_CLIENT_ID** | Public client for Presenton (`presenton` or `brain-gui`). |
+| **KEYCLOAK_CLIENT_SECRET** | Only if the client is confidential. |
+
+The first SSO login on an empty instance becomes the primary administrator. Later
+SSO users are provisioned as regular accounts, mapped by email or `preferred_username`.
+
 ##### Presenton Cloud provider
 
 Presenton Cloud is an optional, installation-wide generation provider. It is not an

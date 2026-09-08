@@ -6,7 +6,17 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import JSONResponse
 
-from api.v1.auth.schemas import AuthCredentialsRequest, LoginCredentialsRequest
+from api.v1.auth.keycloak import (
+    exchange_authorization_code,
+    ensure_presenton_user_from_sso,
+    keycloak_public_config,
+    keycloak_validator,
+)
+from api.v1.auth.schemas import (
+    AuthCredentialsRequest,
+    LoginCredentialsRequest,
+    OAuthKeycloakCodeRequest,
+)
 from api.v1.auth.assets import is_app_data_path_authorized
 from api.v1.auth.rate_limit import LOGIN_RATE_LIMITER, login_rate_limit_key
 from api.v1.auth.principal import resolve_request_principal
@@ -85,6 +95,7 @@ async def get_status(
     session: AsyncSession = Depends(get_async_session),
     user: User | None = Depends(read_user_from_cookie),
 ):
+    keycloak = keycloak_public_config()
     if is_disable_auth_enabled():
         return {
             "configured": True,
@@ -92,6 +103,7 @@ async def get_status(
             "username": "electron",
             "user_id": None,
             "role": "admin",
+            "keycloak": keycloak,
         }
     configured = await _account_count(session) > 0
     if user is not None:
@@ -101,6 +113,7 @@ async def get_status(
             "username": user.username,
             "user_id": str(user.id),
             "role": "admin" if user.is_superuser else "user",
+            "keycloak": keycloak,
         }
     principal, _ = await resolve_request_principal(request, session)
     if principal is not None and principal.method in {"embed", "service"}:
@@ -110,6 +123,7 @@ async def get_status(
             "username": principal.username,
             "user_id": str(principal.user_id),
             "role": "user",
+            "keycloak": keycloak,
         }
     return {
         "configured": configured,
@@ -117,7 +131,60 @@ async def get_status(
         "username": None,
         "user_id": None,
         "role": None,
+        "keycloak": keycloak,
     }
+
+
+@API_V1_AUTH_ROUTER.get("/oauth/config")
+async def oauth_config():
+    """Public OIDC settings for the login screen (no secrets)."""
+    return {"keycloak": keycloak_public_config()}
+
+
+@API_V1_AUTH_ROUTER.post("/oauth/keycloak/code")
+async def login_oauth_keycloak_code(
+    body: OAuthKeycloakCodeRequest,
+    request: Request,
+    session: AsyncSession = Depends(get_async_session),
+):
+    """Exchange code+PKCE on the server (avoids CORS on the token endpoint)."""
+    if not keycloak_validator.is_enabled():
+        raise HTTPException(
+            status_code=403,
+            detail="Keycloak authentication is not enabled",
+        )
+    try:
+        token_response = await exchange_authorization_code(
+            body.code,
+            body.redirect_uri,
+            body.code_verifier,
+        )
+        id_token = token_response.get("id_token")
+        access_token = token_response.get("access_token")
+        if not id_token or not access_token:
+            raise ValueError("Keycloak did not return id_token or access_token")
+        claims = await keycloak_validator.validate_oidc_tokens(
+            id_token,
+            access_token=access_token,
+        )
+        user = await ensure_presenton_user_from_sso(
+            session,
+            claims.user_id,
+            claims.sub,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+
+    token = await get_jwt_strategy().write_token(user)
+    response = JSONResponse(
+        {
+            "configured": True,
+            "authenticated": True,
+            **serialize_user(user),
+        }
+    )
+    _set_login_cookie(response, token, request)
+    return response
 
 
 @API_V1_AUTH_ROUTER.get("/runtime-config")

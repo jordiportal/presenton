@@ -45,6 +45,12 @@ class LoginCredentialsRequest(BaseModel):
     password: str = Field(min_length=6, max_length=128)
 
 
+class OAuthKeycloakCodeRequest(BaseModel):
+    code: str = Field(min_length=1, max_length=4096)
+    redirect_uri: str = Field(min_length=1, max_length=2048)
+    code_verifier: str = Field(min_length=43, max_length=128)
+
+
 class AdminCreateUserRequest(AuthCredentialsRequest):
     pass
 

@@ -45,6 +45,13 @@ def test_presenton_provider_endpoints_require_a_local_session():
     assert middleware._requires_auth("/api/v1/auth/presenton/device/poll") is True
 
 
+def test_keycloak_oauth_endpoints_are_public():
+    middleware = SessionAuthMiddleware(app=None)
+
+    assert middleware._requires_auth("/api/v1/auth/oauth/config") is False
+    assert middleware._requires_auth("/api/v1/auth/oauth/keycloak/code") is False
+
+
 def test_auth_disabled_runtime_still_checks_presenton_cloud_proxy(monkeypatch):
     captured = {}
 

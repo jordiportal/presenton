@@ -57,6 +57,58 @@ def is_disable_auth_enabled():
     return _is_truthy(get_disable_auth_env())
 
 
+def is_keycloak_enabled() -> bool:
+    return _is_truthy(os.getenv("KEYCLOAK_ENABLED"))
+
+
+def get_keycloak_base_url() -> str:
+    return (os.getenv("KEYCLOAK_BASE_URL") or "").strip().rstrip("/")
+
+
+def get_keycloak_public_base_url() -> str:
+    public = (os.getenv("KEYCLOAK_PUBLIC_BASE_URL") or "").strip().rstrip("/")
+    return public or get_keycloak_base_url()
+
+
+def get_keycloak_realm() -> str:
+    return (os.getenv("KEYCLOAK_REALM") or "").strip()
+
+
+def get_keycloak_client_id() -> str:
+    return (os.getenv("KEYCLOAK_CLIENT_ID") or "").strip()
+
+
+def get_keycloak_client_secret() -> str:
+    return (os.getenv("KEYCLOAK_CLIENT_SECRET") or "").strip()
+
+
+def get_keycloak_issuer() -> str:
+    """Issuer used by FastAPI for JWKS and the token endpoint."""
+    return f"{get_keycloak_base_url()}/realms/{get_keycloak_realm()}"
+
+
+def get_keycloak_public_issuer() -> str:
+    """Issuer the browser uses for the authorize redirect."""
+    return f"{get_keycloak_public_base_url()}/realms/{get_keycloak_realm()}"
+
+
+def get_keycloak_valid_issuers() -> list[str]:
+    issuers = [get_keycloak_issuer()]
+    public = get_keycloak_public_issuer()
+    if public not in issuers:
+        issuers.append(public)
+    return issuers
+
+
+def is_keycloak_configured() -> bool:
+    return bool(
+        is_keycloak_enabled()
+        and get_keycloak_base_url()
+        and get_keycloak_realm()
+        and get_keycloak_client_id()
+    )
+
+
 def get_presenton_embed_secret_env() -> str | None:
     """Shared secret with Brain: Bearer de tools OpenAPI y firma del JWT de embed."""
     raw = os.getenv("PRESENTON_EMBED_SECRET")

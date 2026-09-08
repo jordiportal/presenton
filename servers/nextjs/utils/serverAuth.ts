@@ -63,6 +63,7 @@ export async function getServerAuthStatus(): Promise<AuthStatus> {
       method: "GET",
       headers: Object.keys(outbound).length ? outbound : undefined,
       cache: "no-store",
+      signal: AbortSignal.timeout(4000),
     });
 
     if (!response.ok) {
