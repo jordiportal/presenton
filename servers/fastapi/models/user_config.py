@@ -109,6 +109,11 @@ class UserConfig(BaseModel):
     OPENAI_COMPAT_IMAGE_API_KEY: Optional[str] = None
     OPENAI_COMPAT_IMAGE_MODEL: Optional[str] = None
 
+    # OpenAI Compatible image-to-video (LiteLLM /v1/videos)
+    OPENAI_COMPAT_VIDEO_BASE_URL: Optional[str] = None
+    OPENAI_COMPAT_VIDEO_API_KEY: Optional[str] = None
+    OPENAI_COMPAT_VIDEO_MODEL: Optional[str] = None
+
     # Dalle 3 Quality
     DALL_E_3_QUALITY: Optional[str] = None
     # Gpt Image 1.5 Quality

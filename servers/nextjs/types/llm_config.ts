@@ -104,6 +104,9 @@ export interface LLMConfig {
   OPENAI_COMPAT_IMAGE_BASE_URL?: string;
   OPENAI_COMPAT_IMAGE_API_KEY?: string;
   OPENAI_COMPAT_IMAGE_MODEL?: string;
+  OPENAI_COMPAT_VIDEO_BASE_URL?: string;
+  OPENAI_COMPAT_VIDEO_API_KEY?: string;
+  OPENAI_COMPAT_VIDEO_MODEL?: string;
 
   // Dalle 3 Quality
   DALL_E_3_QUALITY?: string;

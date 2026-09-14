@@ -377,3 +377,15 @@ def set_openai_compat_image_api_key_env(value: str):
 
 def set_openai_compat_image_model_env(value: str):
     os.environ["OPENAI_COMPAT_IMAGE_MODEL"] = value
+
+
+def set_openai_compat_video_base_url_env(value: str):
+    os.environ["OPENAI_COMPAT_VIDEO_BASE_URL"] = value
+
+
+def set_openai_compat_video_api_key_env(value: str):
+    os.environ["OPENAI_COMPAT_VIDEO_API_KEY"] = value
+
+
+def set_openai_compat_video_model_env(value: str):
+    os.environ["OPENAI_COMPAT_VIDEO_MODEL"] = value

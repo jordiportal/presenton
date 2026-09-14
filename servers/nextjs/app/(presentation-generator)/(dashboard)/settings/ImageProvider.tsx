@@ -236,6 +236,7 @@ const ImageProvider = ({ llmConfig, setLlmConfig }: { llmConfig: LLMConfig, setL
 
                                             if (provider.value === "openai_compatible") {
                                                 return (
+                                                    <div className="space-y-4">
                                                     <OpenAICompatibleImageFields
                                                         layout="textProviderSettings"
                                                         baseUrl={llmConfig.OPENAI_COMPAT_IMAGE_BASE_URL || ""}
@@ -252,6 +253,27 @@ const ImageProvider = ({ llmConfig, setLlmConfig }: { llmConfig: LLMConfig, setL
                                                         }}
                                                         onModelListMetaChange={setOpenaiCompatListMeta}
                                                     />
+                                                    <div className="w-[205px]">
+                                                        <label className="mb-2 block text-sm font-medium text-gray-700">
+                                                            Image-to-video model
+                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="LiteLLM video slug"
+                                                            className="w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                                                            value={llmConfig.OPENAI_COMPAT_VIDEO_MODEL || ""}
+                                                            onChange={(e) => {
+                                                                setLlmConfig((prev: any) => ({
+                                                                    ...prev,
+                                                                    OPENAI_COMPAT_VIDEO_MODEL: e.target.value,
+                                                                }));
+                                                            }}
+                                                        />
+                                                        <p className="mt-1.5 text-xs text-gray-500">
+                                                            Uses the same LiteLLM URL and key. Required to animate slide images.
+                                                        </p>
+                                                    </div>
+                                                    </div>
                                                 );
                                             }
 

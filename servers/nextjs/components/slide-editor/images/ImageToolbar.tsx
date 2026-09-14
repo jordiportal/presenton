@@ -2,6 +2,7 @@ import Image from "next/image";
 import {
   Check,
   ChevronDown,
+  Clapperboard,
   Crop,
   FlipHorizontal2,
   FlipVertical2,
@@ -22,6 +23,7 @@ import {
   type PointerEventHandler,
   type ReactNode,
 } from "react";
+import { useSelector } from "react-redux";
 import { cn } from "@/lib/utils";
 import {
   STAGE_HEIGHT,
@@ -33,6 +35,7 @@ import {
   uniformBorderRadius,
 } from "@/components/slide-editor/model/element-model";
 import type { ImageSlideElement } from "@/components/slide-editor/state/state";
+import type { VideoElement } from "@/components/slide-editor/types";
 import {
   FloatingToolbar,
   FloatingToolbarPanel,
@@ -42,9 +45,11 @@ import { OpacitySwatchIcon } from "@/components/slide-editor/toolbar/OpacitySwat
 import { ImagePickerModal } from "@/components/slide-editor/images/ImagePickerModal";
 import { resolveBackendAssetSource } from "@/utils/api";
 import { ImagesApi } from "@/app/(presentation-generator)/services/api/images";
+import { VideosApi } from "@/app/(presentation-generator)/services/api/videos";
 import { notify } from "@/components/ui/sonner";
+import type { RootState } from "@/store/store";
 
-type ImagePanel = "fit" | "crop" | "radius" | "opacity" | null;
+type ImagePanel = "fit" | "crop" | "radius" | "opacity" | "animate" | null;
 type ImageFit = "contain" | "cover" | "fill";
 type CropPoint = { x: number; y: number };
 type CropFrame = { left: number; top: number; width: number; height: number };
@@ -287,6 +292,7 @@ export function ImageToolbar({
   scale,
   onChange,
   onCropModeChange,
+  onReplaceWithVideo,
 }: {
   anchorBox?: FloatingToolbarBox | null;
   element: ImageSlideElement;
@@ -294,10 +300,16 @@ export function ImageToolbar({
   scale: number;
   onChange: (index: number, element: ImageSlideElement) => void;
   onCropModeChange?: (active: boolean) => void;
+  onReplaceWithVideo?: (index: number, element: VideoElement) => void;
 }) {
+  const llmConfig = useSelector((state: RootState) => state.userConfig.llm_config);
+  const videoModel = (llmConfig?.OPENAI_COMPAT_VIDEO_MODEL || "").trim();
+  const canAnimate = Boolean(onReplaceWithVideo);
   const [openPanel, setOpenPanel] = useState<ImagePanel>(null);
   const [imagePickerOpen, setImagePickerOpen] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [animatePrompt, setAnimatePrompt] = useState("");
   const fit = element.fit ?? "contain";
   const maxRadius = Math.max(
     0.01,
@@ -556,6 +568,54 @@ export function ImageToolbar({
     void uploadReplacementImage(event.currentTarget.files?.[0]);
   };
 
+  const animateImage = async () => {
+    if (!onReplaceWithVideo) return;
+    if (!videoModel) {
+      notify.error(
+        "Video model missing",
+        "Set an image-to-video model in Settings (LiteLLM / OpenAI-compatible).",
+      );
+      return;
+    }
+    if (!imageSource) {
+      notify.error("Animate failed", "This image has no source to animate.");
+      return;
+    }
+    setIsAnimating(true);
+    try {
+      const asset = await VideosApi.animateImage({
+        imageUrl: (element.data || "").trim() || imageSource,
+        prompt: animatePrompt.trim() || undefined,
+      });
+      if (!asset.file_url) throw new Error("Animation did not return a video URL.");
+      onReplaceWithVideo(index, {
+        type: "video",
+        position: element.position,
+        size: element.size,
+        rotation: element.rotation,
+        opacity: element.opacity,
+        src: asset.file_url,
+        provider: "file",
+        video_id: null,
+        poster: imageSource,
+        autoplay: true,
+        loop: true,
+        muted: true,
+        decorative: element.decorative ?? false,
+        name: element.name || "video",
+      });
+      setOpenPanel(null);
+      notify.success("Image animated", "The image was replaced with a short video.");
+    } catch (animateError: unknown) {
+      notify.error(
+        "Animate failed",
+        animateError instanceof Error ? animateError.message : "Could not generate video.",
+      );
+    } finally {
+      setIsAnimating(false);
+    }
+  };
+
   return (
     <>
       <FloatingToolbar
@@ -647,6 +707,51 @@ export function ImageToolbar({
             className="size-4"
           />
         </button>
+
+        {canAnimate ? (
+          <div className="relative">
+            <button
+              type="button"
+              title="Animate image"
+              aria-label="Animate image"
+              aria-pressed={openPanel === "animate"}
+              disabled={isAnimating}
+              onClick={() => togglePanel("animate")}
+              className={cn(
+                "rounded-[2px] border-0 bg-transparent p-1 text-[#05070A] hover:bg-[#F4F3FF] disabled:cursor-wait disabled:opacity-50",
+                openPanel === "animate" && "bg-[#F4F1FF] text-[#7C3AED]",
+              )}
+            >
+              {isAnimating ? (
+                <Loader2 size={16} strokeWidth={1.8} aria-hidden="true" className="animate-spin" />
+              ) : (
+                <Clapperboard size={16} strokeWidth={1.7} aria-hidden="true" />
+              )}
+            </button>
+            {openPanel === "animate" ? (
+              <Panel className="flex w-[260px] flex-col gap-2 p-3">
+                <label className="block text-[12px] font-medium text-[#4B5563]">
+                  Motion prompt
+                  <textarea
+                    value={animatePrompt}
+                    onChange={(event) => setAnimatePrompt(event.currentTarget.value)}
+                    placeholder="Subtle camera drift, keep the same scene"
+                    rows={3}
+                    className="mt-1 w-full resize-none rounded-[8px] border border-[#E7E8EC] px-2 py-1.5 text-[13px] text-[#191919] outline-none focus:border-[#7A5AF8]"
+                  />
+                </label>
+                <button
+                  type="button"
+                  disabled={isAnimating}
+                  onClick={() => void animateImage()}
+                  className="rounded-[8px] bg-[#111827] px-3 py-2 text-[13px] font-medium text-white hover:bg-[#0B1220] disabled:opacity-60"
+                >
+                  {isAnimating ? "Generating video…" : "Animate"}
+                </button>
+              </Panel>
+            ) : null}
+          </div>
+        ) : null}
 
         <Divider />
         <div className="flex items-center gap-3">

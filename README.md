@@ -475,6 +475,7 @@ These variables match `docker-compose.yml`. **`IMAGE_PROVIDER`** selects the bac
 - **COMFYUI_URL** / **COMFYUI_WORKFLOW**: Self-hosted ComfyUI workflow JSON.
 - **OPEN_WEBUI_IMAGE_URL** / **OPEN_WEBUI_IMAGE_API_KEY**: Open WebUI–compatible image endpoint.
 - **OPENAI_COMPAT_IMAGE_BASE_URL** / **OPENAI_COMPAT_IMAGE_API_KEY** / **OPENAI_COMPAT_IMAGE_MODEL**: Required if using **openai_compatible** to send image requests to any OpenAI-compatible `/v1/images/*` endpoint (LiteLLM, Azure, vLLM Gateways, etc.).
+- **OPENAI_COMPAT_VIDEO_BASE_URL** / **OPENAI_COMPAT_VIDEO_API_KEY** / **OPENAI_COMPAT_VIDEO_MODEL**: Optional image-to-video via OpenAI Videos (`/v1/videos`). If URL/key are empty, Presenton reuses the image LiteLLM endpoint. Set the model to a LiteLLM video slug such as `h3-max-i2v`.
 
 The parallel image generation option applies everywhere images are generated: initial presentation generation, slide editing and regeneration, direct image requests, and assistant image tools.
 

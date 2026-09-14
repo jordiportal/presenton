@@ -172,6 +172,9 @@ export const updateLLMConfig = (
     openai_compat_image_base_url: "OPENAI_COMPAT_IMAGE_BASE_URL",
     openai_compat_image_api_key: "OPENAI_COMPAT_IMAGE_API_KEY",
     openai_compat_image_model: "OPENAI_COMPAT_IMAGE_MODEL",
+    openai_compat_video_base_url: "OPENAI_COMPAT_VIDEO_BASE_URL",
+    openai_compat_video_api_key: "OPENAI_COMPAT_VIDEO_API_KEY",
+    openai_compat_video_model: "OPENAI_COMPAT_VIDEO_MODEL",
     codex_model: "CODEX_MODEL",
   };
 

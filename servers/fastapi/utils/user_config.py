@@ -95,6 +95,9 @@ from utils.get_env import (
     get_openai_compat_image_base_url_env,
     get_openai_compat_image_api_key_env,
     get_openai_compat_image_model_env,
+    get_openai_compat_video_base_url_env,
+    get_openai_compat_video_api_key_env,
+    get_openai_compat_video_model_env,
 )
 from utils.parsers import parse_bool_or_none
 from utils.user_config_store import read_user_config_file, update_user_config_file
@@ -191,6 +194,9 @@ from utils.set_env import (
     set_openai_compat_image_base_url_env,
     set_openai_compat_image_api_key_env,
     set_openai_compat_image_model_env,
+    set_openai_compat_video_base_url_env,
+    set_openai_compat_video_api_key_env,
+    set_openai_compat_video_model_env,
 )
 
 
@@ -372,6 +378,12 @@ def get_user_config():
         or get_openai_compat_image_api_key_env(),
         OPENAI_COMPAT_IMAGE_MODEL=existing_config.OPENAI_COMPAT_IMAGE_MODEL
         or get_openai_compat_image_model_env(),
+        OPENAI_COMPAT_VIDEO_BASE_URL=existing_config.OPENAI_COMPAT_VIDEO_BASE_URL
+        or get_openai_compat_video_base_url_env(),
+        OPENAI_COMPAT_VIDEO_API_KEY=existing_config.OPENAI_COMPAT_VIDEO_API_KEY
+        or get_openai_compat_video_api_key_env(),
+        OPENAI_COMPAT_VIDEO_MODEL=existing_config.OPENAI_COMPAT_VIDEO_MODEL
+        or get_openai_compat_video_model_env(),
     )
 
 
@@ -585,6 +597,12 @@ def update_env_with_user_config():
         set_openai_compat_image_api_key_env(user_config.OPENAI_COMPAT_IMAGE_API_KEY)
     if user_config.OPENAI_COMPAT_IMAGE_MODEL:
         set_openai_compat_image_model_env(user_config.OPENAI_COMPAT_IMAGE_MODEL)
+    if user_config.OPENAI_COMPAT_VIDEO_BASE_URL:
+        set_openai_compat_video_base_url_env(user_config.OPENAI_COMPAT_VIDEO_BASE_URL)
+    if user_config.OPENAI_COMPAT_VIDEO_API_KEY:
+        set_openai_compat_video_api_key_env(user_config.OPENAI_COMPAT_VIDEO_API_KEY)
+    if user_config.OPENAI_COMPAT_VIDEO_MODEL:
+        set_openai_compat_video_model_env(user_config.OPENAI_COMPAT_VIDEO_MODEL)
 
 
 def save_codex_tokens_to_user_config(*, include_model: bool = False) -> None:

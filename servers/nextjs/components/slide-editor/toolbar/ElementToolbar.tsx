@@ -116,6 +116,7 @@ const TOOLBAR_RENDERERS: Partial<
           scale={scale}
           onCropModeChange={onImageCropModeChange}
           onChange={(index, element) => onChange(index, element, path)}
+          onReplaceWithVideo={(index, video) => onChange(index, video, path)}
         />
       )
     ) : null,
