@@ -381,6 +381,13 @@ function pointsForAlignmentGuide(guide: AlignmentGuide) {
     : [guide.start, guide.coordinate, guide.end, guide.coordinate];
 }
 
+function isTextEditingTarget(target: EventTarget | null) {
+  if (!(target instanceof Element)) return false;
+  return Boolean(
+    target.closest("input,textarea,select,[contenteditable='true']"),
+  );
+}
+
 function syncAlignmentGuideNode(
   node: Konva.Line | null,
   guide: AlignmentGuide | undefined,
@@ -437,6 +444,7 @@ function TemplateV2KonvaSlideComponent({
   const pendingImageUploadRef = useRef<ElementSelection | null>(null);
   const undoStackRef = useRef<RawUi[]>([]);
   const redoStackRef = useRef<RawUi[]>([]);
+  const lastCommittedUiRef = useRef<RawUi | null>(null);
   const handledHistoryCommandTokenRef = useRef<number | null>(null);
   const multiComponentDragRef = useRef<MultiComponentDragState | null>(null);
   const componentAlignmentDragRef =
@@ -1012,8 +1020,13 @@ function TemplateV2KonvaSlideComponent({
 
   useEffect(() => {
     if (layout === currentUiRef.current) return;
+    if (layout === lastCommittedUiRef.current) {
+      currentUiRef.current = layout as RawUi;
+      return;
+    }
     const next = normalizeMarkdownTextInUi(cloneJson(layout as RawUi));
     currentUiRef.current = next;
+    lastCommittedUiRef.current = next;
     setUiDraft(next);
     componentAlignmentDragRef.current = null;
     elementAlignmentDragRef.current = null;
@@ -1293,6 +1306,7 @@ function TemplateV2KonvaSlideComponent({
         redoStackRef.current = [];
       }
       currentUiRef.current = nextUi;
+      lastCommittedUiRef.current = nextUi;
       setUiDraft(nextUi);
       onLayoutChange?.(nextUi as TemplateV2Layout);
       dispatch(
@@ -2101,6 +2115,11 @@ function TemplateV2KonvaSlideComponent({
           change_source: "element_toolbar",
         }),
       });
+      const nextType = readString(next.type);
+      if (nextType !== "text" && nextType !== "text-list") {
+        clearInlineEdit();
+        return;
+      }
       updateInlineEdit(selection, (active) => {
         if (
           !active?.style ||
@@ -2133,7 +2152,7 @@ function TemplateV2KonvaSlideComponent({
         return { ...active, style: rawTextStyle(next) };
       });
     },
-    [editorAnalyticsProps, selection, updateElement, updateInlineEdit],
+    [clearInlineEdit, editorAnalyticsProps, selection, updateElement, updateInlineEdit],
   );
 
   const applyLayoutElementChange = useCallback(
@@ -3018,7 +3037,7 @@ function TemplateV2KonvaSlideComponent({
         event.defaultPrevented ||
         event.isComposing ||
         !isSurfaceActive() ||
-        isEditableTarget(event.target) ||
+        isTextEditingTarget(event.target) ||
         !(event.metaKey || event.ctrlKey) ||
         event.altKey
       ) {
@@ -3029,6 +3048,8 @@ function TemplateV2KonvaSlideComponent({
       const wantsUndo = key === "z" && !event.shiftKey;
       const wantsRedo = key === "y" || (key === "z" && event.shiftKey);
       if (!wantsUndo && !wantsRedo) return;
+      if (wantsUndo && undoStackRef.current.length === 0) return;
+      if (wantsRedo && redoStackRef.current.length === 0) return;
 
       event.preventDefault();
       event.stopPropagation();

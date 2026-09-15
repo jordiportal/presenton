@@ -56,6 +56,7 @@ type PanelId =
   | "chart-colors"
   | "infographic-colors"
   | "infographic-range"
+  | "infographic-type"
   | "component-menu"
   | null;
 

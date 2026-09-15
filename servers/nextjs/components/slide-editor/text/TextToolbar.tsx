@@ -23,10 +23,13 @@ import {
   Repeat2,
   Search,
   Settings,
+  Shapes,
   Sigma,
   Underline,
   XCircle,
 } from "lucide-react";
+import { InfographicTypeOptions } from "@/components/slide-editor/infographics/InfographicTypePanel";
+import { type ListInfographicType } from "@/components/slide-editor/infographics/list-to-infographic";
 import type { TextSlideElement } from "@/components/slide-editor/state/state";
 import { withHash } from "@/components/slide-editor/utils/color";
 import type { Font, Marker } from "@/components/slide-editor/types";
@@ -92,7 +95,7 @@ const FONT_MENU_OPTION_HEIGHT = 30;
 const FONT_MENU_MAX_VISIBLE_ROWS = 8;
 const FONT_MENU_OVERSCAN_ROWS = 4;
 
-type TextToolbarPanel = "marker" | "settings";
+type TextToolbarPanel = "marker" | "settings" | "infographic";
 type FontPickerSource = "template" | "google";
 type ToolbarSurfaceRect = {
   height: number;
@@ -141,6 +144,8 @@ export function TextToolbar({
   templateFonts = EMPTY_TEMPLATE_FONTS,
   onChange,
   onListMarkerChange,
+  onConvertToInfographic,
+  canConvertToInfographic = false,
 }: {
   element: TextSlideElement;
   index: number;
@@ -158,6 +163,8 @@ export function TextToolbar({
   templateFonts?: TemplateFontOption[];
   onChange: (index: number, element: TextSlideElement) => void;
   onListMarkerChange?: (marker: Marker) => void;
+  onConvertToInfographic?: (type: ListInfographicType) => void;
+  canConvertToInfographic?: boolean;
 }) {
   const activeSelectionRange = normalizedTextSelectionRange(
     selectionRange,
@@ -639,6 +646,36 @@ export function TextToolbar({
                     marker={listMarker}
                     onChange={(marker) => {
                       onListMarkerChange(marker);
+                      setOpenPanel(null);
+                    }}
+                  />
+                ) : null}
+              </div>
+              <Divider />
+            </>
+          ) : null}
+          {onConvertToInfographic ? (
+            <>
+              <div style={textToolbarStyles.settingsControlWrap}>
+                <ToolbarButton
+                  title="Convert to infographic"
+                  controlId="infographic"
+                  disabled={!canConvertToInfographic}
+                  hoveredControl={hoveredControl}
+                  pressed={openPanel === "infographic"}
+                  setHoveredControl={setHoveredControl}
+                  onClick={() =>
+                    setOpenPanel((current) =>
+                      current === "infographic" ? null : "infographic",
+                    )
+                  }
+                >
+                  <Shapes size={18} strokeWidth={2.2} aria-hidden="true" />
+                </ToolbarButton>
+                {openPanel === "infographic" ? (
+                  <InfographicConvertPanel
+                    onChange={(type) => {
+                      onConvertToInfographic(type);
                       setOpenPanel(null);
                     }}
                   />
@@ -1170,6 +1207,22 @@ function TextSettingsPanel({
   );
 }
 
+function InfographicConvertPanel({
+  onChange,
+}: {
+  onChange: (type: ListInfographicType) => void;
+}) {
+  return (
+    <FloatingToolbarPanel
+      aria-label="Convert to infographic"
+      style={textToolbarStyles.infographicPanel}
+      onMouseDown={(event) => event.stopPropagation()}
+    >
+      <InfographicTypeOptions onChange={onChange} />
+    </FloatingToolbarPanel>
+  );
+}
+
 function ListMarkerPanel({
   marker,
   onChange,
@@ -1689,6 +1742,34 @@ const textToolbarStyles = {
     border: "1px solid #E5E7EB",
     background: "#FFFFFF",
     boxShadow: "0 18px 44px rgba(15, 23, 42, 0.16)",
+  },
+  infographicPanel: {
+    width: 188,
+    boxSizing: "border-box",
+    padding: 8,
+    borderRadius: 6,
+    border: "1px solid #E5E7EB",
+    background: "#FFFFFF",
+    boxShadow: "0 18px 44px rgba(15, 23, 42, 0.16)",
+    display: "flex",
+    flexDirection: "column",
+    gap: 2,
+  },
+  infographicOption: {
+    width: "100%",
+    height: 32,
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    padding: "0 8px",
+    border: "none",
+    borderRadius: 6,
+    background: "transparent",
+    color: "#111827",
+    fontSize: 12,
+    fontWeight: 600,
+    cursor: "pointer",
+    textAlign: "left",
   },
   settingsSliderRow: {
     width: "100%",

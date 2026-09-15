@@ -3,6 +3,7 @@ import { useEffect, useCallback } from 'react';
 type KeyboardEvent = {
   key: string;
   ctrlKey: boolean;
+  metaKey?: boolean;
   shiftKey: boolean;
   preventDefault: () => void;
 };
@@ -18,18 +19,19 @@ export const useKeyboardShortcut = (
         return;
       }
 
-      const key = event.key.toLowerCase();
-      const isTemplateV2KonvaShortcut =
-        typeof document !== "undefined" &&
-        Boolean(document.documentElement.dataset.templateV2KonvaActiveSurface) &&
-        (key === "z" || key === "y");
-      if (isTemplateV2KonvaShortcut) {
+      const nativeEvent = event as unknown as globalThis.KeyboardEvent;
+      const target = nativeEvent.target;
+      if (
+        target instanceof Element &&
+        target.closest("input,textarea,select,[contenteditable='true']")
+      ) {
         return;
       }
 
-      const isCtrlPressed = event.ctrlKey;
+      const key = event.key.toLowerCase();
+      const isModifierPressed = Boolean(event.ctrlKey || event.metaKey || nativeEvent.metaKey);
       
-      if (keys.includes(key) && isCtrlPressed) {
+      if (keys.includes(key) && isModifierPressed) {
         event.preventDefault();
         callback(event);
       }

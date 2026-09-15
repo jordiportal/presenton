@@ -63,9 +63,11 @@ export const usePresentationUndoRedo = () => {
   useKeyboardShortcut(
     ["z"],
     (e) => {
-      if (e.ctrlKey && !e.shiftKey && canUndo) {
-        e.preventDefault();
-        onUndo();
+      if (e.ctrlKey || e.metaKey) {
+        if (!e.shiftKey && canUndo) {
+          e.preventDefault();
+          onUndo();
+        }
       }
     },
     [canUndo, onUndo]
@@ -75,7 +77,7 @@ export const usePresentationUndoRedo = () => {
   useKeyboardShortcut(
     ["z"],
     (e) => {
-      if (e.ctrlKey && e.shiftKey && canRedo) {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && canRedo) {
         e.preventDefault();
         onRedo();
       }
@@ -87,7 +89,7 @@ export const usePresentationUndoRedo = () => {
   useKeyboardShortcut(
     ["y"],
     (e) => {
-      if (e.ctrlKey && canRedo) {
+      if ((e.ctrlKey || e.metaKey) && canRedo) {
         e.preventDefault();
         onRedo();
       }

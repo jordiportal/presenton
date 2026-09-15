@@ -1,5 +1,9 @@
 import type { TemplateFontOption } from "@/components/slide-editor/text/google-fonts";
-import type { Marker } from "@/components/slide-editor/types";
+import type { Marker, SlideElement } from "@/components/slide-editor/types";
+import {
+  convertTextListToInfographic,
+  listItemsFromTextList,
+} from "@/components/slide-editor/infographics/list-to-infographic";
 import {
   rawTextListRunsForEditor,
   setRawTextListRunsContent,
@@ -31,7 +35,7 @@ export function BulletsToolbar({
   componentActions?: ComponentActionsMenuActions | null;
   selectionRange?: TextSelectionRange | null;
   templateFonts?: TemplateFontOption[];
-  onChange: (index: number, element: BulletsSlideElement) => void;
+  onChange: (index: number, element: SlideElement) => void;
 }) {
   const marker = readMarker(element.marker);
   const textElement: TextSlideElement = {
@@ -74,6 +78,11 @@ export function BulletsToolbar({
       templateFonts={templateFonts}
       onChange={updateTextElement}
       onListMarkerChange={updateMarker}
+      canConvertToInfographic={listItemsFromTextList(element).length > 0}
+      onConvertToInfographic={(type) => {
+        const next = convertTextListToInfographic(element, type);
+        if (next) onChange(index, next);
+      }}
     />
   );
 }

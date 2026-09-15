@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
-import { Pencil, Plus, PlusCircle, Trash2 } from "lucide-react";
+import { Pencil, Plus, PlusCircle, Shapes, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NumberField, Panel } from "@/components/slide-editor/shapes/ShapeToolbar";
 import type { InfographicType } from "@/components/slide-editor/types";
@@ -10,6 +10,11 @@ import {
   infographicToolbarItemStats,
   removeLastInfographicToolbarItem,
 } from "@/components/slide-editor/infographics/infographic-editing";
+import { InfographicTypeOptions } from "@/components/slide-editor/infographics/InfographicTypePanel";
+import {
+  convertInfographicToListType,
+  isListInfographicType,
+} from "@/components/slide-editor/infographics/list-to-infographic";
 import { resizedInfographicFrame } from "@/components/slide-editor/infographics/infographic-sizing";
 import {
   numericInputMode,
@@ -18,7 +23,7 @@ import {
 } from "@/components/slide-editor/toolbar/numericInput";
 
 type RawRecord = Record<string, unknown>;
-type InfographicPanelId = "items" | "infographic-range";
+type InfographicPanelId = "items" | "infographic-range" | "infographic-type";
 
 export type TemplateV2InfographicToolbarElement = RawRecord & {
   type: "infographic";
@@ -54,6 +59,7 @@ export function TemplateV2InfographicToolbarControls({
     infographicType === "progress_bar" || infographicType === "gauge";
   const rawData = readRecord(element.data);
   const itemStats = infographicToolbarItemStats(rawData);
+  const canSwitchListType = isListInfographicType(infographicType);
 
   const commitDataChange = (changes: Partial<ToolbarInfographicData>) => {
     const next = { ...rawData, ...data, ...changes };
@@ -78,8 +84,68 @@ export function TemplateV2InfographicToolbarControls({
     });
   };
 
+  const commitListTypeChange = (nextType: InfographicType) => {
+    if (!isListInfographicType(nextType) || nextType === infographicType) {
+      onToggle("infographic-type");
+      return;
+    }
+    const next = convertInfographicToListType(
+      {
+        position: readPoint(element.position),
+        data: element.data,
+        colors: Array.isArray(element.colors)
+          ? element.colors.filter((color): color is string => typeof color === "string")
+          : undefined,
+        text_color:
+          typeof element.text_color === "string" ? element.text_color : null,
+        decorative:
+          typeof element.decorative === "boolean" ? element.decorative : false,
+      },
+      nextType,
+    );
+    if (!next) {
+      onToggle("infographic-type");
+      return;
+    }
+    onChange({
+      data: next.data,
+      position: next.position,
+      size: next.size,
+      name: next.name,
+      infographic_type: undefined,
+      min_value: undefined,
+      max_value: undefined,
+      value: undefined,
+    });
+    onToggle("infographic-type");
+  };
+
   return (
     <>
+      {canSwitchListType ? (
+        <div className="relative">
+          <ToolbarIconButton
+            title="Infographic type"
+            open={openPanel === "infographic-type"}
+            onClick={() => onToggle("infographic-type")}
+          >
+            <Shapes size={16} strokeWidth={1.8} aria-hidden />
+          </ToolbarIconButton>
+          {openPanel === "infographic-type" ? (
+            <Panel className="w-[188px] overflow-hidden p-2">
+              <InfographicTypeOptions
+                selectedType={
+                  isListInfographicType(infographicType)
+                    ? infographicType
+                    : undefined
+                }
+                onChange={commitListTypeChange}
+              />
+            </Panel>
+          ) : null}
+        </div>
+      ) : null}
+
       {isMeter ? (
         <InlineNumberInput
           label="Value"
@@ -375,3 +441,13 @@ function readNumber(value: unknown, fallback: number) {
 function formatNumber(value: number) {
   return Number.isFinite(value) ? String(value) : "0";
 }
+
+function readPoint(value: unknown) {
+  const record = readRecord(value);
+  return {
+    x: readNumber(record.x, FRAME_MARGIN_FALLBACK),
+    y: readNumber(record.y, FRAME_MARGIN_FALLBACK),
+  };
+}
+
+const FRAME_MARGIN_FALLBACK = 12;

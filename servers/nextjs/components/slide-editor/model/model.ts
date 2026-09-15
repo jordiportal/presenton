@@ -2064,6 +2064,14 @@ export function mergeEditorToolbarElement(
       editorHeight ?? renderedBox.height,
     ),
   };
+  const editorType = readString(editor.type);
+  if (editorType && editorType !== type) {
+    return {
+      ...(editor as RawElement),
+      position: nextPosition,
+      size: nextSize,
+    };
+  }
   if (isVectorType(type)) {
     const currentBox = polygonRenderBox(current);
     const localFramePosition = {
