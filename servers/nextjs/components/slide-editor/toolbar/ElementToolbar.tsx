@@ -23,6 +23,7 @@ type ElementToolbarProps = {
     height: number;
   } | null;
   path: string;
+  slideIndex?: number;
   scale: number;
   componentActions?: ComponentActionsMenuActions | null;
   selectedTableCell: TableCellSelection | null;
@@ -95,6 +96,7 @@ const TOOLBAR_RENDERERS: Partial<
     onEditIcon,
     onImageCropModeChange,
     path,
+    slideIndex,
     scale,
   }) =>
     element.type === "image" ? (
@@ -112,6 +114,8 @@ const TOOLBAR_RENDERERS: Partial<
         <ImageToolbar
           element={element}
           index={index}
+          path={path}
+          slideIndex={slideIndex}
           anchorBox={anchorBox}
           scale={scale}
           onCropModeChange={onImageCropModeChange}

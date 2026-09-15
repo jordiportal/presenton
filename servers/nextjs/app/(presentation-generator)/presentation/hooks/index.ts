@@ -1,4 +1,5 @@
 export { usePresentationStreaming } from './usePresentationStreaming';
+export { useVideoJobQueue } from './useVideoJobQueue';
 export { usePresentationData } from './usePresentationData';
 export { usePresentationNavigation } from './usePresentationNavigation';
 export { usePresentSessionSync } from './usePresentSessionSync';

@@ -45,7 +45,10 @@ import { OpacitySwatchIcon } from "@/components/slide-editor/toolbar/OpacitySwat
 import { ImagePickerModal } from "@/components/slide-editor/images/ImagePickerModal";
 import { resolveBackendAssetSource } from "@/utils/api";
 import { ImagesApi } from "@/app/(presentation-generator)/services/api/images";
-import { VideosApi } from "@/app/(presentation-generator)/services/api/videos";
+import {
+  VideosApi,
+  emitVideoJobQueued,
+} from "@/app/(presentation-generator)/services/api/videos";
 import { notify } from "@/components/ui/sonner";
 import type { RootState } from "@/store/store";
 
@@ -289,6 +292,8 @@ export function ImageToolbar({
   anchorBox,
   element,
   index,
+  path,
+  slideIndex,
   scale,
   onChange,
   onCropModeChange,
@@ -297,12 +302,17 @@ export function ImageToolbar({
   anchorBox?: FloatingToolbarBox | null;
   element: ImageSlideElement;
   index: number;
+  path?: string;
+  slideIndex?: number;
   scale: number;
   onChange: (index: number, element: ImageSlideElement) => void;
   onCropModeChange?: (active: boolean) => void;
   onReplaceWithVideo?: (index: number, element: VideoElement) => void;
 }) {
   const llmConfig = useSelector((state: RootState) => state.userConfig.llm_config);
+  const presentationId = useSelector(
+    (state: RootState) => state.presentationGeneration.presentationData?.id,
+  );
   const videoModel = (llmConfig?.OPENAI_COMPAT_VIDEO_MODEL || "").trim();
   const canAnimate = Boolean(onReplaceWithVideo);
   const [openPanel, setOpenPanel] = useState<ImagePanel>(null);
@@ -583,33 +593,31 @@ export function ImageToolbar({
     }
     setIsAnimating(true);
     try {
-      const asset = await VideosApi.animateImage({
+      const task = await VideosApi.enqueueAnimate({
         imageUrl: (element.data || "").trim() || imageSource,
         prompt: animatePrompt.trim() || undefined,
-      });
-      if (!asset.file_url) throw new Error("Animation did not return a video URL.");
-      onReplaceWithVideo(index, {
-        type: "video",
+        presentationId,
+        slideIndex,
+        elementIndex: index,
+        elementPath: path,
+        poster: imageSource,
         position: element.position,
         size: element.size,
         rotation: element.rotation,
         opacity: element.opacity,
-        src: asset.file_url,
-        provider: "file",
-        video_id: null,
-        poster: imageSource,
-        autoplay: true,
-        loop: true,
-        muted: true,
-        decorative: element.decorative ?? false,
         name: element.name || "video",
+        decorative: element.decorative ?? false,
       });
+      emitVideoJobQueued(task);
       setOpenPanel(null);
-      notify.success("Image animated", "The image was replaced with a short video.");
+      notify.success(
+        "Vídeo en cola",
+        "Puedes seguir editando. El progreso está en Queue, en la cabecera.",
+      );
     } catch (animateError: unknown) {
       notify.error(
         "Animate failed",
-        animateError instanceof Error ? animateError.message : "Could not generate video.",
+        animateError instanceof Error ? animateError.message : "Could not queue video.",
       );
     } finally {
       setIsAnimating(false);
@@ -746,7 +754,7 @@ export function ImageToolbar({
                   onClick={() => void animateImage()}
                   className="rounded-[8px] bg-[#111827] px-3 py-2 text-[13px] font-medium text-white hover:bg-[#0B1220] disabled:opacity-60"
                 >
-                  {isAnimating ? "Generating video…" : "Animate"}
+                  {isAnimating ? "Adding to queue…" : "Animate"}
                 </button>
               </Panel>
             ) : null}

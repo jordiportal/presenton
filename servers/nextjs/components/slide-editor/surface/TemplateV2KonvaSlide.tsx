@@ -3432,6 +3432,7 @@ function TemplateV2KonvaSlideComponent({
           index={selection.componentIndex}
           anchorBox={selectedBox}
           path={keyForSelection(selection)}
+          slideIndex={surfaceSlideIndex ?? slideIndex}
           scale={1}
           selectedTableCell={selectedTableCell}
           templateFonts={templateFonts}

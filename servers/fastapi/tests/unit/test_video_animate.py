@@ -1,9 +1,20 @@
-from unittest.mock import AsyncMock, patch
+import asyncio
 
-from fastapi import FastAPI
+import pytest
+from fastapi import BackgroundTasks, FastAPI, HTTPException
 from fastapi.testclient import TestClient
+from unittest.mock import AsyncMock
 
-from api.v1.ppt.endpoints.videos import VIDEOS_ROUTER
+from api.v1.ppt.endpoints import videos as videos_mod
+from api.v1.ppt.endpoints.videos import (
+    ASYNC_TASK_TYPE_VIDEO_ANIMATE,
+    AnimateImageRequest,
+    VIDEOS_ROUTER,
+    _run_animate_image_task,
+    animate_image,
+)
+from enums.async_task_status import AsyncTaskStatus
+from models.sql.async_task import AsyncTaskModel
 from services import video_generation_service as video_svc
 
 
@@ -11,6 +22,35 @@ def _client() -> TestClient:
     app = FastAPI()
     app.include_router(VIDEOS_ROUTER)
     return TestClient(app)
+
+
+class _TaskSession:
+    def __init__(self, task: AsyncTaskModel):
+        self.task = task
+        self.commit_count = 0
+
+    async def get(self, _model, key):
+        return self.task if key == self.task.id else None
+
+    def add(self, obj) -> None:
+        self.task = obj
+
+    async def commit(self) -> None:
+        self.commit_count += 1
+
+
+class _SessionMaker:
+    def __init__(self, session: _TaskSession):
+        self.session = session
+
+    def __call__(self):
+        return self
+
+    async def __aenter__(self):
+        return self.session
+
+    async def __aexit__(self, *_args):
+        return None
 
 
 def test_videos_endpoint_helpers():
@@ -90,29 +130,94 @@ def test_capabilities_disabled_without_model(monkeypatch):
     assert response.json()["image_to_video"] is False
 
 
-def test_animate_requires_configuration(monkeypatch):
-    monkeypatch.setattr(video_svc, "video_generation_configured", lambda: False)
-    client = _client()
-    response = client.post(
-        "/videos/animate",
-        json={"image_url": "/app_data/images/frame.png"},
-    )
-    assert response.status_code == 400
-
-
-def test_animate_returns_file_url(monkeypatch):
-    monkeypatch.setattr(video_svc, "video_generation_configured", lambda: True)
-    client = _client()
-    with patch(
-        "api.v1.ppt.endpoints.videos.animate_image_to_video",
-        new=AsyncMock(return_value="/app_data/videos/clip.mp4"),
-    ):
-        response = client.post(
-            "/videos/animate",
-            json={
-                "image_url": "/app_data/images/frame.png",
-                "prompt": "gentle motion",
-            },
+def test_animate_requires_configuration(monkeypatch, fake_async_session):
+    monkeypatch.setattr(videos_mod, "video_generation_configured", lambda: False)
+    with pytest.raises(HTTPException) as exc:
+        asyncio.run(
+            animate_image(
+                AnimateImageRequest(image_url="/app_data/images/frame.png"),
+                BackgroundTasks(),
+                fake_async_session,
+            )
         )
-    assert response.status_code == 200
-    assert response.json()["file_url"] == "/app_data/videos/clip.mp4"
+    assert exc.value.status_code == 400
+
+
+def test_animate_enqueues_task(monkeypatch, fake_async_session):
+    monkeypatch.setattr(videos_mod, "video_generation_configured", lambda: True)
+    background_tasks = BackgroundTasks()
+    task = asyncio.run(
+        animate_image(
+            AnimateImageRequest(
+                image_url="/app_data/images/frame.png",
+                prompt="gentle motion",
+                presentation_id="pres-1",
+                slide_index=2,
+                element_path="element:0:0",
+            ),
+            background_tasks,
+            fake_async_session,
+        )
+    )
+    assert task.type == ASYNC_TASK_TYPE_VIDEO_ANIMATE
+    assert task.status == AsyncTaskStatus.PENDING
+    assert task.message == "Queued for video generation"
+    assert task.data["presentation_id"] == "pres-1"
+    assert task.data["slide_index"] == 2
+    assert "file_url" not in (task.data or {})
+    assert fake_async_session.added == [task]
+    assert fake_async_session.commit_count == 1
+    assert len(background_tasks.tasks) == 1
+
+
+def test_animate_worker_sets_file_url(monkeypatch):
+    body = AnimateImageRequest(
+        image_url="/app_data/images/frame.png",
+        prompt="gentle motion",
+        presentation_id="pres-1",
+        slide_index=2,
+        element_path="element:0:0",
+    )
+    task = AsyncTaskModel(
+        id="task-video-1",
+        type=ASYNC_TASK_TYPE_VIDEO_ANIMATE,
+        status=AsyncTaskStatus.PENDING,
+        data={"presentation_id": "pres-1"},
+    )
+    session = _TaskSession(task)
+    monkeypatch.setattr(videos_mod, "async_session_maker", _SessionMaker(session))
+    monkeypatch.setattr(
+        videos_mod,
+        "animate_image_to_video",
+        AsyncMock(return_value="/app_data/videos/clip.mp4"),
+    )
+
+    asyncio.run(_run_animate_image_task(task.id, body))
+
+    assert task.status == AsyncTaskStatus.COMPLETED
+    assert task.message == "Video ready"
+    assert task.data["file_url"] == "/app_data/videos/clip.mp4"
+    assert task.data["element_path"] == "element:0:0"
+
+
+def test_animate_worker_records_error(monkeypatch):
+    body = AnimateImageRequest(image_url="/app_data/images/frame.png")
+    task = AsyncTaskModel(
+        id="task-video-err",
+        type=ASYNC_TASK_TYPE_VIDEO_ANIMATE,
+        status=AsyncTaskStatus.PENDING,
+    )
+    session = _TaskSession(task)
+    monkeypatch.setattr(videos_mod, "async_session_maker", _SessionMaker(session))
+    monkeypatch.setattr(
+        videos_mod,
+        "animate_image_to_video",
+        AsyncMock(side_effect=HTTPException(status_code=502, detail="Atlas down")),
+    )
+
+    asyncio.run(_run_animate_image_task(task.id, body))
+
+    assert task.status == AsyncTaskStatus.ERROR
+    assert task.message == "Video generation failed"
+    assert task.error["status_code"] == 502
+    assert task.error["detail"] == "Atlas down"

@@ -61,6 +61,7 @@ import { sanitizeAnalyticsError } from "@/utils/analytics";
 import { v4 as uuidv4 } from "uuid";
 import StreamingGenerationMetrics from "./StreamingGenerationMetrics";
 import { ShareDialog } from "./ShareDialog";
+import { VideoJobQueueButton } from "./VideoJobQueue";
 import {
   collaborationHolderInitial,
   collaborationHolderLabel,
@@ -738,6 +739,9 @@ const PresentationHeader = ({
             <span className="hidden rounded-full border border-[#E4E4E8] bg-white px-3 py-1 font-syne text-xs text-[#667085] sm:inline">
               Shared by {presentationData.owner_username}
             </span>
+          ) : null}
+          {!isStreaming ? (
+            <VideoJobQueueButton presentationId={presentation_id} />
           ) : null}
           {canUseNotes ? (
             <div className="flex items-center gap-1.5">
