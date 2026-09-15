@@ -501,7 +501,7 @@ export type Kh7FilterBinding = {
 };
 
 export type DataBinding = {
-  source: "kh7" | "mock";
+  source: "kh7" | "mock" | "onlyoffice";
   query_id: string;
   query_name?: string | null;
   dimensions?: string[];
@@ -509,6 +509,9 @@ export type DataBinding = {
   measures?: string[];
   filters: Kh7FilterBinding[];
   fetched_at?: string | null;
+  sheet?: string | null;
+  range?: string | null;
+  document_name?: string | null;
 };
 
 export type FilterWidgetKind =

@@ -86,6 +86,7 @@ export async function refreshBoundTargets(
     targets.map(async ({ selection, element }) => {
       const binding = readBinding(element);
       if (!binding) return;
+      if (binding.source === "onlyoffice") return;
       const filters = mergeSlideFilters(binding, slideFilters);
       if (
         filtersEqual(binding.filters, filters) &&

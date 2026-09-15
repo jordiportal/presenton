@@ -2101,6 +2101,26 @@ function adaptDataBinding(value: unknown): DataBinding | null {
   if (!raw) return null;
   const source = readString(raw.source);
   const queryId = readString(raw.query_id);
+  if (source === "onlyoffice") {
+    const sheet = readString(raw.sheet);
+    const range = readString(raw.range);
+    const resolved =
+      queryId || (sheet && range ? `${sheet}!${range}` : "");
+    if (!resolved) return null;
+    return {
+      source: "onlyoffice",
+      query_id: resolved,
+      query_name: readString(raw.query_name) ?? readString(raw.document_name),
+      document_name: readString(raw.document_name),
+      sheet,
+      range,
+      dimensions: [],
+      column_dimensions: [],
+      measures: [],
+      filters: [],
+      fetched_at: readString(raw.fetched_at),
+    };
+  }
   if ((source !== "kh7" && source !== "mock") || !queryId) return null;
   return {
     source,

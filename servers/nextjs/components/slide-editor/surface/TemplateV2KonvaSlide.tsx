@@ -3540,9 +3540,13 @@ function TemplateV2KonvaSlideComponent({
               ...filterEditorElement,
               source:
                 filterEditorElement.source ||
-                collectBoundTargets(uiDraft).find((item) =>
-                  readString(item.element.data_binding?.query_id),
-                )?.element.data_binding?.query_id ||
+                collectBoundTargets(uiDraft).find((item) => {
+                  const source = readString(item.element.data_binding?.source);
+                  return (
+                    (source === "kh7" || source === "mock") &&
+                    readString(item.element.data_binding?.query_id)
+                  );
+                })?.element.data_binding?.query_id ||
                 filterEditorElement.source,
             } as FilterElement
           }

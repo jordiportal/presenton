@@ -543,3 +543,8 @@ def get_kh7_bi_service_key_env() -> str | None:
         os.getenv("KH7_BI_SERVICE_KEY") or os.getenv("KH7_BI_TOKEN") or ""
     ).strip()
     return raw or None
+
+
+def get_onlyoffice_mcp_url_env() -> str | None:
+    raw = (os.getenv("ONLYOFFICE_MCP_URL") or "").strip().rstrip("/")
+    return raw or None

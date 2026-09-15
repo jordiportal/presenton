@@ -47,6 +47,7 @@ import {
 import { ChartColorPaletteCard } from "@/components/slide-editor/charts/ChartColorPalette";
 import { TemplateV2ChartJsElement } from "@/components/slide-editor/charts/TemplateV2ChartJsElement";
 import { Kh7QueryPanel } from "@/components/slide-editor/data/Kh7QueryPanel";
+import { OnlyOfficeQueryPanel } from "@/components/slide-editor/data/OnlyOfficeQueryPanel";
 
 const CHART_TYPES: Array<{ label: string; value: ChartType }> = [
   { label: "Bar Chart", value: "bar" },
@@ -872,8 +873,10 @@ function ChartDataModal({
   onClose: () => void;
 }) {
   const [draftChart, setDraftChart] = useState<ChartElement>(() => chart);
-  const [dataTab, setDataTab] = useState<"manual" | "kh7">(
-    chart.data_binding?.source === "kh7" || chart.data_binding?.source === "mock"
+  const [dataTab, setDataTab] = useState<"manual" | "kh7" | "onlyoffice">(
+    chart.data_binding?.source === "onlyoffice"
+      ? "onlyoffice"
+      : chart.data_binding?.source === "kh7" || chart.data_binding?.source === "mock"
       ? "kh7"
       : "manual",
   );
@@ -1084,10 +1087,41 @@ function ChartDataModal({
                 >
                   KH7 query
                 </button>
+                <button
+                  type="button"
+                  className={`h-7 rounded-full px-3 text-[11px] font-semibold ${
+                    dataTab === "onlyoffice"
+                      ? "bg-white text-[#191919] shadow-sm"
+                      : "text-[#6B6B74]"
+                  }`}
+                  onClick={() => setDataTab("onlyoffice")}
+                >
+                  Excel
+                </button>
               </div>
               {dataTab === "kh7" ? (
                 <div className="mb-5">
                   <Kh7QueryPanel
+                    binding={draftChart.data_binding}
+                    onApply={(result, nextBinding) => {
+                      updateData(
+                        result.chart.categories,
+                        result.chart.series.map((item) => ({
+                          name: item.name,
+                          values: item.values,
+                        })),
+                      );
+                      setDraftChart((currentChart) => ({
+                        ...currentChart,
+                        data_binding: nextBinding,
+                      }));
+                    }}
+                  />
+                </div>
+              ) : null}
+              {dataTab === "onlyoffice" ? (
+                <div className="mb-5">
+                  <OnlyOfficeQueryPanel
                     binding={draftChart.data_binding}
                     onApply={(result, nextBinding) => {
                       updateData(

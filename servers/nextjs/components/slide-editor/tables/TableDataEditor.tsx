@@ -16,6 +16,7 @@ import {
   tableRowsAsStrings,
 } from "@/components/slide-editor/model/element-model";
 import { Kh7QueryPanel } from "@/components/slide-editor/data/Kh7QueryPanel";
+import { OnlyOfficeQueryPanel } from "@/components/slide-editor/data/OnlyOfficeQueryPanel";
 import { tableGridFromExecute } from "@/app/(presentation-generator)/services/api/kh7";
 import {
   ADVANCED_TABLE_MAX_COLUMNS,
@@ -62,8 +63,10 @@ function TableDataModal({
   onClose: () => void;
 }) {
   const [draft, setDraft] = useState<TableSlideElement>(() => table);
-  const [dataTab, setDataTab] = useState<"manual" | "kh7">(
-    table.data_binding?.source === "kh7" || table.data_binding?.source === "mock"
+  const [dataTab, setDataTab] = useState<"manual" | "kh7" | "onlyoffice">(
+    table.data_binding?.source === "onlyoffice"
+      ? "onlyoffice"
+      : table.data_binding?.source === "kh7" || table.data_binding?.source === "mock"
       ? "kh7"
       : "manual",
   );
@@ -168,6 +171,17 @@ function TableDataModal({
                 >
                   KH7 query
                 </button>
+                <button
+                  type="button"
+                  className={`h-7 rounded-full px-3 text-[11px] font-semibold ${
+                    dataTab === "onlyoffice"
+                      ? "bg-white text-[#191919] shadow-sm"
+                      : "text-[#6B6B74]"
+                  }`}
+                  onClick={() => setDataTab("onlyoffice")}
+                >
+                  Excel
+                </button>
               </div>
               {dataTab === "kh7" ? (
                 <div className="mb-5">
@@ -175,6 +189,48 @@ function TableDataModal({
                     binding={draft.data_binding}
                     onApply={(result, nextBinding) => {
                       const grid = tableGridFromExecute(result);
+                      setDraft((current) => {
+                        const next = setTableRowsFromStrings(current, [
+                          grid.columns,
+                          ...grid.rows,
+                        ]);
+                        const rowCount = grid.rows.length + 1;
+                        const columnCount = Math.max(1, grid.columns.length);
+                        return {
+                          ...next,
+                          data_binding: nextBinding,
+                          max_columns: Math.max(
+                            tableColumnLimit(current),
+                            columnCount,
+                            ADVANCED_TABLE_MAX_COLUMNS,
+                          ),
+                          max_rows: Math.max(
+                            tableRowLimit(current),
+                            rowCount,
+                            ADVANCED_TABLE_MAX_ROWS,
+                          ),
+                          size: {
+                            width: current.size?.width ?? 1120,
+                            height: Math.min(
+                              620,
+                              Math.max(
+                                current.size?.height ?? 320,
+                                28 + rowCount * 24,
+                              ),
+                            ),
+                          },
+                        };
+                      });
+                    }}
+                  />
+                </div>
+              ) : null}
+              {dataTab === "onlyoffice" ? (
+                <div className="mb-5">
+                  <OnlyOfficeQueryPanel
+                    binding={draft.data_binding}
+                    onApply={(result, nextBinding) => {
+                      const grid = result.table;
                       setDraft((current) => {
                         const next = setTableRowsFromStrings(current, [
                           grid.columns,
