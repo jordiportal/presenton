@@ -1,6 +1,7 @@
 export { usePresentationStreaming } from './usePresentationStreaming';
 export { usePresentationData } from './usePresentationData';
 export { usePresentationNavigation } from './usePresentationNavigation';
+export { usePresentSessionSync } from './usePresentSessionSync';
 export { useAutoSave } from './useAutoSave';
 export { usePresentationCollaboration } from './usePresentationCollaboration';
 export {

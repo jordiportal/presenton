@@ -14,6 +14,7 @@ import "../../utils/prism-languages";
 import { Skeleton } from "@/components/ui/skeleton";
 import { OverlayLoader } from "@/components/ui/overlay-loader";
 import PresentationMode from "./PresentationMode";
+import PresenterView from "./PresenterView";
 import SidePanel from "./SidePanel";
 import SlideContent from "./SlideContent";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,7 @@ import {
   usePresentationStreaming,
   usePresentationData,
   usePresentationNavigation,
+  usePresentSessionSync,
   useAutoSave,
   usePresentationCollaboration,
   PresentationCollaborationProvider,
@@ -38,11 +40,18 @@ import {
 } from "../hooks";
 import { SlideNotesOverlay } from "./SlideNotesOverlay";
 import { PresentationPageProps } from "../types";
+import { notify } from "@/components/ui/sonner";
+import {
+  PRESENTER_MODE,
+  PRESENT_SLIDE_UI_EVENT,
+  buildPresentationPath,
+  openPresenterWindow,
+} from "../utils/presentSession";
 import { isTruthyEmbedFlag } from "@/utils/embed";
 import { isBrainPresentonMessage } from "@/utils/brain-bridge";
 import { applyPresentationThemeToElement } from "../utils/applyPresentationThemeDom";
 
-import { replaceSlidesWithBlankFallback } from "@/store/slices/presentationGeneration";
+import { replaceSlidesWithBlankFallback, updateSlideUi } from "@/store/slices/presentationGeneration";
 import { addToHistory } from "@/store/slices/undoRedoSlice";
 import {
   createBlankPresentationSlide,
@@ -291,6 +300,7 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
 
   const {
     isPresentMode,
+    isPresenterView,
     stream,
     currentSlide: presentSlideFromUrl,
     toggleFullscreen,
@@ -302,6 +312,44 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
     setSelectedSlide,
     setIsFullscreen
   );
+
+  const { postSlide, postSlideUi, postExit } = usePresentSessionSync({
+    presentationId: presentation_id,
+    enabled: isPresentMode,
+    currentIndex: presentSlideFromUrl,
+    onRemoteSlide: (index) => {
+      handleSlideChange(index, presentationDataRef.current);
+    },
+    onRemoteSlideUi: (index, ui) => {
+      dispatch(updateSlideUi({ index, ui }));
+    },
+    onRemoteExit: () => {
+      if (isPresenterView) {
+        window.close();
+      }
+      handlePresentExit();
+    },
+  });
+
+  useEffect(() => {
+    if (!isPresentMode) return;
+    const handleSlideUi = (event: Event) => {
+      const detail = (event as CustomEvent<{ index?: unknown; ui?: unknown }>)
+        .detail;
+      if (
+        typeof detail?.index !== "number" ||
+        !detail.ui ||
+        typeof detail.ui !== "object" ||
+        Array.isArray(detail.ui)
+      ) {
+        return;
+      }
+      postSlideUi(detail.index, detail.ui as Record<string, unknown>);
+    };
+    window.addEventListener(PRESENT_SLIDE_UI_EVENT, handleSlideUi);
+    return () =>
+      window.removeEventListener(PRESENT_SLIDE_UI_EVENT, handleSlideUi);
+  }, [isPresentMode, postSlideUi]);
 
   const collaboration = usePresentationCollaboration({
     presentationId: presentation_id,
@@ -517,11 +565,16 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
       pathname,
       presentation_id,
       stream_mode: !!stream,
-      presentation_mode: isPresentMode ? "present" : "edit",
+      presentation_mode: isPresenterView
+        ? "presenter"
+        : isPresentMode
+          ? "present"
+          : "edit",
       generation_mode: isSmartPresentation ? "smart" : "standard",
     });
   }, [
     isPresentMode,
+    isPresenterView,
     isSmartPresentation,
     pathname,
     presentation_id,
@@ -563,6 +616,33 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
 
   const onSlideChange = (newSlide: number) => {
     handleSlideChange(newSlide, presentationData);
+    postSlide(newSlide);
+  };
+
+  const onExitSession = () => {
+    postExit();
+    if (isPresenterView) {
+      window.close();
+    }
+    handlePresentExit();
+  };
+
+  const openPresenterView = () => {
+    const opened = openPresenterWindow(
+      presentation_id,
+      buildPresentationPath({
+        presentationId: presentation_id,
+        mode: PRESENTER_MODE,
+        slide: presentSlideFromUrl,
+        search: searchParams,
+      }),
+    );
+    if (!opened) {
+      notify.error(
+        "Popup blocked",
+        "Allow popups for this site to open presenter view.",
+      );
+    }
   };
 
   const navigateEditorToSlide = useCallback(
@@ -857,6 +937,20 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
   }, [isPresentMode, isTemplateV2Presentation, selectedSlide]);
 
   // Presentation Mode View
+  if (isPresenterView) {
+    return (
+      <PresenterView
+        slides={presentationData?.slides ?? []}
+        currentSlide={presentSlideFromUrl}
+        theme={presentationData?.theme ?? undefined}
+        fonts={presentationData?.fonts}
+        title={presentationData?.title}
+        onExit={onExitSession}
+        onSlideChange={onSlideChange}
+      />
+    );
+  }
+
   if (isPresentMode) {
     return (
       <PresentationMode
@@ -866,8 +960,9 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
         fonts={presentationData?.fonts}
         isFullscreen={isFullscreen}
         onFullscreenToggle={toggleFullscreen}
-        onExit={handlePresentExit}
+        onExit={onExitSession}
         onSlideChange={onSlideChange}
+        onOpenPresenter={openPresenterView}
       />
     );
   }

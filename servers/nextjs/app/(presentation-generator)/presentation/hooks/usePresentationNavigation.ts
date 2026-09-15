@@ -1,5 +1,11 @@
 import { useCallback, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import {
+  AUDIENCE_MODE,
+  buildPresentationPath,
+  isPresentSessionMode,
+  PRESENTER_MODE,
+} from "../utils/presentSession";
 
 const SLIDES_SCROLL_CONTAINER_SELECTOR =
   "[data-presentation-slides-scroll-container='true']";
@@ -13,7 +19,9 @@ export const usePresentationNavigation = (
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const isPresentMode = searchParams.get("mode") === "present";
+  const modeParam = searchParams.get("mode");
+  const isPresenterView = modeParam === PRESENTER_MODE;
+  const isPresentMode = isPresentSessionMode(modeParam);
   const stream = searchParams.get("stream");
   const currentSlide = parseInt(
     searchParams.get("slide") || `${selectedSlide}` || "0"
@@ -86,21 +94,32 @@ export const usePresentationNavigation = (
       document.exitFullscreen().catch(() => undefined);
     }
     setIsFullscreen(false);
-    router.push(`/presentation?id=${presentationId}`);
-  }, [router, presentationId, setIsFullscreen]);
+    router.push(
+      buildPresentationPath({
+        presentationId,
+        search: searchParams,
+      }),
+    );
+  }, [router, presentationId, searchParams, setIsFullscreen]);
 
   const handleSlideChange = useCallback((newSlide: number, presentationData: any) => {
     if (newSlide >= 0 && newSlide < presentationData?.slides.length!) {
       setSelectedSlide(newSlide);
       router.push(
-        `/presentation?id=${presentationId}&mode=present&slide=${newSlide}`,
+        buildPresentationPath({
+          presentationId,
+          mode: isPresenterView ? PRESENTER_MODE : AUDIENCE_MODE,
+          slide: newSlide,
+          search: searchParams,
+        }),
         { scroll: false }
       );
     }
-  }, [router, presentationId, setSelectedSlide]);
+  }, [isPresenterView, router, presentationId, searchParams, setSelectedSlide]);
 
   return {
     isPresentMode,
+    isPresenterView,
     stream,
     currentSlide,
     scrollToSlide,

@@ -5,6 +5,7 @@ import {
   ChevronLeft,
   ChevronRight,
   LayoutGrid,
+  Presentation,
   ScreenShareOff,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -23,6 +24,7 @@ interface PresentationModeProps {
   onFullscreenToggle: (target?: Element | null) => void;
   onExit: () => void;
   onSlideChange: (slideNumber: number) => void;
+  onOpenPresenter?: () => void;
 }
 
 const SLIDE_BASE_WIDTH = 1280;
@@ -213,6 +215,7 @@ const PresentationMode: React.FC<PresentationModeProps> = ({
   onFullscreenToggle,
   onExit,
   onSlideChange,
+  onOpenPresenter,
 }) => {
   const rootRef = useRef<HTMLDivElement>(null);
   const hideChromeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -359,6 +362,12 @@ const PresentationMode: React.FC<PresentationModeProps> = ({
             setShowSlideGrid(false);
           }
           break;
+        case "p":
+        case "P":
+          if (!event.ctrlKey && !event.metaKey && !event.altKey) {
+            onOpenPresenter?.();
+          }
+          break;
         default:
           break;
       }
@@ -369,6 +378,7 @@ const PresentationMode: React.FC<PresentationModeProps> = ({
       goPrev,
       onExit,
       onFullscreenToggle,
+      onOpenPresenter,
       onSlideChange,
       showSlideGrid,
       slideCount,
@@ -542,6 +552,17 @@ const PresentationMode: React.FC<PresentationModeProps> = ({
                 >
                   <LayoutGrid className="size-[18px]" strokeWidth={2} />
                 </PresentationIconButton>
+                {onOpenPresenter ? (
+                  <PresentationIconButton
+                    title="Presenter view"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onOpenPresenter();
+                    }}
+                  >
+                    <Presentation className="size-[18px]" strokeWidth={1.8} />
+                  </PresentationIconButton>
+                ) : null}
                 <PresentationIconButton
                   title="Speaker note"
                   active={notesPanelOpen}

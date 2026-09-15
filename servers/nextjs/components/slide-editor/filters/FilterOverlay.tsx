@@ -79,7 +79,7 @@ export function FilterOverlay({
     <div
       data-template-v2-filter-layer="true"
       className="pointer-events-none absolute inset-0"
-      style={{ zIndex: 6 }}
+      style={{ zIndex: 20 }}
     >
       {descriptors.map(({ element, key, selection }) => (
         <div

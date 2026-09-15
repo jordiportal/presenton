@@ -102,6 +102,7 @@ import {
 
 
 import { updateSlideUi } from "@/store/slices/presentationGeneration";
+import { emitPresentSlideUi } from "@/app/(presentation-generator)/presentation/utils/presentSession";
 import { useNearViewport } from "@/app/hooks/useNearViewport";
 import { resolveBackendAssetSource } from "@/utils/api";
 import { bucketFileSize, sanitizeAnalyticsError } from "@/utils/analytics";
@@ -1762,17 +1763,20 @@ function TemplateV2KonvaSlideComponent({
 
   const commitLiveUi = useCallback(
     (nextUi: RawUi, persist: boolean) => {
-      if (nextUi === currentUiRef.current) return;
-      currentUiRef.current = nextUi;
-      setUiDraft(nextUi);
+      if (nextUi !== currentUiRef.current) {
+        currentUiRef.current = nextUi;
+        setUiDraft(nextUi);
+      }
       if (!persist) return;
       onLayoutChange?.(nextUi as TemplateV2Layout);
+      const index = surfaceSlideIndex ?? slideIndex;
       dispatch(
         updateSlideUi({
-          index: surfaceSlideIndex ?? slideIndex,
+          index,
           ui: nextUi as Record<string, unknown>,
         }),
       );
+      emitPresentSlideUi(index, nextUi as Record<string, unknown>);
     },
     [dispatch, onLayoutChange, slideIndex, surfaceSlideIndex],
   );
@@ -1785,9 +1789,11 @@ function TemplateV2KonvaSlideComponent({
         slideFilterBindings(sourceUi),
       );
       if (token !== filterRefreshRef.current) return;
-      if (nextUi === sourceUi) return;
-      if (isEditMode) commitUi(nextUi, false);
-      else commitLiveUi(nextUi, false);
+      if (isEditMode) {
+        if (nextUi !== sourceUi) commitUi(nextUi, false);
+        return;
+      }
+      commitLiveUi(nextUi, true);
     },
     [commitLiveUi, commitUi, isEditMode],
   );

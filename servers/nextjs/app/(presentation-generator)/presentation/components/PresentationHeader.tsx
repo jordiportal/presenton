@@ -11,6 +11,7 @@ import {
   Pencil,
   Check,
   Keyboard,
+  Presentation,
   X,
   AlertTriangle,
   MousePointer2,
@@ -20,7 +21,7 @@ import {
 } from "lucide-react";
 import { askBrain } from "@/utils/brain-bridge";
 import React, { useEffect, useRef, useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import {
   Popover,
   PopoverContent,
@@ -66,6 +67,12 @@ import {
   type CollaborationPresence,
 } from "../../services/api/collaboration";
 import { useNotes } from "../hooks/PresentationNotesContext";
+import {
+  AUDIENCE_MODE,
+  PRESENTER_MODE,
+  buildPresentationPath,
+  openPresenterWindow,
+} from "../utils/presentSession";
 
 const MAX_EXPORT_TITLE_LENGTH = 40;
 
@@ -123,6 +130,7 @@ const PresentationHeader = ({
   const [shareOpen, setShareOpen] = useState(false);
   const [shortcutsDialogOpen, setShortcutsDialogOpen] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isExporting, setIsExporting] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isRegenerateConfirmOpen, setIsRegenerateConfirmOpen] = useState(false);
@@ -178,6 +186,49 @@ const PresentationHeader = ({
       presentation_id,
       enabled: nextValue,
     });
+  };
+
+  const canPresent =
+    !isStreaming &&
+    Boolean(presentationData?.slides && presentationData.slides.length > 0);
+
+  const startPresentation = (withPresenter: boolean) => {
+    const slide = currentSlide || 0;
+    const search = new URLSearchParams(searchParams.toString());
+    if (generationMode === "smart" && !search.get("type")) {
+      search.set("type", "smart");
+    }
+    const audiencePath = buildPresentationPath({
+      presentationId: presentation_id,
+      mode: AUDIENCE_MODE,
+      slide,
+      search,
+    });
+    trackEvent(MixpanelEvent.Presentation_Mode_Entered, {
+      pathname,
+      presentation_id,
+      slide_index: slide,
+      slide_count: presentationData?.slides?.length || 0,
+      generation_mode: generationMode,
+      presenter_view: withPresenter,
+    });
+    if (withPresenter) {
+      const presenterPath = buildPresentationPath({
+        presentationId: presentation_id,
+        mode: PRESENTER_MODE,
+        slide,
+        search,
+      });
+      const opened = openPresenterWindow(presentation_id, presenterPath);
+      if (!opened) {
+        notify.error(
+          "Popup blocked",
+          "Allow popups for this site to open presenter view.",
+        );
+      }
+    }
+    trackEvent(MixpanelEvent.Navigation, { from: pathname, to: audiencePath });
+    router.push(audiencePath);
   };
 
   const beginTitleEdit = () => {
@@ -836,28 +887,20 @@ const PresentationHeader = ({
             <Separator orientation="vertical" className="h-4 w-[2px]" />
             <ToolTip content="Present">
               <button
-                onClick={() => {
-                  const to = `?id=${presentation_id}&mode=present&slide=${
-                    currentSlide || 0
-                  }${generationMode === "smart" ? "&type=smart" : ""}`;
-                  trackEvent(MixpanelEvent.Presentation_Mode_Entered, {
-                    pathname,
-                    presentation_id,
-                    slide_index: currentSlide || 0,
-                    slide_count: presentationData?.slides?.length || 0,
-                    generation_mode: generationMode,
-                  });
-                  trackEvent(MixpanelEvent.Navigation, { from: pathname, to });
-                  router.push(to);
-                }}
-                disabled={
-                  isStreaming ||
-                  !presentationData?.slides ||
-                  presentationData?.slides.length === 0
-                }
+                onClick={() => startPresentation(false)}
+                disabled={!canPresent}
                 className="cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed group"
               >
                 <Play className="w-3.5 h-3.5 text-[#101323] group-hover:text-[#5141e5] duration-300" />
+              </button>
+            </ToolTip>
+            <ToolTip content="Presenter view">
+              <button
+                onClick={() => startPresentation(true)}
+                disabled={!canPresent}
+                className="cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed group"
+              >
+                <Presentation className="w-3.5 h-3.5 text-[#101323] group-hover:text-[#5141e5] duration-300" />
               </button>
             </ToolTip>
           </div>
