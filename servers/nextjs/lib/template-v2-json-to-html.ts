@@ -1,5 +1,8 @@
 import { resolveBackendAssetUrl } from "@/utils/api";
 import { markdownToPlainChartText } from "@/components/slide-editor/charts/chart-data";
+import { renderIbcsKpiPinSvg } from "@/components/slide-editor/ibcs/kpi-pin-svg";
+import { ibcsValuesFromChart } from "@/components/slide-editor/ibcs/values";
+import { ibcsFormatFromConfig } from "@/components/slide-editor/ibcs/format";
 import { normalizeRawTextMarkdownElement } from "@/components/slide-editor/text/template-v2-text";
 import { isLatexTextRun } from "@/components/slide-editor/text/text-runs";
 import { normalizeMathLatex, renderMathHtml } from "@/lib/math";
@@ -25,7 +28,8 @@ type ChartKind =
   | "donut"
   | "polar_area"
   | "radar"
-  | "scatter";
+  | "scatter"
+  | "ibcs_kpi";
 type InfographicKind =
   | "progress_bar"
   | "gauge"
@@ -1124,6 +1128,43 @@ function renderChart(item: JsonRecord, mode: RenderMode): string {
   const box = readBox(item);
   const width = Math.max(1, box.width ?? 1);
   const height = Math.max(1, box.height ?? 1);
+  const kind = chartKindFromValue(
+    readString(item.chart_type ?? item.chartType),
+  );
+  if (kind === "ibcs_kpi") {
+    const ibcs = readRecord(item.ibcs);
+    const svg = renderIbcsKpiPinSvg({
+      values: ibcsValuesFromChart({
+        ibcs: ibcs as {
+          values?: { ac: number; py: number; pl: number; fc: number };
+        },
+        categories: readArray(item.categories).map(String),
+        series: readArray(item.series).map((entry) => {
+          const record = readRecord(entry);
+          return {
+            values: readArray(record.values).map((value) => Number(value) || 0),
+          };
+        }),
+      }),
+      pinVs:
+        readString(ibcs.pin_vs) === "py" || readString(ibcs.pin_vs) === "pl"
+          ? (readString(ibcs.pin_vs) as "py" | "pl")
+          : "fc",
+      width,
+      height,
+      title: readString(item.title),
+      format: ibcsFormatFromConfig({
+        scale: readString(ibcs.scale),
+        scale_label: readString(ibcs.scale_label),
+        decimals: readNumber(ibcs.decimals),
+        unit: readString(ibcs.unit),
+      }),
+      barWidth: readNumber(ibcs.bar_width),
+    }).replace(/^<\?xml[^>]*>\s*/, "");
+    return `<div style="${frameStyle(item, mode)}${transformStyle(
+      item
+    )}overflow:hidden">${svg}</div>`;
+  }
   const config = chartConfig(item, height);
 
   return `<div style="${frameStyle(item, mode)}${transformStyle(
@@ -2677,6 +2718,9 @@ function chartKindFromValue(value: string | null): ChartKind {
   if (normalized === "polar" || normalized === "polar_area") return "polar_area";
   if (normalized === "radar") return "radar";
   if (normalized === "scatter") return "scatter";
+  if (normalized === "ibcs" || normalized === "ibcs_kpi" || normalized === "kpi_pin") {
+    return "ibcs_kpi";
+  }
   return "bar";
 }
 

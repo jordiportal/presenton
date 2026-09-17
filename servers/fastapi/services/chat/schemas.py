@@ -384,13 +384,14 @@ class SlideElementChartInput(OpenAIStrictSchemaModel):
         "radar",
         "scatter",
         "stacked_bar",
+        "ibcs_kpi",
     ] | None = Field(
         ...,
         alias="chartType",
         description=(
             "Chart type. Supports the same chart types as the editor: bar, "
             "horizontal_bar, stacked_bar, horizontal_stacked_bar, line, area, "
-            "pie, donut, scatter, bubble, radar, and polar_area."
+            "pie, donut, scatter, bubble, radar, polar_area, and ibcs_kpi."
         ),
     )
     title: str | None = Field(..., min_length=0, max_length=500)

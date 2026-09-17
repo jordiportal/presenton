@@ -32,6 +32,7 @@ CHART_TYPE_VALUES = [
     "radar",
     "scatter",
     "stacked_bar",
+    "ibcs_kpi",
 ]
 REPEATED_NAME_SUFFIX_RE = re.compile(r"_\d+$")
 JSON_SCHEMA_URI = "https://json-schema.org/draft/2020-12/schema"
@@ -1231,6 +1232,45 @@ def _chart_content_schema() -> dict[str, Any]:
                     "required": ["name", "values"],
                 },
                 "maxItems": 12,
+            },
+            "ibcs": {
+                "type": ["object", "null"],
+                "additionalProperties": False,
+                "properties": {
+                    "kind": {"type": "string", "enum": ["kpi_pin"]},
+                    "pin_vs": {"type": "string", "enum": ["py", "pl", "fc"]},
+                    "measure": {"type": ["string", "null"]},
+                    "current_year": {"type": ["string", "null"]},
+                    "year_dimension": {"type": ["string", "null"]},
+                    "version_dimension": {"type": ["string", "null"]},
+                    "version_codes": {
+                        "type": ["object", "null"],
+                        "additionalProperties": False,
+                        "properties": {
+                            "actual": {"type": ["string", "null"]},
+                            "forecast": {"type": ["string", "null"]},
+                            "plan": {"type": ["string", "null"]},
+                        },
+                    },
+                    "scale": {
+                        "type": ["string", "null"],
+                        "enum": ["auto", "none", "thousands", "millions", None],
+                    },
+                    "scale_label": {"type": ["string", "null"]},
+                    "decimals": {"type": ["number", "integer", "null"]},
+                    "unit": {"type": ["string", "null"]},
+                    "bar_width": {"type": ["number", "null"]},
+                    "values": {
+                        "type": ["object", "null"],
+                        "additionalProperties": False,
+                        "properties": {
+                            "ac": {"type": "number"},
+                            "py": {"type": "number"},
+                            "pl": {"type": "number"},
+                            "fc": {"type": "number"},
+                        },
+                    },
+                },
             },
         },
         "required": ["chart_type", "categories", "series"],

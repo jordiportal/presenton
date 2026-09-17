@@ -915,6 +915,22 @@ class PresentationChatMemoryLayer:
             return normalize_slide_asset_url(icons[0])
         return normalize_slide_asset_url("/static/icons/placeholder.svg")
 
+    def _reindex_slides(
+        self,
+        slides: list[SlideModel],
+        presentation: PresentationModel,
+    ) -> None:
+        ordered = sorted(
+            slides,
+            key=lambda slide: (int(slide.index), str(slide.id)),
+        )
+        for index, slide in enumerate(ordered):
+            if slide.index != index:
+                slide.index = index
+            self._sql_session.add(slide)
+        presentation.n_slides = len(ordered)
+        self._sql_session.add(presentation)
+
     async def add_blank_slide(self, *, index: int | None = None) -> dict[str, Any]:
         presentation = await self._sql_session.get(PresentationModel, self._presentation_id)
         if not presentation:
@@ -958,14 +974,15 @@ class PresentationChatMemoryLayer:
             ui=self._blank_slide_ui(),
         )
         self._sql_session.add(new_slide)
+        self._reindex_slides([*slides, new_slide], presentation)
         await self._sql_session.commit()
         await self._sql_session.refresh(new_slide)
         return {
             "added": True,
-            "message": f"Blank slide added at index {insert_index}.",
+            "message": f"Blank slide added at index {new_slide.index}.",
             "slide_id": str(new_slide.id),
-            "index": insert_index,
-            "slide_number": insert_index + 1,
+            "index": new_slide.index,
+            "slide_number": new_slide.index + 1,
         }
 
     async def save_slide(
@@ -1133,6 +1150,7 @@ class PresentationChatMemoryLayer:
 
         self._sql_session.add(new_slide)
         self._sql_session.add_all(new_assets)
+        self._reindex_slides([*slides, new_slide], presentation)
         await self._sql_session.commit()
         await self._sql_session.refresh(new_slide)
 
@@ -1148,7 +1166,7 @@ class PresentationChatMemoryLayer:
             "action": "created",
             "message": f"New slide saved at index {insert_index}.",
             "slide_id": str(new_slide.id),
-            "index": insert_index,
+            "index": new_slide.index,
             "shifted_slide_count": len(slides_to_shift),
         }
 

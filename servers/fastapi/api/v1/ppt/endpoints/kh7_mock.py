@@ -7,7 +7,11 @@ from typing import Any
 
 from fastapi import HTTPException, status
 
-from api.v1.ppt.endpoints.cube_chart import field_caption as _caption, to_chart as _to_chart
+from api.v1.ppt.endpoints.cube_chart import (
+    field_caption as _caption,
+    measure_formats,
+    to_chart as _to_chart,
+)
 
 
 SOURCES: list[dict[str, Any]] = [
@@ -467,6 +471,7 @@ def execute_cube_query(
         "execution_time_ms": 1,
         "source": "mock",
         "row_count": len(chart["categories"]),
+        "measures": measure_formats(meta, value_fields),
     }
 
 

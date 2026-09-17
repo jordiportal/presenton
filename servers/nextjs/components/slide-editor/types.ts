@@ -31,12 +31,42 @@ export type ChartType =
   | "donut"
   | "horizontal_bar"
   | "horizontal_stacked_bar"
+  | "ibcs_kpi"
   | "line"
   | "pie"
   | "polar_area"
   | "radar"
   | "scatter"
   | "stacked_bar";
+
+export type IbcsScenarioId = "ac" | "py" | "pl" | "fc";
+
+export type IbcsScale = "auto" | "none" | "thousands" | "millions";
+
+export type IbcsChartConfig = {
+  kind: "kpi_pin";
+  pin_vs: Exclude<IbcsScenarioId, "ac">;
+  measure?: string | null;
+  current_year?: string | null;
+  values?: {
+    ac: number;
+    py: number;
+    pl: number;
+    fc: number;
+  } | null;
+  year_dimension?: string | null;
+  version_dimension?: string | null;
+  version_codes?: {
+    actual?: string | null;
+    forecast?: string | null;
+    plan?: string | null;
+  } | null;
+  scale?: IbcsScale | null;
+  scale_label?: string | null;
+  decimals?: number | null;
+  unit?: string | null;
+  bar_width?: number | null;
+};
 export type InfographicType =
   | "progress_bar"
   | "gauge"
@@ -627,6 +657,7 @@ export type ChartElement = ElementBase & {
   legend_color?: string | null;
   source?: string | null;
   data_binding?: DataBinding | null;
+  ibcs?: IbcsChartConfig | null;
 };
 
 export type InfographicElement = ElementBase & {

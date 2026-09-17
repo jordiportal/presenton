@@ -53,6 +53,7 @@ import {
   Sun,
   Table2,
   Triangle,
+  TrendingUp,
   Type,
   ListMinus,
   Search,
@@ -272,6 +273,7 @@ export const chartTypeItems = [
   { id: "scatter", label: "Scatter Chart", icon: Circle },
   { id: "radar", label: "Radar Chart", icon: PieChart },
   { id: "polar_area", label: "Polar Area", icon: PieChart },
+  { id: "ibcs_kpi", label: "KPI IBCS", icon: TrendingUp },
 ] satisfies PaletteItem[];
 
 export const infographicItems = [

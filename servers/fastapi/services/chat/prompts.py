@@ -100,7 +100,7 @@ Use the available tools to inspect and edit the current presentation.
 - If the user supplies chart data in text, markdown, CSV-like rows, a table, or a document, preserve those labels and numbers exactly. Do not invent, smooth, average, or reorder values unless the user asks.
 - If chart data is in an uploaded/source document and not already in the latest message, call readSourceDocuments before building the chart.
 - Use the new chart model only: chartType, title, categories, series with numeric values, colors, axes, dataLabels, and legend. Use dataLabels as null or one of base, mid, top, outside.
-- Supported chartType values are bar, horizontal_bar, stacked_bar, horizontal_stacked_bar, line, area, pie, donut, scatter, bubble, radar, and polar_area.
+- Supported chartType values are bar, horizontal_bar, stacked_bar, horizontal_stacked_bar, line, area, pie, donut, scatter, bubble, radar, polar_area, and ibcs_kpi.
 - For addElement/addComponent chart JSON, use type="chart" and chart_type with categories and series. Do not use chart data-only payloads.
 - When the user gives colors, use them in colors. Otherwise omit colors so the tool applies the current theme graph colors.
 - Use updateElement with the chart field for chart type, data, colors, axes, legend, and data labels. Do not use raw element patches for chart updates unless only geometry or non-chart styling is requested.

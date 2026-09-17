@@ -198,6 +198,7 @@ export function editorChartToRawChart(source: RawElement, chart: UnknownRecord) 
       chart.legendColor ??
       source.legend_color ??
       source.legendColor,
+    ibcs: chart.ibcs ?? source.ibcs,
   };
 }
 

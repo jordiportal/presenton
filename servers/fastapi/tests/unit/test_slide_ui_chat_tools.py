@@ -2392,6 +2392,8 @@ def test_save_slide_for_template_payload_persists_renderable_ui():
 
     assert result["saved"] is True
     assert len(session.slides) == 1
+    assert session.presentation.n_slides == 1
+    assert session.slides[0].index == 0
     saved_slide = session.slides[0]
     assert saved_slide.layout_group == "custom-template"
     assert saved_slide.layout == "thanks"

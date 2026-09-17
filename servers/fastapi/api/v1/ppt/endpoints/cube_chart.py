@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Optional
 
 
 def field_caption(meta: dict[str, Any], name: str, kind: str) -> str:
@@ -72,3 +72,34 @@ def to_chart(
         "rows": table_rows,
         "table": {"columns": table_cols, "rows": table_rows},
     }
+
+
+def measure_formats(
+    meta: dict[str, Any],
+    names: list[str],
+    proxy_measures: Optional[list[dict[str, Any]]] = None,
+) -> list[dict[str, Any]]:
+    by_name = {item.get("name"): item for item in (meta.get("measures") or []) if item.get("name")}
+    proxy = {
+        item.get("name"): item
+        for item in (proxy_measures or [])
+        if item.get("name")
+    }
+    formats: list[dict[str, Any]] = []
+    for name in names:
+        item = by_name.get(name) or {}
+        proxy_item = proxy.get(name) or {}
+        unit = item.get("unit") or proxy_item.get("units") or proxy_item.get("unit")
+        decimals = item.get("decimals")
+        if decimals is None:
+            decimals = proxy_item.get("decimals")
+        formats.append(
+            {
+                "name": name,
+                "caption": item.get("caption") or name,
+                "dataType": item.get("dataType") or proxy_item.get("dataType"),
+                "unit": unit,
+                "decimals": decimals,
+            }
+        )
+    return formats

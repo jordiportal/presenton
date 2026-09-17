@@ -52,6 +52,7 @@ SUPPORTED_CHART_TYPES = {
     "radar",
     "scatter",
     "stacked_bar",
+    "ibcs_kpi",
 }
 DATA_LABEL_POSITIONS = {"base", "mid", "top", "outside"}
 VECTOR_MARKERS = {
@@ -92,6 +93,7 @@ CHART_UPDATE_KEYS = {
     "y_axis",
     "y_axis_grid",
     "y_axis_title",
+    "ibcs",
 }
 
 
@@ -203,20 +205,30 @@ def _normalize_chart_element(
 
     if (
         "x_axis" not in element
-        and chart_type not in {"pie", "donut", "polar_area", "radar"}
+        and chart_type not in {"pie", "donut", "polar_area", "radar", "ibcs_kpi"}
     ):
         element["x_axis"] = True
     if (
         "y_axis" not in element
-        and chart_type not in {"pie", "donut", "polar_area", "radar"}
+        and chart_type not in {"pie", "donut", "polar_area", "radar", "ibcs_kpi"}
     ):
         element["y_axis"] = True
-    if "x_axis_grid" not in element and chart_type not in {"pie", "donut"}:
+    if "x_axis_grid" not in element and chart_type not in {"pie", "donut", "ibcs_kpi"}:
         element["x_axis_grid"] = True
-    if "y_axis_grid" not in element and chart_type not in {"pie", "donut"}:
+    if "y_axis_grid" not in element and chart_type not in {"pie", "donut", "ibcs_kpi"}:
         element["y_axis_grid"] = True
     if "legend" not in element:
-        element["legend"] = chart_type in {"pie", "donut"} or len(series) > 1
+        element["legend"] = (
+            False
+            if chart_type == "ibcs_kpi"
+            else chart_type in {"pie", "donut"} or len(series) > 1
+        )
+    if chart_type == "ibcs_kpi":
+        element["x_axis"] = False
+        element["y_axis"] = False
+        element["x_axis_grid"] = False
+        element["y_axis_grid"] = False
+        element["legend"] = False
     element["data_labels"] = _normalize_chart_data_labels(element.get("data_labels"))
 
 
@@ -237,6 +249,7 @@ def _apply_chart_content_update(
         ("grid_color", "grid_color"),
         ("x_axis_title", "x_axis_title"),
         ("y_axis_title", "y_axis_title"),
+        ("ibcs", "ibcs"),
     ):
         if source_key in chart:
             element[target_key] = copy.deepcopy(chart[source_key])
@@ -1662,7 +1675,7 @@ def _chart_request_on_image_error() -> ValueError:
         "Chart requests must use a chart element, not an image. If the target is an "
         "image/icon, delete that component and addComponent with type chart "
         "(chart_type bar|horizontal_bar|stacked_bar|line|area|pie|donut|"
-        "scatter|bubble|radar|polar_area, title, categories, series with values, "
+        "scatter|bubble|radar|polar_area|ibcs_kpi, title, categories, series with values, "
         "and optional colors). If the target is already chart, use updateElement "
         "with chart."
     )

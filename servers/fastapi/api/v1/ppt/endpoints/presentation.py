@@ -1296,6 +1296,7 @@ def _apply_template_chart_content(
         "radar",
         "scatter",
         "stacked_bar",
+        "ibcs_kpi",
     }:
         updated["chart_type"] = chart_type
     if isinstance(value.get("title"), str):
@@ -1337,6 +1338,8 @@ def _apply_template_chart_content(
     for source_key in ("dataLabels", "data_labels"):
         if source_key in value:
             updated["data_labels"] = _read_template_data_labels(value.get(source_key))
+    if isinstance(value.get("ibcs"), dict):
+        updated["ibcs"] = value["ibcs"]
     return updated
 
 
@@ -1494,6 +1497,18 @@ async def get_presentation(
         .order_by(SlideModel.index)
     )
     slides = list(slides_result)
+    if presentation.n_slides != len(slides) or any(
+        slide.index != index for index, slide in enumerate(slides)
+    ):
+        ordered = sorted(slides, key=lambda item: (int(item.index), str(item.id)))
+        for index, slide in enumerate(ordered):
+            if slide.index != index:
+                slide.index = index
+                sql_session.add(slide)
+        presentation.n_slides = len(ordered)
+        sql_session.add(presentation)
+        await sql_session.commit()
+        slides = ordered
     return PresentationWithSlides(
         **_presentation_response_data(
             presentation,

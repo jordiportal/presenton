@@ -32,6 +32,7 @@ const CHART_TYPE_OPTIONS: Array<{
     { value: "scatter", label: "Scatter Chart" },
     { value: "radar", label: "Radar Chart" },
     { value: "polar_area", label: "Polar Area" },
+    { value: "ibcs_kpi", label: "KPI IBCS" },
   ];
 
 export function ChartToolbarControls({

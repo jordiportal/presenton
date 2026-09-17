@@ -1,5 +1,7 @@
 import { resolveBackendAssetUrl } from "@/utils/api";
 import { chartDataFromSeriesWithColors } from "@/components/slide-editor/charts/chart-data";
+import { parseIbcsDecimals, parseIbcsScale } from "@/components/slide-editor/ibcs/format";
+import { clampIbcsBarWidth } from "@/components/slide-editor/ibcs/spec";
 import { renderMarkdownTextRuns } from "@/components/slide-editor/text/markdown-text";
 import {
   EDITOR_STAGE_HEIGHT,
@@ -16,6 +18,7 @@ import {
   type FilterWidgetKind,
   type Font,
   type GroupElement,
+  type IbcsChartConfig,
   type InfographicData,
   type LayoutAlignment,
   type LayoutItem,
@@ -1034,6 +1037,7 @@ function adaptChart(raw: UnknownRecord): SlideElement {
         "radar",
         "scatter",
         "stacked_bar",
+        "ibcs_kpi",
       ],
       "chart_type",
     ) ??
@@ -1092,6 +1096,7 @@ function adaptChart(raw: UnknownRecord): SlideElement {
     series: supportedSeries,
     source: truncateString(readString(raw.source) ?? "", 120) || null,
     data_binding: adaptDataBinding(raw.data_binding),
+    ibcs: adaptIbcsConfig(raw.ibcs),
   };
 }
 
@@ -2094,6 +2099,44 @@ function isFullSlideFilledShape(
     bounds.height === EDITOR_STAGE_HEIGHT &&
     Boolean(element.fill?.color)
   );
+}
+
+function adaptIbcsConfig(value: unknown): IbcsChartConfig | null {
+  const raw = asRecord(value);
+  if (!raw) return null;
+  const pin = readString(raw.pin_vs);
+  const stored = asRecord(raw.values);
+  const codes = asRecord(raw.version_codes);
+  const decimals = parseIbcsDecimals(raw.decimals);
+  const barWidth = raw.bar_width == null ? null : clampIbcsBarWidth(raw.bar_width);
+  return {
+    kind: "kpi_pin",
+    pin_vs: pin === "py" || pin === "pl" ? pin : "fc",
+    measure: readString(raw.measure),
+    current_year: readString(raw.current_year),
+    values: stored
+      ? {
+          ac: Number(stored.ac) || 0,
+          py: Number(stored.py) || 0,
+          pl: Number(stored.pl) || 0,
+          fc: Number(stored.fc) || 0,
+        }
+      : null,
+    year_dimension: readString(raw.year_dimension),
+    version_dimension: readString(raw.version_dimension),
+    version_codes: codes
+      ? {
+          actual: readString(codes.actual),
+          forecast: readString(codes.forecast),
+          plan: readString(codes.plan),
+        }
+      : null,
+    scale: parseIbcsScale(raw.scale),
+    scale_label: readString(raw.scale_label),
+    decimals,
+    unit: readString(raw.unit),
+    bar_width: raw.bar_width == null ? null : barWidth,
+  };
 }
 
 function adaptDataBinding(value: unknown): DataBinding | null {

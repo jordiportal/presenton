@@ -199,7 +199,7 @@ export function chartColorTargetMode(
 }
 
 export function chartSupportsMultipleSeries(chartType: ChartType) {
-  return chartType !== "pie" && chartType !== "donut";
+  return chartType !== "pie" && chartType !== "donut" && chartType !== "ibcs_kpi";
 }
 
 export function resolvedChartColorTargets(
@@ -439,6 +439,10 @@ export function rawChartType(value: unknown): ChartType {
     case "horizontal_stack_bar":
     case "horizontal_stacked_bar":
       return "horizontal_stacked_bar";
+    case "ibcs":
+    case "ibcs_kpi":
+    case "kpi_pin":
+      return "ibcs_kpi";
     default:
       return "bar";
   }

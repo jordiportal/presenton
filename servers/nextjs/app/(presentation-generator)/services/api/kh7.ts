@@ -12,6 +12,7 @@ export type Kh7Dimension = { name: string; caption: string };
 export type Kh7Measure = {
   name: string;
   caption: string;
+  dataType?: string;
   unit?: string;
   decimals?: number;
 };
@@ -52,6 +53,7 @@ export type Kh7ExecuteResponse = {
   execution_time_ms: number;
   source: string;
   row_count: number;
+  measures?: Kh7Measure[];
 };
 
 export type Kh7TableGrid = {

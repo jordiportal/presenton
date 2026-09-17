@@ -4,7 +4,7 @@ from urllib.parse import quote
 import httpx
 from fastapi import HTTPException, status
 
-from api.v1.ppt.endpoints.cube_chart import to_chart
+from api.v1.ppt.endpoints.cube_chart import measure_formats, to_chart
 from utils.get_env import get_proxy_biw_token_env, get_proxy_biw_url_env
 
 
@@ -340,4 +340,5 @@ async def execute_biw_cube(
         "execution_time_ms": execution_time,
         "source": "biw",
         "row_count": len(chart["categories"]),
+        "measures": measure_formats(meta, value_fields, body.get("measures") or []),
     }

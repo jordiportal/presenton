@@ -85,6 +85,7 @@ class ChartType(str, Enum):
     SCATTER = "scatter"
     RADAR = "radar"
     POLAR_AREA = "polar_area"
+    IBCS_KPI = "ibcs_kpi"
 
 
 class DataLabelPosition(str, Enum):
@@ -345,6 +346,7 @@ class Chart(BaseModel):
     y_axis_grid: Optional[bool] = None
     grid_color: Optional[str] = None
     source: Optional[str] = None
+    ibcs: Optional[dict[str, Any]] = None
 
     # Schema
     decorative: bool

@@ -48,6 +48,16 @@ import { ChartColorPaletteCard } from "@/components/slide-editor/charts/ChartCol
 import { TemplateV2ChartJsElement } from "@/components/slide-editor/charts/TemplateV2ChartJsElement";
 import { Kh7QueryPanel } from "@/components/slide-editor/data/Kh7QueryPanel";
 import { OnlyOfficeQueryPanel } from "@/components/slide-editor/data/OnlyOfficeQueryPanel";
+import { IbcsKpiChart } from "@/components/slide-editor/ibcs/IbcsKpiChart";
+import { IbcsConfigPanel } from "@/components/slide-editor/ibcs/IbcsConfigPanel";
+import { IbcsQueryPanel } from "@/components/slide-editor/ibcs/IbcsQueryPanel";
+import {
+  IBCS_KPI_PIN,
+  IBCS_KPI_PIN_EXAMPLE,
+  isIbcsChartType,
+  mergeIbcsConfig,
+} from "@/components/slide-editor/ibcs/spec";
+import { chartFromIbcsValues } from "@/components/slide-editor/ibcs/values";
 
 const CHART_TYPES: Array<{ label: string; value: ChartType }> = [
   { label: "Bar Chart", value: "bar" },
@@ -61,6 +71,7 @@ const CHART_TYPES: Array<{ label: string; value: ChartType }> = [
   { label: "Scatter Chart", value: "scatter" },
   { label: "Radar Chart", value: "radar" },
   { label: "Polar Area", value: "polar_area" },
+  { label: "KPI IBCS", value: "ibcs_kpi" },
 ];
 const DATA_LABEL_TABS: Array<{
   label: string;
@@ -118,7 +129,7 @@ export function ChartEditorContent({
         <ChartTypeSelect
           value={chart.chart_type}
           onChange={(chartType) =>
-            onChange({ ...chart, chart_type: chartType })
+            onChange(withChartType(chart, chartType))
           }
         />
 
@@ -362,7 +373,8 @@ function ChartCustomizePanel({
     chart.chart_type !== "pie" &&
     chart.chart_type !== "donut" &&
     chart.chart_type !== "polar_area" &&
-    chart.chart_type !== "radar";
+    chart.chart_type !== "radar" &&
+    !isIbcsChartType(chart.chart_type);
   const hasRadialAxes = chart.chart_type === "radar";
   const hasAxes = hasCartesianAxes || hasRadialAxes;
   const showLegend = chart.legend ?? defaultChartLegendVisible(chart);
@@ -388,12 +400,14 @@ function ChartCustomizePanel({
             onChange({ ...chart, title_color: titleColor })
           }
         />
-        <DataLabelsControl
-          value={chart.data_labels ?? null}
-          onChange={(dataLabels) =>
-            onChange({ ...chart, data_labels: dataLabels })
-          }
-        />
+        {isIbcsChartType(chart.chart_type) ? null : (
+          <DataLabelsControl
+            value={chart.data_labels ?? null}
+            onChange={(dataLabels) =>
+              onChange({ ...chart, data_labels: dataLabels })
+            }
+          />
+        )}
       </AccordionSection>
 
       {hasCartesianAxes ? (
@@ -494,6 +508,16 @@ function ChartCustomizePanel({
         </>
       ) : null}
 
+      {isIbcsChartType(chart.chart_type) ? (
+        <AccordionSection
+          compact={compact}
+          defaultOpen
+          icon={<Settings size={17} />}
+          label="Complemento IBCS"
+        >
+          <IbcsConfigPanel chart={chart} onChange={onChange} />
+        </AccordionSection>
+      ) : (
       <AccordionSection
         compact={compact}
         icon={<Settings size={17} />}
@@ -533,11 +557,13 @@ function ChartCustomizePanel({
           </>
         ) : null}
       </AccordionSection>
+      )}
     </div>
   );
 }
 
 function defaultChartLegendVisible(chart: ChartElement) {
+  if (isIbcsChartType(chart.chart_type)) return false;
   const series = chart.series ?? [];
   return (
     chart.chart_type === "pie" ||
@@ -1010,10 +1036,9 @@ function ChartDataModal({
                 compact
                 value={draftChart.chart_type}
                 onChange={(chartType) =>
-                  setDraftChart((currentChart) => ({
-                    ...currentChart,
-                    chart_type: chartType,
-                  }))
+                  setDraftChart((currentChart) =>
+                    withChartType(currentChart, chartType),
+                  )
                 }
               />
               <div
@@ -1042,12 +1067,21 @@ function ChartDataModal({
                         scaleX={previewScale}
                         scaleY={previewScale}
                       >
-                        <TemplateV2ChartJsElement
-                          element={previewChart}
-                          height={previewSourceSize.height}
-                          interactive={false}
-                          width={previewSourceSize.width}
-                        />
+                        {isIbcsChartType(previewChart.chart_type) ? (
+                          <IbcsKpiChart
+                            element={previewChart}
+                            height={previewSourceSize.height}
+                            interactive={false}
+                            width={previewSourceSize.width}
+                          />
+                        ) : (
+                          <TemplateV2ChartJsElement
+                            element={previewChart}
+                            height={previewSourceSize.height}
+                            interactive={false}
+                            width={previewSourceSize.width}
+                          />
+                        )}
                       </Group>
                     </Layer>
                   </Stage>
@@ -1101,22 +1135,47 @@ function ChartDataModal({
               </div>
               {dataTab === "kh7" ? (
                 <div className="mb-5">
-                  <Kh7QueryPanel
-                    binding={draftChart.data_binding}
-                    onApply={(result, nextBinding) => {
-                      updateData(
-                        result.chart.categories,
-                        result.chart.series.map((item) => ({
-                          name: item.name,
-                          values: item.values,
-                        })),
-                      );
-                      setDraftChart((currentChart) => ({
-                        ...currentChart,
-                        data_binding: nextBinding,
-                      }));
-                    }}
-                  />
+                  {isIbcsChartType(draftChart.chart_type) ? (
+                    <IbcsQueryPanel
+                      binding={draftChart.data_binding}
+                      currentYear={draftChart.ibcs?.current_year}
+                      extraFilters={draftChart.data_binding?.filters}
+                      ibcs={draftChart.ibcs}
+                      onApply={({ values, binding, ibcs, measureCaption }) => {
+                        const grid = chartFromIbcsValues(values, measureCaption);
+                        setDraftChart((currentChart) => ({
+                          ...currentChart,
+                          ...grid,
+                          data: chartDataFromSeriesWithColors(
+                            grid.categories ?? [],
+                            grid.series ?? [],
+                            currentChart.colors ?? [],
+                            true,
+                          ),
+                          data_binding: binding,
+                          ibcs,
+                          title: currentChart.title || measureCaption,
+                        }));
+                      }}
+                    />
+                  ) : (
+                    <Kh7QueryPanel
+                      binding={draftChart.data_binding}
+                      onApply={(result, nextBinding) => {
+                        updateData(
+                          result.chart.categories,
+                          result.chart.series.map((item) => ({
+                            name: item.name,
+                            values: item.values,
+                          })),
+                        );
+                        setDraftChart((currentChart) => ({
+                          ...currentChart,
+                          data_binding: nextBinding,
+                        }));
+                      }}
+                    />
+                  )}
                 </div>
               ) : null}
               {dataTab === "onlyoffice" ? (
@@ -1749,6 +1808,31 @@ function clearChartData(chart: ChartElement): ChartElement {
     series,
     data,
     data_binding: null,
+  };
+}
+
+function withChartType(chart: ChartElement, chartType: ChartType): ChartElement {
+  if (!isIbcsChartType(chartType)) {
+    return { ...chart, chart_type: chartType };
+  }
+  const grid = chartFromIbcsValues(
+    chart.ibcs?.values ?? IBCS_KPI_PIN_EXAMPLE,
+    chart.series?.[0]?.name || "Ratio",
+  );
+  return {
+    ...chart,
+    chart_type: chartType,
+    ...grid,
+    x_axis: false,
+    y_axis: false,
+    legend: false,
+    ibcs: mergeIbcsConfig(chart.ibcs, {
+      kind: "kpi_pin",
+      pin_vs: chart.ibcs?.pin_vs ?? IBCS_KPI_PIN.pinVs,
+      measure: chart.ibcs?.measure ?? chart.data_binding?.measures?.[0],
+      current_year: chart.ibcs?.current_year,
+      values: chart.ibcs?.values ?? IBCS_KPI_PIN_EXAMPLE,
+    }),
   };
 }
 

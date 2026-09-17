@@ -17,6 +17,11 @@ import type {
   TableCell,
 } from "@/components/slide-editor/types";
 import {
+  IBCS_KPI_PIN,
+  IBCS_KPI_PIN_EXAMPLE,
+} from "@/components/slide-editor/ibcs/spec";
+import { chartFromIbcsValues } from "@/components/slide-editor/ibcs/values";
+import {
   DEFAULT_YEARS,
   MONTH_SHORT,
   defaultDimensionForKind,
@@ -342,6 +347,7 @@ function chartTypeFromPaletteId(id?: string): ChartType | null {
     case "polar_area":
     case "radar":
     case "scatter":
+    case "ibcs_kpi":
       return normalized as ChartType;
     case "stackedbar":
     case "stacked_bar":
@@ -426,6 +432,38 @@ function makeChartElement(chartType: ChartType): SlideElement {
     decorative: false,
     name: `${chartType}_chart`,
   };
+
+  if (chartType === "ibcs_kpi") {
+    const grid = chartFromIbcsValues(IBCS_KPI_PIN_EXAMPLE, "Ratio");
+    return {
+      type: "chart",
+      position: { ...DEFAULT_CHART_INSERT_POSITION },
+      size: { width: 640, height: 360 },
+      chart_type: "ibcs_kpi",
+      title: null,
+      color: "3F3F46",
+      axis_color: "D8D8D8",
+      grid_color: "D8D8D8",
+      x_axis: false,
+      y_axis: false,
+      x_axis_grid: false,
+      y_axis_grid: false,
+      legend: false,
+      categories: grid.categories,
+      series: grid.series,
+      colors: ["3F3F46", "12B76A", "E11D2E"],
+      data: chartData(grid.categories ?? [], grid.series?.[0]?.values ?? [], [
+        "3F3F46",
+      ]),
+      ibcs: {
+        kind: "kpi_pin",
+        pin_vs: IBCS_KPI_PIN.pinVs,
+        current_year: String(new Date().getFullYear()),
+        values: { ...IBCS_KPI_PIN_EXAMPLE },
+      },
+      ...schema,
+    };
+  }
 
   if (chartType === "bar") {
     const categories = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];

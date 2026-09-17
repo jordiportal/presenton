@@ -56,6 +56,8 @@ import {
   type LatestFrameBatch,
 } from "@/components/slide-editor/surface/latestFrameBatch";
 import { TemplateV2ChartJsElement as RawChartElement } from "@/components/slide-editor/charts/TemplateV2ChartJsElement";
+import { IbcsKpiChart } from "@/components/slide-editor/ibcs/IbcsKpiChart";
+import { isIbcsChartType } from "@/components/slide-editor/ibcs/spec";
 import { TemplateV2TableElement as RawTableElement } from "@/components/slide-editor/tables/TemplateV2TableElement";
 import { blackOrWhiteTextColor } from "@/components/slide-editor/tables/table-colors";
 import { LatexRunNode } from "@/components/slide-editor/math/LatexRunNode";
@@ -2359,6 +2361,17 @@ function RawElementVisual({
     const legendState = Object.prototype.hasOwnProperty.call(element, "legend")
       ? String(element.legend)
       : String(element.showLegend ?? "auto");
+    if (isIbcsChartType(element.chart_type ?? element.chartType)) {
+      return (
+        <IbcsKpiChart
+          key={`ibcs-kpi-${legendState}`}
+          element={element}
+          width={width}
+          height={height}
+          interactive={interactive}
+        />
+      );
+    }
     return (
       <RawChartElement
         key={`chart-legend-${legendState}`}
