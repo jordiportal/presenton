@@ -22,7 +22,7 @@ export function Kh7QueryPanel({
   onApply: (result: Kh7ExecuteResponse, nextBinding: DataBinding) => void;
 }) {
   const [configured, setConfigured] = useState<boolean | null>(null);
-  const [origin, setOrigin] = useState<"kh7" | "mock" | null>(null);
+  const [origin, setOrigin] = useState<"kh7" | "mock" | "biw" | null>(null);
   const [sources, setSources] = useState<Kh7Source[]>([]);
   const [sourceName, setSourceName] = useState(binding?.query_id ?? "");
   const [metadata, setMetadata] = useState<Kh7Metadata | null>(null);
@@ -172,7 +172,9 @@ export function Kh7QueryPanel({
       onApply(result, {
         source: origin === "mock" ? "mock" : "kh7",
         query_id: sourceName,
-        query_name: result.query_name,
+        query_name:
+          sources.find((item) => item.name === sourceName)?.description ||
+          result.query_name,
         dimensions: rowFields,
         column_dimensions: columnFields,
         measures: valueFields,
@@ -213,6 +215,10 @@ export function Kh7QueryPanel({
         <div className="rounded-lg border border-[#F3E4B8] bg-[#FFF8E4] px-3 py-2 text-[11px] text-[#6B5B1A]">
           Cubo mock (mismos datos que el plugin Análisis de OnlyOffice). Asigna
           dimensiones al eje X y medidas a las series.
+        </div>
+      ) : origin === "biw" ? (
+        <div className="rounded-lg border border-[#D6E4FF] bg-[#F0F5FF] px-3 py-2 text-[11px] text-[#2B5797]">
+          Datos de SAP BW a través de proxy-biw.
         </div>
       ) : null}
 

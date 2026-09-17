@@ -545,6 +545,27 @@ def get_kh7_bi_service_key_env() -> str | None:
     return raw or None
 
 
+def get_proxy_biw_url_env() -> str | None:
+    raw = (os.getenv("PROXY_BIW_URL") or os.getenv("KH7_BI_URL") or "").strip().rstrip("/")
+    if raw.lower().endswith("/api"):
+        raw = raw[:-4].rstrip("/")
+    return raw or None
+
+
+def get_proxy_biw_token_env() -> str | None:
+    raw = (
+        os.getenv("PROXY_BIW_TOKEN")
+        or os.getenv("KH7_BI_TOKEN")
+        or os.getenv("KH7_BI_SERVICE_KEY")
+        or ""
+    ).strip()
+    if raw:
+        return raw
+    if get_proxy_biw_url_env():
+        return "onlyoffice-plugin-local"
+    return None
+
+
 def get_onlyoffice_mcp_url_env() -> str | None:
     raw = (os.getenv("ONLYOFFICE_MCP_URL") or "").strip().rstrip("/")
     return raw or None

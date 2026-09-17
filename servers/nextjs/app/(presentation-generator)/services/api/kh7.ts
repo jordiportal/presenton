@@ -102,7 +102,7 @@ function formatTableCell(value: unknown): string {
 }
 
 export class Kh7Api {
-  static async status(): Promise<{ configured: boolean; source?: "kh7" | "mock" }> {
+  static async status(): Promise<{ configured: boolean; source?: "kh7" | "mock" | "biw" }> {
     const response = await fetch(getApiUrl("/api/v1/ppt/kh7/status"), {
       headers: getHeader(),
       cache: "no-cache",
