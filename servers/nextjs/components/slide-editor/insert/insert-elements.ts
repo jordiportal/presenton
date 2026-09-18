@@ -353,6 +353,7 @@ function chartTypeFromPaletteId(id?: string): ChartType | null {
     case "radar":
     case "scatter":
     case "ibcs_kpi":
+    case "ibcs_column":
       return normalized as ChartType;
     case "stackedbar":
     case "stacked_bar":
@@ -465,6 +466,49 @@ function makeChartElement(chartType: ChartType): SlideElement {
         pin_vs: IBCS_KPI_PIN.pinVs,
         current_year: String(new Date().getFullYear()),
         values: { ...IBCS_KPI_PIN_EXAMPLE },
+      },
+      ...schema,
+    };
+  }
+
+  if (chartType === "ibcs_column") {
+    const members = [
+      { code: "nac", caption: "NACIONAL", ac: 13_362_000, py: 12_833_000, pl: 12_900_000, fc: 13_500_000 },
+      { code: "exp", caption: "EXPORTACIÓN", ac: 6_362_000, py: 4_945_000, pl: 6_000_000, fc: 6_060_000 },
+      { code: "dis", caption: "DISTRIBUCIÓN", ac: 2_870_000, py: 2_928_000, pl: 2_930_000, fc: 2_870_000 },
+      { code: "usa", caption: "USA", ac: 112_000, py: 158_000, pl: 158_000, fc: 137_000 },
+    ];
+    const categories = members.map((item) => item.caption);
+    const values = members.map((item) => item.ac);
+    return {
+      type: "chart",
+      position: { ...DEFAULT_CHART_INSERT_POSITION },
+      size: { width: 900, height: 460 },
+      chart_type: "ibcs_column",
+      title: null,
+      color: "1A1A1A",
+      axis_color: "D8D8D8",
+      grid_color: "E4E7EC",
+      x_axis: false,
+      y_axis: false,
+      x_axis_grid: false,
+      y_axis_grid: false,
+      legend: false,
+      categories,
+      series: [{ name: "Ratio", values }],
+      colors: ["1A1A1A", "7CB342", "E11D2E"],
+      data: chartData(categories, values, ["1A1A1A"]),
+      ibcs: {
+        kind: "column",
+        pin_vs: "py",
+        current_year: String(new Date().getFullYear()),
+        overlay_baseline: "py",
+        variance_rows: [
+          { baseline: "py", style: "solid", label: "ΔPY%" },
+          { baseline: "fc", style: "dashed", label: "ΔFC%" },
+        ],
+        show_total: true,
+        members,
       },
       ...schema,
     };

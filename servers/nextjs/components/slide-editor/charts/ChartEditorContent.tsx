@@ -49,15 +49,20 @@ import { TemplateV2ChartJsElement } from "@/components/slide-editor/charts/Templ
 import { Kh7QueryPanel } from "@/components/slide-editor/data/Kh7QueryPanel";
 import { OnlyOfficeQueryPanel } from "@/components/slide-editor/data/OnlyOfficeQueryPanel";
 import { IbcsKpiChart } from "@/components/slide-editor/ibcs/IbcsKpiChart";
+import { IbcsColumnChart } from "@/components/slide-editor/ibcs/IbcsColumnChart";
 import { IbcsConfigPanel } from "@/components/slide-editor/ibcs/IbcsConfigPanel";
 import { IbcsQueryPanel } from "@/components/slide-editor/ibcs/IbcsQueryPanel";
+import { IbcsColumnQueryPanel } from "@/components/slide-editor/ibcs/IbcsColumnQueryPanel";
 import {
   IBCS_KPI_PIN,
   IBCS_KPI_PIN_EXAMPLE,
+  isAnyIbcsChartType,
   isIbcsChartType,
+  isIbcsColumnChartType,
   mergeIbcsConfig,
 } from "@/components/slide-editor/ibcs/spec";
 import { chartFromIbcsValues } from "@/components/slide-editor/ibcs/values";
+import type { IbcsTableMember } from "@/components/slide-editor/ibcs/table-columns";
 
 const CHART_TYPES: Array<{ label: string; value: ChartType }> = [
   { label: "Bar Chart", value: "bar" },
@@ -72,6 +77,7 @@ const CHART_TYPES: Array<{ label: string; value: ChartType }> = [
   { label: "Radar Chart", value: "radar" },
   { label: "Polar Area", value: "polar_area" },
   { label: "KPI IBCS", value: "ibcs_kpi" },
+  { label: "Columnas IBCS", value: "ibcs_column" },
 ];
 const DATA_LABEL_TABS: Array<{
   label: string;
@@ -374,7 +380,7 @@ function ChartCustomizePanel({
     chart.chart_type !== "donut" &&
     chart.chart_type !== "polar_area" &&
     chart.chart_type !== "radar" &&
-    !isIbcsChartType(chart.chart_type);
+    !isAnyIbcsChartType(chart.chart_type);
   const hasRadialAxes = chart.chart_type === "radar";
   const hasAxes = hasCartesianAxes || hasRadialAxes;
   const showLegend = chart.legend ?? defaultChartLegendVisible(chart);
@@ -400,7 +406,7 @@ function ChartCustomizePanel({
             onChange({ ...chart, title_color: titleColor })
           }
         />
-        {isIbcsChartType(chart.chart_type) ? null : (
+        {isAnyIbcsChartType(chart.chart_type) ? null : (
           <DataLabelsControl
             value={chart.data_labels ?? null}
             onChange={(dataLabels) =>
@@ -508,7 +514,7 @@ function ChartCustomizePanel({
         </>
       ) : null}
 
-      {isIbcsChartType(chart.chart_type) ? (
+      {isAnyIbcsChartType(chart.chart_type) ? (
         <AccordionSection
           compact={compact}
           defaultOpen
@@ -563,7 +569,7 @@ function ChartCustomizePanel({
 }
 
 function defaultChartLegendVisible(chart: ChartElement) {
-  if (isIbcsChartType(chart.chart_type)) return false;
+  if (isAnyIbcsChartType(chart.chart_type)) return false;
   const series = chart.series ?? [];
   return (
     chart.chart_type === "pie" ||
@@ -1067,7 +1073,14 @@ function ChartDataModal({
                         scaleX={previewScale}
                         scaleY={previewScale}
                       >
-                        {isIbcsChartType(previewChart.chart_type) ? (
+                        {isIbcsColumnChartType(previewChart.chart_type) ? (
+                          <IbcsColumnChart
+                            element={previewChart}
+                            height={previewSourceSize.height}
+                            interactive={false}
+                            width={previewSourceSize.width}
+                          />
+                        ) : isIbcsChartType(previewChart.chart_type) ? (
                           <IbcsKpiChart
                             element={previewChart}
                             height={previewSourceSize.height}
@@ -1135,7 +1148,29 @@ function ChartDataModal({
               </div>
               {dataTab === "kh7" ? (
                 <div className="mb-5">
-                  {isIbcsChartType(draftChart.chart_type) ? (
+                  {isIbcsColumnChartType(draftChart.chart_type) ? (
+                    <IbcsColumnQueryPanel
+                      binding={draftChart.data_binding}
+                      extraFilters={draftChart.data_binding?.filters}
+                      ibcs={draftChart.ibcs}
+                      onApply={({ members, binding, ibcs, measureCaption }) => {
+                        const grid = chartGridFromIbcsMembers(members, measureCaption);
+                        setDraftChart((currentChart) => ({
+                          ...currentChart,
+                          ...grid,
+                          data: chartDataFromSeriesWithColors(
+                            grid.categories,
+                            grid.series,
+                            currentChart.colors ?? [],
+                            true,
+                          ),
+                          data_binding: binding,
+                          ibcs,
+                          title: currentChart.title || measureCaption,
+                        }));
+                      }}
+                    />
+                  ) : isIbcsChartType(draftChart.chart_type) ? (
                     <IbcsQueryPanel
                       binding={draftChart.data_binding}
                       currentYear={draftChart.ibcs?.current_year}
@@ -1811,9 +1846,53 @@ function clearChartData(chart: ChartElement): ChartElement {
   };
 }
 
+function chartGridFromIbcsMembers(
+  members: IbcsTableMember[],
+  measureName: string,
+): { categories: string[]; series: Array<{ name: string; values: number[] }> } {
+  const body = members.filter((item) => item.code !== "__total__");
+  return {
+    categories: body.map((item) => item.caption),
+    series: [{ name: measureName, values: body.map((item) => item.ac) }],
+  };
+}
+
+const IBCS_COLUMN_EXAMPLE_MEMBERS: IbcsTableMember[] = [
+  { code: "nac", caption: "NACIONAL", ac: 13_362_000, py: 12_833_000, pl: 12_900_000, fc: 13_500_000 },
+  { code: "exp", caption: "EXPORTACIÓN", ac: 6_362_000, py: 4_945_000, pl: 6_000_000, fc: 6_060_000 },
+  { code: "dis", caption: "DISTRIBUCIÓN", ac: 2_870_000, py: 2_928_000, pl: 2_930_000, fc: 2_870_000 },
+  { code: "usa", caption: "USA", ac: 112_000, py: 158_000, pl: 158_000, fc: 137_000 },
+];
+
 function withChartType(chart: ChartElement, chartType: ChartType): ChartElement {
-  if (!isIbcsChartType(chartType)) {
+  if (!isAnyIbcsChartType(chartType)) {
     return { ...chart, chart_type: chartType };
+  }
+  if (isIbcsColumnChartType(chartType)) {
+    const existingMembers = chart.ibcs?.members;
+    const members =
+      existingMembers && existingMembers.length
+        ? existingMembers
+        : IBCS_COLUMN_EXAMPLE_MEMBERS;
+    const grid = chartGridFromIbcsMembers(
+      members,
+      chart.series?.[0]?.name || "Ratio",
+    );
+    return {
+      ...chart,
+      chart_type: chartType,
+      ...grid,
+      x_axis: false,
+      y_axis: false,
+      legend: false,
+      ibcs: mergeIbcsConfig(chart.ibcs, {
+        kind: "column",
+        measure: chart.ibcs?.measure ?? chart.data_binding?.measures?.[0],
+        current_year: chart.ibcs?.current_year,
+        row_dimension: chart.ibcs?.row_dimension,
+        members,
+      }),
+    };
   }
   const grid = chartFromIbcsValues(
     chart.ibcs?.values ?? IBCS_KPI_PIN_EXAMPLE,

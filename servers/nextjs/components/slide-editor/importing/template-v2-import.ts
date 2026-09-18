@@ -1065,6 +1065,7 @@ function adaptChart(raw: UnknownRecord): SlideElement {
         "scatter",
         "stacked_bar",
         "ibcs_kpi",
+        "ibcs_column",
       ],
       "chart_type",
     ) ??
@@ -2251,7 +2252,14 @@ function adaptIbcsConfig(value: unknown): IbcsChartConfig | null {
   const codes = asRecord(raw.version_codes);
   const decimals = parseIbcsDecimals(raw.decimals);
   const barWidth = raw.bar_width == null ? null : clampIbcsBarWidth(raw.bar_width);
-  const kind = readString(raw.kind) === "table" ? "table" : "kpi_pin";
+  const rawKind = readString(raw.kind);
+  const kind =
+    rawKind === "table" ? "table" : rawKind === "column" ? "column" : "kpi_pin";
+  const overlayRaw = readString(raw.overlay_baseline);
+  const overlayBaseline =
+    overlayRaw === "py" || overlayRaw === "pl" || overlayRaw === "fc"
+      ? overlayRaw
+      : null;
   return {
     kind,
     pin_vs: pin === "py" || pin === "pl" ? pin : "fc",
@@ -2282,7 +2290,32 @@ function adaptIbcsConfig(value: unknown): IbcsChartConfig | null {
     row_dimension: readString(raw.row_dimension),
     columns: adaptIbcsTableColumns(raw.columns),
     members: adaptIbcsTableMembers(raw.members),
+    overlay_baseline: overlayBaseline,
+    variance_rows: adaptIbcsVarianceRows(raw.variance_rows),
+    show_total: raw.show_total === false ? false : raw.show_total === true ? true : null,
   };
+}
+
+function adaptIbcsVarianceRows(
+  value: unknown,
+): IbcsChartConfig["variance_rows"] {
+  if (!Array.isArray(value) || value.length === 0) return null;
+  const rows = value
+    .map((item) => {
+      const raw = asRecord(item) ?? {};
+      const baseline = readString(raw.baseline);
+      if (baseline !== "py" && baseline !== "pl" && baseline !== "fc") return null;
+      return {
+        baseline,
+        style: readString(raw.style) === "dashed" ? "dashed" : "solid",
+        label: readString(raw.label),
+      } as NonNullable<IbcsChartConfig["variance_rows"]>[number];
+    })
+    .filter(
+      (row): row is NonNullable<IbcsChartConfig["variance_rows"]>[number] =>
+        row !== null,
+    );
+  return rows.length ? rows : null;
 }
 
 const IBCS_TABLE_ROLES = new Set([

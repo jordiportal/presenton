@@ -33,6 +33,7 @@ const CHART_TYPE_OPTIONS: Array<{
     { value: "radar", label: "Radar Chart" },
     { value: "polar_area", label: "Polar Area" },
     { value: "ibcs_kpi", label: "KPI IBCS" },
+    { value: "ibcs_column", label: "Columnas IBCS" },
   ];
 
 export function ChartToolbarControls({

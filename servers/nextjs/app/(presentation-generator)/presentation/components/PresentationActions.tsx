@@ -274,6 +274,7 @@ export const chartTypeItems = [
   { id: "radar", label: "Radar Chart", icon: PieChart },
   { id: "polar_area", label: "Polar Area", icon: PieChart },
   { id: "ibcs_kpi", label: "KPI IBCS", icon: TrendingUp },
+  { id: "ibcs_column", label: "Columnas IBCS", icon: BarChart3 },
 ] satisfies PaletteItem[];
 
 export const infographicItems = [

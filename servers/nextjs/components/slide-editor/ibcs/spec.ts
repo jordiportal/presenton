@@ -11,7 +11,13 @@
  */
 
 export type IbcsScenarioId = "ac" | "py" | "pl" | "fc";
-export type IbcsVisualKind = "kpi_pin" | "table";
+export type IbcsVisualKind = "kpi_pin" | "table" | "column";
+export type IbcsVarianceBaseline = Exclude<IbcsScenarioId, "ac">;
+export type IbcsVarianceRow = {
+  baseline: IbcsVarianceBaseline;
+  style: "solid" | "dashed";
+  label?: string | null;
+};
 export type IbcsYearRole = "current" | "previous";
 export type IbcsVersionRole = "actual" | "plan" | "forecast";
 
@@ -54,10 +60,43 @@ export const IBCS_TABLE: IbcsVisualSpec = {
   kind: "table",
 };
 
+export const IBCS_COLUMN: IbcsVisualSpec = {
+  ...IBCS_KPI_PIN,
+  kind: "column",
+};
+
 export const IBCS_VISUALS: Record<IbcsVisualKind, IbcsVisualSpec> = {
   kpi_pin: IBCS_KPI_PIN,
   table: IBCS_TABLE,
+  column: IBCS_COLUMN,
 };
+
+/** Default overlay baseline for the AC column segment (ΔPY). */
+export const IBCS_COLUMN_OVERLAY_DEFAULT: IbcsVarianceBaseline = "py";
+
+/** Default variance rows above the columns (ordered bottom → top). */
+export const IBCS_COLUMN_VARIANCE_DEFAULT: IbcsVarianceRow[] = [
+  { baseline: "py", style: "solid", label: "ΔPY%" },
+  { baseline: "fc", style: "dashed", label: "ΔFC%" },
+];
+
+export function normalizeVarianceRows(
+  rows?: IbcsVarianceRow[] | null,
+): IbcsVarianceRow[] {
+  if (!Array.isArray(rows)) return IBCS_COLUMN_VARIANCE_DEFAULT.map((row) => ({ ...row }));
+  const clean = rows
+    .filter(
+      (row): row is IbcsVarianceRow =>
+        !!row && (row.baseline === "py" || row.baseline === "pl" || row.baseline === "fc"),
+    )
+    .slice(0, 3)
+    .map((row) => ({
+      baseline: row.baseline,
+      style: row.style === "dashed" ? "dashed" : "solid",
+      label: row.label ?? null,
+    }));
+  return clean;
+}
 
 export type IbcsScenarioValues = {
   ac: number;
@@ -76,6 +115,17 @@ export const IBCS_KPI_PIN_EXAMPLE: IbcsScenarioValues = {
 
 export function isIbcsChartType(value: unknown): value is "ibcs_kpi" {
   return value === "ibcs_kpi";
+}
+
+export function isIbcsColumnChartType(value: unknown): value is "ibcs_column" {
+  return value === "ibcs_column";
+}
+
+/** True for any chart_type backed by the IBCS complemento (KPI pin or column). */
+export function isAnyIbcsChartType(
+  value: unknown,
+): value is "ibcs_kpi" | "ibcs_column" {
+  return value === "ibcs_kpi" || value === "ibcs_column";
 }
 
 export function specForKind(kind: IbcsVisualKind | null | undefined): IbcsVisualSpec {
@@ -127,6 +177,9 @@ export type IbcsConfigLike = {
   decimals?: number | null;
   unit?: string | null;
   bar_width?: number | null;
+  overlay_baseline?: IbcsVarianceBaseline | null;
+  variance_rows?: IbcsVarianceRow[] | null;
+  show_total?: boolean | null;
 };
 
 export const IBCS_DEFAULT_BAR_WIDTH = 14.5;
@@ -162,11 +215,13 @@ export function mergeIbcsConfig(
     ...(current?.version_codes ?? {}),
     ...(patch.version_codes ?? {}),
   };
-  const kind = patch.kind ?? current?.kind ?? "kpi_pin";
+  const requested = patch.kind ?? current?.kind ?? "kpi_pin";
+  const kind: IbcsVisualKind =
+    requested === "table" || requested === "column" ? requested : "kpi_pin";
   return {
     ...current,
     ...patch,
-    kind: kind === "table" ? "table" : "kpi_pin",
+    kind,
     pin_vs: spec.pinVs,
     version_codes:
       Object.keys(versionCodes).length > 0 ? versionCodes : current?.version_codes,

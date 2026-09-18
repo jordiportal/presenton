@@ -2,6 +2,11 @@ import { resolveBackendAssetUrl } from "@/utils/api";
 import { markdownToPlainChartText } from "@/components/slide-editor/charts/chart-data";
 import { renderIbcsKpiPinSvg } from "@/components/slide-editor/ibcs/kpi-pin-svg";
 import { renderIbcsTableSvg } from "@/components/slide-editor/ibcs/table-svg";
+import { renderIbcsColumnSvg } from "@/components/slide-editor/ibcs/column-svg";
+import type {
+  IbcsVarianceBaseline,
+  IbcsVarianceRow,
+} from "@/components/slide-editor/ibcs/spec";
 import { ibcsValuesFromChart } from "@/components/slide-editor/ibcs/values";
 import { ibcsFormatFromConfig } from "@/components/slide-editor/ibcs/format";
 import { renderTreemapSvg } from "@/components/slide-editor/filters/treemap-svg";
@@ -37,7 +42,8 @@ type ChartKind =
   | "polar_area"
   | "radar"
   | "scatter"
-  | "ibcs_kpi";
+  | "ibcs_kpi"
+  | "ibcs_column";
 type InfographicKind =
   | "progress_bar"
   | "gauge"
@@ -1308,6 +1314,53 @@ function renderChart(item: JsonRecord, mode: RenderMode): string {
         unit: readString(ibcs.unit),
       }),
       barWidth: readNumber(ibcs.bar_width),
+    }).replace(/^<\?xml[^>]*>\s*/, "");
+    return `<div style="${frameStyle(item, mode)}${transformStyle(
+      item
+    )}overflow:hidden">${svg}</div>`;
+  }
+  if (kind === "ibcs_column") {
+    const ibcs = readRecord(item.ibcs);
+    const overlayRaw = readString(ibcs.overlay_baseline);
+    const overlayBaseline =
+      overlayRaw === "pl" || overlayRaw === "fc" || overlayRaw === "py"
+        ? (overlayRaw as IbcsVarianceBaseline)
+        : undefined;
+    const varianceRows: IbcsVarianceRow[] = [];
+    for (const entry of readArray(ibcs.variance_rows)) {
+      const record = readRecord(entry);
+      const baseline = readString(record.baseline);
+      if (baseline !== "py" && baseline !== "pl" && baseline !== "fc") continue;
+      varianceRows.push({
+        baseline,
+        style: readString(record.style) === "dashed" ? "dashed" : "solid",
+        label: readString(record.label) ?? null,
+      });
+    }
+    const svg = renderIbcsColumnSvg({
+      members: readArray(ibcs.members).map((entry) => {
+        const record = readRecord(entry);
+        return {
+          code: readString(record.code) || readString(record.caption) || "",
+          caption: readString(record.caption) || readString(record.code) || "",
+          ac: Number(record.ac) || 0,
+          py: Number(record.py) || 0,
+          pl: Number(record.pl) || 0,
+          fc: Number(record.fc) || 0,
+        } satisfies IbcsTableMember;
+      }),
+      width,
+      height,
+      title: readString(item.title),
+      format: ibcsFormatFromConfig({
+        scale: readString(ibcs.scale),
+        scale_label: readString(ibcs.scale_label),
+        decimals: readNumber(ibcs.decimals),
+        unit: readString(ibcs.unit),
+      }),
+      overlayBaseline,
+      varianceRows: varianceRows.length ? varianceRows : undefined,
+      showTotal: ibcs.show_total === false ? false : undefined,
     }).replace(/^<\?xml[^>]*>\s*/, "");
     return `<div style="${frameStyle(item, mode)}${transformStyle(
       item
@@ -2868,6 +2921,9 @@ function chartKindFromValue(value: string | null): ChartKind {
   if (normalized === "scatter") return "scatter";
   if (normalized === "ibcs" || normalized === "ibcs_kpi" || normalized === "kpi_pin") {
     return "ibcs_kpi";
+  }
+  if (normalized === "ibcs_column" || normalized === "ibcs_columns") {
+    return "ibcs_column";
   }
   return "bar";
 }

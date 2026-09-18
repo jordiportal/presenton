@@ -6,14 +6,29 @@ import {
   type Kh7Dimension,
   type Kh7DimensionValue,
 } from "@/app/(presentation-generator)/services/api/kh7";
-import type { ChartElement, IbcsChartConfig, IbcsScale } from "@/components/slide-editor/types";
+import type {
+  ChartElement,
+  IbcsChartConfig,
+  IbcsScale,
+  IbcsVarianceBaseline,
+  IbcsVarianceRow,
+} from "@/components/slide-editor/types";
 import {
+  IBCS_COLUMN_OVERLAY_DEFAULT,
+  IBCS_COLUMN_VARIANCE_DEFAULT,
   IBCS_DEFAULT_BAR_WIDTH,
   IBCS_KPI_PIN,
   clampIbcsBarWidth,
   mergeIbcsConfig,
+  normalizeVarianceRows,
   specFromConfig,
 } from "@/components/slide-editor/ibcs/spec";
+
+const BASELINE_OPTIONS: Array<{ value: IbcsVarianceBaseline; label: string }> = [
+  { value: "py", label: "Año anterior (ΔPY)" },
+  { value: "pl", label: "Plan (ΔPL)" },
+  { value: "fc", label: "Forecast (ΔFC)" },
+];
 
 const SCALE_OPTIONS: Array<{ value: IbcsScale; label: string }> = [
   { value: "auto", label: "Automático (K / M)" },
@@ -114,22 +129,159 @@ export function IbcsConfigPanel({
   const scale = ibcs?.scale ?? "auto";
   const suffixPlaceholder =
     scale === "millions" ? "Millones" : scale === "thousands" ? "Miles" : "M";
+  const isColumn =
+    ibcs?.kind === "column" || chart.chart_type === "ibcs_column";
+  const overlayBaseline = ibcs?.overlay_baseline ?? IBCS_COLUMN_OVERLAY_DEFAULT;
+  const varianceRows = normalizeVarianceRows(
+    ibcs?.variance_rows ?? IBCS_COLUMN_VARIANCE_DEFAULT,
+  );
+  const setVarianceRows = (rows: IbcsVarianceRow[]) =>
+    patchIbcs({ variance_rows: rows });
 
   return (
     <div className="space-y-3">
-      <Field label="Pin vs">
-        <select
-          className={inputClassName()}
-          value={ibcs?.pin_vs ?? IBCS_KPI_PIN.pinVs}
-          onChange={(event) =>
-            patchIbcs({ pin_vs: event.target.value as "py" | "pl" | "fc" })
-          }
-        >
-          <option value="fc">Forecast (ΔFC)</option>
-          <option value="pl">Plan (ΔPL)</option>
-          <option value="py">Año anterior (ΔPY)</option>
-        </select>
-      </Field>
+      {isColumn ? (
+        <>
+          <Field label="Δ integrado en la columna (overlay)">
+            <select
+              className={inputClassName()}
+              value={overlayBaseline}
+              onChange={(event) =>
+                patchIbcs({
+                  overlay_baseline: event.target.value as IbcsVarianceBaseline,
+                })
+              }
+            >
+              {BASELINE_OPTIONS.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </Field>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[12px] font-medium text-[#191919]">
+                Filas de varianza (%)
+              </span>
+              {varianceRows.length < 3 ? (
+                <button
+                  type="button"
+                  className="text-[11px] font-semibold text-[#2B5797]"
+                  onClick={() =>
+                    setVarianceRows([
+                      ...varianceRows,
+                      { baseline: "pl", style: "solid", label: null },
+                    ])
+                  }
+                >
+                  + Añadir
+                </button>
+              ) : null}
+            </div>
+            <p className="text-[11px] text-[#6B6B74]">
+              De abajo (junto a las columnas) hacia arriba. Línea sólida o discontinua.
+            </p>
+            {varianceRows.map((row, index) => (
+              <div
+                key={index}
+                className="flex items-center gap-2 rounded-lg border border-[#E6E6EA] px-2 py-1.5"
+              >
+                <select
+                  className="h-8 w-[120px] rounded border border-[#E6E6EA] text-[11px]"
+                  value={row.baseline}
+                  onChange={(event) =>
+                    setVarianceRows(
+                      varianceRows.map((item, itemIndex) =>
+                        itemIndex === index
+                          ? {
+                              ...item,
+                              baseline: event.target.value as IbcsVarianceBaseline,
+                            }
+                          : item,
+                      ),
+                    )
+                  }
+                >
+                  {BASELINE_OPTIONS.map((item) => (
+                    <option key={item.value} value={item.value}>
+                      {item.label}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  className="h-8 w-[92px] rounded border border-[#E6E6EA] text-[11px]"
+                  value={row.style}
+                  onChange={(event) =>
+                    setVarianceRows(
+                      varianceRows.map((item, itemIndex) =>
+                        itemIndex === index
+                          ? {
+                              ...item,
+                              style: event.target.value as "solid" | "dashed",
+                            }
+                          : item,
+                      ),
+                    )
+                  }
+                >
+                  <option value="solid">Sólida</option>
+                  <option value="dashed">Discontinua</option>
+                </select>
+                <input
+                  className="h-8 min-w-0 flex-1 rounded border border-[#E6E6EA] px-2 text-[11px]"
+                  placeholder={`Δ${row.baseline.toUpperCase()}%`}
+                  value={row.label ?? ""}
+                  onChange={(event) =>
+                    setVarianceRows(
+                      varianceRows.map((item, itemIndex) =>
+                        itemIndex === index
+                          ? { ...item, label: event.target.value || null }
+                          : item,
+                      ),
+                    )
+                  }
+                />
+                <button
+                  type="button"
+                  className="text-[11px] text-[#B42318]"
+                  onClick={() =>
+                    setVarianceRows(
+                      varianceRows.filter((_, itemIndex) => itemIndex !== index),
+                    )
+                  }
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <label className="flex items-center gap-2 text-[12px] font-medium text-[#191919]">
+            <input
+              type="checkbox"
+              checked={ibcs?.show_total !== false}
+              onChange={(event) => patchIbcs({ show_total: event.target.checked })}
+            />
+            Mostrar columna Total
+          </label>
+        </>
+      ) : (
+        <Field label="Pin vs">
+          <select
+            className={inputClassName()}
+            value={ibcs?.pin_vs ?? IBCS_KPI_PIN.pinVs}
+            onChange={(event) =>
+              patchIbcs({ pin_vs: event.target.value as "py" | "pl" | "fc" })
+            }
+          >
+            <option value="fc">Forecast (ΔFC)</option>
+            <option value="pl">Plan (ΔPL)</option>
+            <option value="py">Año anterior (ΔPY)</option>
+          </select>
+        </Field>
+      )}
 
       <Field label="Agrupación">
         <select
@@ -184,25 +336,27 @@ export function IbcsConfigPanel({
         </Field>
       </div>
 
-      <label className="block text-[12px] font-medium text-[#191919]">
-        Ancho de columna
-        <input
-          className="mt-2 w-full accent-[#191919]"
-          max={28}
-          min={8}
-          step={0.5}
-          type="range"
-          value={barWidth}
-          onChange={(event) =>
-            patchIbcs({ bar_width: Number(event.target.value) })
-          }
-        />
-        <div className="mt-1 flex justify-between text-[11px] font-normal text-[#6B6B74]">
-          <span>Estrecha</span>
-          <span>{barWidth.toFixed(1)}%</span>
-          <span>Ancha</span>
-        </div>
-      </label>
+      {isColumn ? null : (
+        <label className="block text-[12px] font-medium text-[#191919]">
+          Ancho de columna
+          <input
+            className="mt-2 w-full accent-[#191919]"
+            max={28}
+            min={8}
+            step={0.5}
+            type="range"
+            value={barWidth}
+            onChange={(event) =>
+              patchIbcs({ bar_width: Number(event.target.value) })
+            }
+          />
+          <div className="mt-1 flex justify-between text-[11px] font-normal text-[#6B6B74]">
+            <span>Estrecha</span>
+            <span>{barWidth.toFixed(1)}%</span>
+            <span>Ancha</span>
+          </div>
+        </label>
+      )}
 
       <div className="border-t border-[#E6E6EA] pt-3">
         <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-[#6B6B74]">

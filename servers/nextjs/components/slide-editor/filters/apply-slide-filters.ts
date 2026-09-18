@@ -7,6 +7,7 @@ import {
 import {
   mergeIbcsConfig,
   isIbcsChartType,
+  isIbcsColumnChartType,
   resolveCurrentYear,
   specFromConfig,
   type IbcsConfigLike,
@@ -350,6 +351,85 @@ async function executeBoundElement(
         version_codes: spec.versionCodes,
       }),
       data_binding: nextBinding,
+    };
+  }
+
+  if (
+    readString(element.type) === "chart" &&
+    isIbcsColumnChartType(element.chart_type ?? element.chartType)
+  ) {
+    const ibcs = asRecord(element.ibcs) as IbcsConfigLike | null;
+    const spec = specFromConfig({ ...ibcs, kind: "column" });
+    const yearFilter = filters.find(
+      (item) => String(item.dimension || item.column || "") === spec.yearDimension,
+    );
+    const currentYear = resolveCurrentYear(
+      yearFilter?.values?.[0] != null
+        ? String(yearFilter.values[0])
+        : readString(ibcs?.current_year),
+    );
+    const measure = binding.measures?.[0] || readString(ibcs?.measure) || "";
+    const rowDimension =
+      binding.dimensions?.[0] || readString(ibcs?.row_dimension) || "";
+    if (!measure || !rowDimension) {
+      return { ...element, data_binding: nextBinding };
+    }
+    let knownDimensions: string[] | undefined;
+    let unit = readString(ibcs?.unit);
+    let decimals = parseIbcsDecimals(ibcs?.decimals);
+    try {
+      const meta = await Kh7Api.metadata(binding.query_id);
+      knownDimensions = meta.dimensions.map((item) => item.name);
+      const measureMeta = meta.measures.find((item) => item.name === measure);
+      if (!unit) unit = measureMeta?.unit ?? null;
+      if (decimals == null) decimals = parseIbcsDecimals(measureMeta?.decimals);
+    } catch {
+      knownDimensions = undefined;
+    }
+    const fetched = await fetchIbcsTableMembers({
+      source: binding.query_id,
+      measure,
+      currentYear,
+      rowDimension,
+      spec,
+      knownDimensions,
+      extraFilters: filters
+        .filter((item) => (item.values?.length ?? 0) > 0)
+        .map((item) => ({
+          dimension: String(item.dimension || item.column || ""),
+          values: (item.values ?? []).map(String),
+        })),
+    });
+    if (!unit) unit = fetched.unit ?? null;
+    if (decimals == null) decimals = fetched.decimals ?? null;
+    const nextIbcs = mergeIbcsConfig(ibcs, {
+      kind: "column",
+      measure,
+      current_year: currentYear,
+      row_dimension: rowDimension,
+      members: fetched.members,
+      unit,
+      decimals,
+      year_dimension: spec.yearDimension,
+      version_dimension: spec.versionDimension,
+      version_codes: spec.versionCodes,
+    });
+    const categories = fetched.members.map((item) => item.caption);
+    const series = [{ name: measure, values: fetched.members.map((item) => item.ac) }];
+    const colors = Array.isArray(element.colors)
+      ? (element.colors as string[])
+      : [];
+    return {
+      ...element,
+      categories,
+      series,
+      data: chartDataFromSeriesWithColors(categories, series, colors, true),
+      ibcs: nextIbcs,
+      data_binding: {
+        ...nextBinding,
+        dimensions: [rowDimension],
+        measures: [measure],
+      },
     };
   }
 

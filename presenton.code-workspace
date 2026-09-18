@@ -1,0 +1,20 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../brain"
+		},
+		{
+			"path": "../brain-packs"
+		},
+		{
+			"path": "../proxy-biw"
+		},
+		{
+			"path": "../brain-onlyoffice-mcp"
+		}
+	],
+	"settings": {}
+}
