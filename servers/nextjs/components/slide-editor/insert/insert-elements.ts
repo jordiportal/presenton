@@ -27,6 +27,7 @@ import {
   defaultDimensionForKind,
   filterKindLabel,
 } from "@/components/slide-editor/filters/filter-model";
+import { TREEMAP_EXAMPLE } from "@/components/slide-editor/filters/treemap-layout";
 import { INFOGRAPHIC_EXAMPLE_ICON_URLS } from "@/components/slide-editor/infographics/infographic-icons";
 import { fitInfographicElementToData } from "@/components/slide-editor/infographics/infographic-sizing";
 import {
@@ -1688,17 +1689,20 @@ function createDefaultTableInsertElements(kind?: string): SlideElement[] {
 function makeFilterElement(kind: FilterWidgetKind): SlideElement {
   const temporal = kind === "temporal";
   const year = kind === "year";
+  const treemap = kind === "treemap";
   return {
     type: "filter",
-    position: { x: temporal ? 80 : 80, y: 72 },
+    position: { x: temporal ? 80 : treemap ? 40 : 80, y: treemap ? 120 : 72 },
     size: {
-      width: temporal ? 1120 : year ? 280 : kind === "search" ? 360 : 720,
-      height: kind === "search" ? 72 : 64,
+      width: temporal ? 1120 : treemap ? 720 : year ? 280 : kind === "search" ? 360 : 720,
+      height: treemap ? 380 : kind === "search" ? 72 : 64,
     },
     filter_kind: kind,
     label: filterKindLabel(kind),
     source: null,
     dimension: defaultDimensionForKind(kind) || null,
+    child_dimension: null,
+    measure: null,
     options: temporal
       ? MONTH_SHORT.map((item) => ({ ...item }))
       : year
@@ -1706,6 +1710,7 @@ function makeFilterElement(kind: FilterWidgetKind): SlideElement {
         : [],
     selected: temporal ? ["09"] : year ? ["2026"] : [],
     accent: "F97316",
+    nodes: treemap ? TREEMAP_EXAMPLE : null,
     decorative: false,
     name: `filter_${kind}`,
   };
@@ -1719,6 +1724,7 @@ function createDefaultFilterInsertElements(kind?: string): SlideElement[] {
     "filter-multi": "multi",
     "filter-dropdown": "dropdown",
     "filter-search": "search",
+    "filter-treemap": "treemap",
   };
   const filterKind = kind ? map[kind] : undefined;
   return filterKind ? [makeFilterElement(filterKind)] : [];

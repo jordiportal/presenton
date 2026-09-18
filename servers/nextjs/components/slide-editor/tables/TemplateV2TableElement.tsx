@@ -11,6 +11,7 @@ import { LatexRunNode } from "@/components/slide-editor/math/LatexRunNode";
 import { effectiveLineHeight } from "@/components/slide-editor/text/text-line-height";
 import { readableTableTextColor } from "@/components/slide-editor/tables/table-colors";
 import { colorWithOpacity } from "@/components/slide-editor/model/render-style";
+import { IbcsTableChart, isIbcsTable } from "@/components/slide-editor/ibcs/IbcsTableChart";
 
 type UnknownRecord = Record<string, any>;
 type RawElement = UnknownRecord;
@@ -44,6 +45,16 @@ export function TemplateV2TableElement({
   onCellEdit?: (rowIndex: number, colIndex: number) => void;
 }) {
   const rows = rawTableRows(element);
+  if (isIbcsTable(element)) {
+    return (
+      <IbcsTableChart
+        element={element}
+        width={width}
+        height={height}
+        interactive={interactive}
+      />
+    );
+  }
   const rowCount = Math.max(1, rows.length);
   const colCount = Math.max(1, ...rows.map((row) => row.length));
   const cellW = width / colCount;

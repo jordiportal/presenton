@@ -274,6 +274,10 @@ class Table(BaseModel):
     rotation: Optional[float] = None
     columns: list[TableCell]
     rows: list[list[TableCell]]
+    font: Optional[Font] = None
+    table_style: Optional[str] = None
+    data_binding: Optional[dict[str, Any]] = None
+    ibcs: Optional[dict[str, Any]] = None
 
     # Schema
     decorative: bool
@@ -554,14 +558,18 @@ class Filter(BaseModel):
     position: Optional[Position] = None
     size: Optional[Size] = None
     filter_kind: Literal[
-        "temporal", "year", "radio", "multi", "dropdown", "search"
+        "temporal", "year", "radio", "multi", "dropdown", "search", "treemap"
     ]
     label: Optional[str] = None
     source: Optional[str] = None
     dimension: Optional[str] = None
+    child_dimension: Optional[str] = None
+    measure: Optional[str] = None
     options: Optional[list[FilterOption]] = None
     selected: list[str] = Field(default_factory=list)
     accent: Optional[str] = None
+    nodes: Optional[list[dict[str, Any]]] = None
+    data_binding: Optional[dict[str, Any]] = None
     decorative: bool = False
     name: str = "filter"
 

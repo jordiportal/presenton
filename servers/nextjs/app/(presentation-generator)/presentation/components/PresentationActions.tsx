@@ -317,6 +317,7 @@ export const filterTypeItems = [
   { id: "filter-multi", label: "Multiselector", icon: Filter },
   { id: "filter-dropdown", label: "Desplegable", icon: Filter },
   { id: "filter-search", label: "Filtro libre", icon: Search },
+  { id: "filter-treemap", label: "Treemap", icon: Grid3X3 },
 ] satisfies PaletteItem[];
 
 export const imageItems = [
@@ -1413,7 +1414,15 @@ function ActionsPanel({
               label: "Dimensión",
               items: filterTypeItems.filter(
                 (item) =>
-                  item.id !== "filter-temporal" && item.id !== "filter-year",
+                  item.id !== "filter-temporal" &&
+                  item.id !== "filter-year" &&
+                  item.id !== "filter-treemap",
+              ),
+            },
+            {
+              label: "Visual",
+              items: filterTypeItems.filter(
+                (item) => item.id === "filter-treemap",
               ),
             },
           ]}

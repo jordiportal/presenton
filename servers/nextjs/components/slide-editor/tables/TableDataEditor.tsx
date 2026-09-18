@@ -17,6 +17,18 @@ import {
 } from "@/components/slide-editor/model/element-model";
 import { Kh7QueryPanel } from "@/components/slide-editor/data/Kh7QueryPanel";
 import { OnlyOfficeQueryPanel } from "@/components/slide-editor/data/OnlyOfficeQueryPanel";
+import {
+  IbcsTableColumnsEditor,
+  IbcsTableFormatEditor,
+  IbcsTableQueryPanel,
+} from "@/components/slide-editor/ibcs/IbcsTableQueryPanel";
+import {
+  defaultIbcsTableColumns,
+  ibcsTableToGrid,
+  type IbcsTableColumn,
+} from "@/components/slide-editor/ibcs/table-columns";
+import { ibcsFormatFromConfig } from "@/components/slide-editor/ibcs/format";
+import { isAdvancedTable } from "@/components/slide-editor/tables/table-style";
 import { tableGridFromExecute } from "@/app/(presentation-generator)/services/api/kh7";
 import {
   ADVANCED_TABLE_MAX_COLUMNS,
@@ -63,8 +75,10 @@ function TableDataModal({
   onClose: () => void;
 }) {
   const [draft, setDraft] = useState<TableSlideElement>(() => table);
-  const [dataTab, setDataTab] = useState<"manual" | "kh7" | "onlyoffice">(
-    table.data_binding?.source === "onlyoffice"
+  const [dataTab, setDataTab] = useState<"manual" | "kh7" | "ibcs" | "onlyoffice">(
+    table.ibcs?.kind === "table"
+      ? "ibcs"
+      : table.data_binding?.source === "onlyoffice"
       ? "onlyoffice"
       : table.data_binding?.source === "kh7" || table.data_binding?.source === "mock"
       ? "kh7"
@@ -107,7 +121,11 @@ function TableDataModal({
                 className="flex h-8 items-center gap-1.5 rounded-full border border-[#E6E6EA] bg-white px-4 text-[12px] font-semibold text-[#191919] transition hover:bg-[#F7F7FA]"
                 onClick={() => {
                   commitGrid(clearedGrid(rows));
-                  setDraft((current) => ({ ...current, data_binding: null }));
+                  setDraft((current) => ({
+                    ...current,
+                    data_binding: null,
+                    ibcs: null,
+                  }));
                 }}
               >
                 <Trash2 size={14} strokeWidth={2} />
@@ -171,6 +189,19 @@ function TableDataModal({
                 >
                   KH7 query
                 </button>
+                {isAdvancedTable(draft) ? (
+                  <button
+                    type="button"
+                    className={`h-7 rounded-full px-3 text-[11px] font-semibold ${
+                      dataTab === "ibcs"
+                        ? "bg-white text-[#191919] shadow-sm"
+                        : "text-[#6B6B74]"
+                    }`}
+                    onClick={() => setDataTab("ibcs")}
+                  >
+                    IBCS
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   className={`h-7 rounded-full px-3 text-[11px] font-semibold ${
@@ -199,6 +230,7 @@ function TableDataModal({
                         return {
                           ...next,
                           data_binding: nextBinding,
+                          ibcs: null,
                           max_columns: Math.max(
                             tableColumnLimit(current),
                             columnCount,
@@ -225,6 +257,97 @@ function TableDataModal({
                   />
                 </div>
               ) : null}
+              {dataTab === "ibcs" ? (
+                <div className="mb-5 space-y-4">
+                  <IbcsTableQueryPanel
+                    binding={draft.data_binding}
+                    extraFilters={draft.data_binding?.filters}
+                    ibcs={draft.ibcs}
+                    onApply={({ binding, ibcs, grid }) => {
+                      setDraft((current) => {
+                        const next = setTableRowsFromStrings(current, grid);
+                        return {
+                          ...next,
+                          data_binding: binding,
+                          ibcs,
+                          max_columns: Math.max(
+                            tableColumnLimit(current),
+                            grid[0]?.length ?? 0,
+                            ADVANCED_TABLE_MAX_COLUMNS,
+                          ),
+                          max_rows: Math.max(
+                            tableRowLimit(current),
+                            grid.length,
+                            ADVANCED_TABLE_MAX_ROWS,
+                          ),
+                          size: {
+                            width: Math.max(current.size?.width ?? 1120, 1120),
+                            height: Math.min(
+                              640,
+                              Math.max(220, 36 + grid.length * 24),
+                            ),
+                          },
+                        };
+                      });
+                    }}
+                  />
+                  <IbcsTableFormatEditor
+                    ibcs={draft.ibcs}
+                    onChange={(patch) => {
+                      setDraft((current) => {
+                        const members = current.ibcs?.members ?? [];
+                        const columns =
+                          (current.ibcs?.columns as IbcsTableColumn[] | undefined) ??
+                          defaultIbcsTableColumns();
+                        const ibcs = {
+                          ...current.ibcs,
+                          ...patch,
+                          kind: "table" as const,
+                          pin_vs: current.ibcs?.pin_vs ?? "fc",
+                          columns,
+                          members,
+                        };
+                        const grid = ibcsTableToGrid(
+                          members,
+                          columns,
+                          ibcsFormatFromConfig(ibcs),
+                        );
+                        return {
+                          ...setTableRowsFromStrings(current, grid),
+                          ibcs,
+                        };
+                      });
+                    }}
+                  />
+                  <IbcsTableColumnsEditor
+                    columns={
+                      (draft.ibcs?.columns as IbcsTableColumn[] | undefined) ??
+                      defaultIbcsTableColumns()
+                    }
+                    onChange={(columns) => {
+                      setDraft((current) => {
+                        const members = current.ibcs?.members ?? [];
+                        const ibcs = {
+                          ...current.ibcs,
+                          kind: "table" as const,
+                          pin_vs: current.ibcs?.pin_vs ?? "fc",
+                          columns,
+                          members,
+                        };
+                        const grid = ibcsTableToGrid(
+                          members,
+                          columns,
+                          ibcsFormatFromConfig(ibcs),
+                        );
+                        return {
+                          ...setTableRowsFromStrings(current, grid),
+                          ibcs,
+                        };
+                      });
+                    }}
+                  />
+                </div>
+              ) : null}
               {dataTab === "onlyoffice" ? (
                 <div className="mb-5">
                   <OnlyOfficeQueryPanel
@@ -241,6 +364,7 @@ function TableDataModal({
                         return {
                           ...next,
                           data_binding: nextBinding,
+                          ibcs: null,
                           max_columns: Math.max(
                             tableColumnLimit(current),
                             columnCount,

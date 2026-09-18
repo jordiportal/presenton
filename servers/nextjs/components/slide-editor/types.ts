@@ -43,8 +43,36 @@ export type IbcsScenarioId = "ac" | "py" | "pl" | "fc";
 
 export type IbcsScale = "auto" | "none" | "thousands" | "millions";
 
+export type IbcsTableColumn = {
+  id: string;
+  role:
+    | "label"
+    | "py"
+    | "pl"
+    | "fc"
+    | "ac"
+    | "delta_py"
+    | "pct_py"
+    | "delta_pl"
+    | "pct_pl"
+    | "delta_fc"
+    | "pct_fc";
+  viz: "text" | "number" | "bar" | "variance" | "variance_hatched" | "percent";
+  label: string;
+  visible?: boolean;
+};
+
+export type IbcsTableMember = {
+  code: string;
+  caption: string;
+  ac: number;
+  py: number;
+  pl: number;
+  fc: number;
+};
+
 export type IbcsChartConfig = {
-  kind: "kpi_pin";
+  kind: "kpi_pin" | "table";
   pin_vs: Exclude<IbcsScenarioId, "ac">;
   measure?: string | null;
   current_year?: string | null;
@@ -66,6 +94,9 @@ export type IbcsChartConfig = {
   decimals?: number | null;
   unit?: string | null;
   bar_width?: number | null;
+  row_dimension?: string | null;
+  columns?: IbcsTableColumn[] | null;
+  members?: IbcsTableMember[] | null;
 };
 export type InfographicType =
   | "progress_bar"
@@ -550,11 +581,20 @@ export type FilterWidgetKind =
   | "radio"
   | "multi"
   | "dropdown"
-  | "search";
+  | "search"
+  | "treemap";
 
 export type FilterOption = {
   code: string;
   caption: string;
+};
+
+export type TreemapNode = {
+  code: string;
+  caption: string;
+  value: number;
+  parentCode?: string | null;
+  children?: TreemapNode[] | null;
 };
 
 export type FilterElement = ElementBase & {
@@ -563,9 +603,13 @@ export type FilterElement = ElementBase & {
   label?: string | null;
   source?: string | null;
   dimension?: string | null;
+  child_dimension?: string | null;
+  measure?: string | null;
   options?: FilterOption[] | null;
   selected: string[];
   accent?: string | null;
+  nodes?: TreemapNode[] | null;
+  data_binding?: DataBinding | null;
 };
 
 export type VideoProvider = "file" | "youtube" | "vimeo" | "url";
@@ -592,6 +636,7 @@ export type TableElement = ElementBase & {
   max_rows?: number | null;
   min_rows?: number | null;
   data_binding?: DataBinding | null;
+  ibcs?: IbcsChartConfig | null;
 };
 
 export type VectorCurve = {

@@ -257,7 +257,15 @@ export function TemplateInsertPanel({
               label: "Dimensión",
               items: filterTypeItems.filter(
                 (item) =>
-                  item.id !== "filter-temporal" && item.id !== "filter-year",
+                  item.id !== "filter-temporal" &&
+                  item.id !== "filter-year" &&
+                  item.id !== "filter-treemap",
+              ),
+            },
+            {
+              label: "Visual",
+              items: filterTypeItems.filter(
+                (item) => item.id === "filter-treemap",
               ),
             },
           ]}

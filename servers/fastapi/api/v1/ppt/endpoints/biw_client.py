@@ -309,7 +309,14 @@ async def execute_biw_cube(
         )
 
     axis_dims = resolve_axis_dimensions(row_fields + col_fields)
-    proxy_filters = ensure_version_filter(to_proxy_filters(filters), meta, axis_dims)
+    raw_filters = to_proxy_filters(filters)
+    if raw_filters:
+        raw_filters = {
+            name: value
+            for name, value in raw_filters.items()
+            if name in dim_names
+        }
+    proxy_filters = ensure_version_filter(raw_filters, meta, axis_dims)
     body_payload: dict[str, Any] = {
         "query": source,
         "dimensions": axis_dims,

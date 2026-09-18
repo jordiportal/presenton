@@ -19,6 +19,8 @@ import {
   type Font,
   type GroupElement,
   type IbcsChartConfig,
+  type IbcsTableColumn,
+  type IbcsTableMember,
   type InfographicData,
   type LayoutAlignment,
   type LayoutItem,
@@ -31,6 +33,7 @@ import {
   type TextElement,
   type TextListItem,
   type TextRun,
+  type TreemapNode,
   type VectorCurve,
 } from "@/components/slide-editor/types";
 import { normalizeInfographicIcon } from "@/components/slide-editor/infographics/infographic-editing";
@@ -872,6 +875,7 @@ function adaptTable(raw: UnknownRecord): SlideElement {
     max_rows: readNumber(raw, "max_rows") ?? maxRows,
     min_rows: readNumber(raw, "min_rows"),
     data_binding: adaptDataBinding(raw.data_binding),
+    ibcs: adaptIbcsConfig(raw.ibcs),
   };
 }
 
@@ -879,7 +883,7 @@ function adaptFilter(raw: UnknownRecord): SlideElement {
   const kind =
     readEnum(
       raw,
-      ["temporal", "year", "radio", "multi", "dropdown", "search"],
+      ["temporal", "year", "radio", "multi", "dropdown", "search", "treemap"],
       "filter_kind",
     ) ?? "multi";
   const options = readArray(raw, "options")
@@ -901,10 +905,30 @@ function adaptFilter(raw: UnknownRecord): SlideElement {
     label: readString(raw.label),
     source: readString(raw.source),
     dimension: readString(raw.dimension),
+    child_dimension: readString(raw.child_dimension),
+    measure: readString(raw.measure),
     options,
     selected: readArray(raw, "selected").map(String).filter(Boolean),
     accent: readString(raw.accent),
+    nodes: adaptTreemapNodes(raw.nodes),
+    data_binding: adaptDataBinding(raw.data_binding),
   };
+}
+
+function adaptTreemapNodes(value: unknown): TreemapNode[] | null {
+  if (!Array.isArray(value) || value.length === 0) return null;
+  return value.map((item) => {
+    const raw = asRecord(item) ?? {};
+    const caption = readString(raw.caption) || readString(raw.code) || "";
+    const children = adaptTreemapNodes(raw.children);
+    return {
+      code: readString(raw.code) || caption,
+      caption,
+      value: Number(raw.value) || 0,
+      parentCode: readString(raw.parentCode) || readString(raw.parent_code),
+      children,
+    };
+  });
 }
 
 function adaptVideo(raw: UnknownRecord): SlideElement {
@@ -2109,8 +2133,9 @@ function adaptIbcsConfig(value: unknown): IbcsChartConfig | null {
   const codes = asRecord(raw.version_codes);
   const decimals = parseIbcsDecimals(raw.decimals);
   const barWidth = raw.bar_width == null ? null : clampIbcsBarWidth(raw.bar_width);
+  const kind = readString(raw.kind) === "table" ? "table" : "kpi_pin";
   return {
-    kind: "kpi_pin",
+    kind,
     pin_vs: pin === "py" || pin === "pl" ? pin : "fc",
     measure: readString(raw.measure),
     current_year: readString(raw.current_year),
@@ -2136,7 +2161,69 @@ function adaptIbcsConfig(value: unknown): IbcsChartConfig | null {
     decimals,
     unit: readString(raw.unit),
     bar_width: raw.bar_width == null ? null : barWidth,
+    row_dimension: readString(raw.row_dimension),
+    columns: adaptIbcsTableColumns(raw.columns),
+    members: adaptIbcsTableMembers(raw.members),
   };
+}
+
+const IBCS_TABLE_ROLES = new Set([
+  "label",
+  "py",
+  "pl",
+  "fc",
+  "ac",
+  "delta_py",
+  "pct_py",
+  "delta_pl",
+  "pct_pl",
+  "delta_fc",
+  "pct_fc",
+]);
+
+const IBCS_TABLE_VIZ = new Set([
+  "text",
+  "number",
+  "bar",
+  "variance",
+  "variance_hatched",
+  "percent",
+]);
+
+function adaptIbcsTableColumns(value: unknown): IbcsTableColumn[] | null {
+  if (!Array.isArray(value) || value.length === 0) return null;
+  return value.map((item, index) => {
+    const raw = asRecord(item) ?? {};
+    const role = readString(raw.role);
+    const viz = readString(raw.viz);
+    return {
+      id: readString(raw.id) || role || `col_${index}`,
+      role: IBCS_TABLE_ROLES.has(role ?? "")
+        ? (role as IbcsTableColumn["role"])
+        : "label",
+      viz: IBCS_TABLE_VIZ.has(viz ?? "")
+        ? (viz as IbcsTableColumn["viz"])
+        : "number",
+      label: readString(raw.label) ?? "",
+      visible: raw.visible === false ? false : true,
+    };
+  });
+}
+
+function adaptIbcsTableMembers(value: unknown): IbcsTableMember[] | null {
+  if (!Array.isArray(value) || value.length === 0) return null;
+  return value.map((item, index) => {
+    const raw = asRecord(item) ?? {};
+    const caption = readString(raw.caption) || readString(raw.code) || `Fila ${index + 1}`;
+    return {
+      code: readString(raw.code) || caption,
+      caption,
+      ac: Number(raw.ac) || 0,
+      py: Number(raw.py) || 0,
+      pl: Number(raw.pl) || 0,
+      fc: Number(raw.fc) || 0,
+    };
+  });
 }
 
 function adaptDataBinding(value: unknown): DataBinding | null {

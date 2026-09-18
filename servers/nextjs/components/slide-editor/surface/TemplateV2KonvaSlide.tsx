@@ -3544,6 +3544,7 @@ function TemplateV2KonvaSlideComponent({
               max_columns: next.max_columns ?? element.max_columns,
               max_rows: next.max_rows ?? element.max_rows,
               data_binding: next.data_binding,
+              ibcs: next.ibcs,
               size: next.size ?? element.size,
             }))
           }
@@ -3577,7 +3578,7 @@ function TemplateV2KonvaSlideComponent({
               ...next,
               type: "filter",
               position: element.position,
-              size: element.size,
+              size: next.size ?? element.size,
             }));
             window.setTimeout(() => {
               void refreshSlideBindings(currentUiRef.current);

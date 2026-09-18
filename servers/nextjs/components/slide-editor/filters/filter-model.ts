@@ -31,15 +31,34 @@ export const DEFAULT_YEARS: FilterOption[] = [
 
 export const TIME_DIMENSIONS = new Set([
   "0CALMONTH",
+  "0CALMONTH2",
   "0CALYEAR",
   "0CALWEEK",
   "ZMES",
 ]);
 
+export function isYearMonthDimension(dimension?: string | null) {
+  const name = String(dimension ?? "").toUpperCase();
+  if (!name) return false;
+  if (name.includes("MONTH2") || name.includes("CALMONTH2")) return false;
+  return name === "0CALMONTH" || name.endsWith("CALMONTH");
+}
+
+export function isYearMonthCode(code: string) {
+  const digits = String(code ?? "").replace(/\D/g, "");
+  return digits.length === 6;
+}
+
 export function isFilterElement(
   value: { type?: unknown } | null | undefined,
 ): value is FilterElement {
   return value?.type === "filter";
+}
+
+export function isTreemapFilter(
+  value: { type?: unknown; filter_kind?: unknown } | null | undefined,
+): boolean {
+  return value?.type === "filter" && value?.filter_kind === "treemap";
 }
 
 export function filterKindLabel(kind: FilterWidgetKind) {
@@ -56,6 +75,8 @@ export function filterKindLabel(kind: FilterWidgetKind) {
       return "Desplegable";
     case "search":
       return "Filtro libre";
+    case "treemap":
+      return "Treemap";
   }
 }
 
@@ -83,38 +104,58 @@ export function resolveFilterCodes(
   selected: string[],
   options: FilterOption[] | null | undefined,
   yearCodes: string[] = [],
+  dimension?: string | null,
 ) {
   if (selected.length === 0) return [];
   const catalog = options ?? [];
   const years = yearCodes.filter(Boolean);
+  const catalogYearMonth = catalog.filter((item) => isYearMonthCode(item.code));
+  const composeYearMonth =
+    isYearMonthDimension(dimension) || catalogYearMonth.length > 0;
   const resolved: string[] = [];
 
   for (const value of selected) {
     const mm = monthKey(value);
-    const yearMatches = catalog.filter(
-      (item) => item.code.length > 2 && monthKey(item.code) === mm,
+    const exact = catalog.filter((item) => item.code === value);
+    const monthOnly = catalog.filter(
+      (item) =>
+        !isYearMonthCode(item.code) &&
+        (item.code === mm || monthKey(item.code) === mm),
     );
-    if (/^\d{2}$/.test(mm) && (years.length > 0 || yearMatches.length > 0)) {
+    const yearMonth = catalogYearMonth.filter(
+      (item) => monthKey(item.code) === mm,
+    );
+
+    if (composeYearMonth && /^\d{2}$/.test(mm)) {
       const yearsToUse = years.length
         ? years
-        : [...new Set(yearMatches.map((item) => item.code.slice(0, -2)))];
+        : [
+            ...new Set(
+              yearMonth.map((item) => item.code.replace(/\D/g, "").slice(0, 4)),
+            ),
+          ];
       if (yearsToUse.length > 0) {
-        resolved.push(...yearsToUse.map((year) => `${year}${mm}`));
+        resolved.push(
+          ...yearsToUse.map((year) => {
+            const match = yearMonth.find((item) =>
+              item.code.replace(/\D/g, "").startsWith(year),
+            );
+            return match?.code ?? `${year}${mm}`;
+          }),
+        );
         continue;
       }
     }
-    if (catalog.some((item) => item.code === value)) {
-      resolved.push(value);
+
+    if (exact.length > 0) {
+      resolved.push(...exact.map((item) => item.code));
       continue;
     }
-    const matches = catalog.filter(
-      (item) => item.code === mm || monthKey(item.code) === mm,
-    );
-    if (matches.length === 0) {
-      resolved.push(value);
+    if (monthOnly.length > 0) {
+      resolved.push(...monthOnly.map((item) => item.code));
       continue;
     }
-    resolved.push(...matches.map((item) => item.code));
+    resolved.push(value);
   }
 
   return [...new Set(resolved)];

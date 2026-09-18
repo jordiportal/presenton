@@ -1,8 +1,14 @@
 import { resolveBackendAssetUrl } from "@/utils/api";
 import { markdownToPlainChartText } from "@/components/slide-editor/charts/chart-data";
 import { renderIbcsKpiPinSvg } from "@/components/slide-editor/ibcs/kpi-pin-svg";
+import { renderIbcsTableSvg } from "@/components/slide-editor/ibcs/table-svg";
 import { ibcsValuesFromChart } from "@/components/slide-editor/ibcs/values";
 import { ibcsFormatFromConfig } from "@/components/slide-editor/ibcs/format";
+import { renderTreemapSvg } from "@/components/slide-editor/filters/treemap-svg";
+import type {
+  IbcsTableColumn,
+  IbcsTableMember,
+} from "@/components/slide-editor/ibcs/table-columns";
 import { normalizeRawTextMarkdownElement } from "@/components/slide-editor/text/template-v2-text";
 import { isLatexTextRun } from "@/components/slide-editor/text/text-runs";
 import { normalizeMathLatex, renderMathHtml } from "@/lib/math";
@@ -516,6 +522,37 @@ function renderItem(item: JsonRecord, mode: RenderMode): string {
 
 function renderFilter(item: JsonRecord, mode: RenderMode): string {
   const kind = readString(item.filter_kind) ?? "multi";
+  const box = readBox(item);
+  if (kind === "treemap") {
+    const svg = renderTreemapSvg({
+      nodes: readArray(item.nodes).map((entry) => {
+        const record = readRecord(entry);
+        return {
+          code: readString(record.code) || "",
+          caption: readString(record.caption) || readString(record.code) || "",
+          value: Number(record.value) || 0,
+          parentCode: readString(record.parent_code) || readString(record.parentCode),
+          children: readArray(record.children).map((child) => {
+            const nested = readRecord(child);
+            return {
+              code: readString(nested.code) || "",
+              caption: readString(nested.caption) || readString(nested.code) || "",
+              value: Number(nested.value) || 0,
+              parentCode:
+                readString(nested.parent_code) ||
+                readString(nested.parentCode) ||
+                readString(record.code),
+            };
+          }),
+        };
+      }),
+      width: Math.max(40, (box.width ?? 720) - 16),
+      height: Math.max(40, (box.height ?? 380) - 26),
+      selected: readArray(item.selected).map(String),
+    }).replace(/^<\?xml[^>]*>\s*/, "");
+    const label = escapeHtml(readString(item.label) ?? "Treemap");
+    return `<div style="${frameStyle(item, mode)}display:flex;flex-direction:column;padding:0 8px 8px;border:1px solid #E4E7EC;border-radius:18px;background:#fff;overflow:hidden;"><div style="height:18px;display:flex;align-items:center;font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#667085;">${label}</div><div style="flex:1;min-height:0;overflow:hidden;border-radius:8px;">${svg.replace("<svg ", '<svg style="display:block;width:100%;height:100%;" ')}</div></div>`;
+  }
   const selected = new Set(readArray(item.selected).map(String));
   const options = readArray(item.options).map((value) => {
     const record = readRecordOrNull(value) ?? {};
@@ -672,6 +709,44 @@ function renderTextList(item: JsonRecord, mode: RenderMode): string {
 }
 
 function renderTable(item: JsonRecord, mode: RenderMode): string {
+  const ibcs = readRecord(item.ibcs);
+  if (readString(ibcs.kind) === "table") {
+    const box = readBox(item);
+    const svg = renderIbcsTableSvg({
+      members: readArray(ibcs.members).map((entry) => {
+        const record = readRecord(entry);
+        return {
+          code: readString(record.code) || readString(record.caption) || "",
+          caption: readString(record.caption) || readString(record.code) || "",
+          ac: Number(record.ac) || 0,
+          py: Number(record.py) || 0,
+          pl: Number(record.pl) || 0,
+          fc: Number(record.fc) || 0,
+        } satisfies IbcsTableMember;
+      }),
+      columns: readArray(ibcs.columns).map((entry) => {
+        const record = readRecord(entry);
+        return {
+          id: readString(record.id) || readString(record.role) || "col",
+          role: (readString(record.role) || "label") as IbcsTableColumn["role"],
+          viz: (readString(record.viz) || "number") as IbcsTableColumn["viz"],
+          label: readString(record.label) ?? "",
+          visible: record.visible === false ? false : true,
+        } satisfies IbcsTableColumn;
+      }),
+      width: Math.max(1, box.width ?? 1120),
+      height: Math.max(1, box.height ?? 360),
+      format: ibcsFormatFromConfig({
+        scale: readString(ibcs.scale),
+        scale_label: readString(ibcs.scale_label),
+        decimals: readNumber(ibcs.decimals),
+        unit: readString(ibcs.unit),
+      }),
+    }).replace(/^<\?xml[^>]*>\s*/, "");
+    return `<div style="${frameStyle(item, mode)}${transformStyle(
+      item,
+    )}overflow:hidden">${svg}</div>`;
+  }
   const rows = tableRows(item);
   if (!rows.length) {
     return `<div style="${frameStyle(

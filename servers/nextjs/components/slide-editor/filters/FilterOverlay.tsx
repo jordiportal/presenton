@@ -8,7 +8,10 @@ import {
 } from "react";
 import type Konva from "konva";
 import { FilterWidget } from "@/components/slide-editor/filters/FilterWidget";
-import { isFilterElement } from "@/components/slide-editor/filters/filter-model";
+import {
+  isFilterElement,
+  isTreemapFilter,
+} from "@/components/slide-editor/filters/filter-model";
 import {
   keyForSelection,
   readArray,
@@ -88,7 +91,9 @@ export function FilterOverlay({
             if (node) elementRefs.current.set(key, node);
             else elementRefs.current.delete(key);
           }}
-          className="absolute left-0 top-0 flex flex-col origin-top-left"
+          className={`absolute left-0 top-0 flex flex-col origin-top-left ${
+            isTreemapFilter(element) ? "overflow-hidden rounded-[18px]" : ""
+          }`}
           style={{ pointerEvents: "none" }}
           onDoubleClick={(event) => {
             event.stopPropagation();
@@ -96,20 +101,33 @@ export function FilterOverlay({
           }}
         >
           <div
-            className="flex h-[22px] shrink-0 items-center px-1 text-[10px] font-semibold uppercase tracking-wide text-[#667085]"
+            className="flex h-[18px] shrink-0 items-center px-2.5 text-[10px] font-semibold uppercase tracking-wide text-[#667085]"
             style={{ pointerEvents: "none" }}
           >
             {element.label || "Filtro"}
           </div>
           <div
-            className="min-h-0 min-w-0 flex-1 px-1 pb-1"
-            style={{ pointerEvents: "auto" }}
+            className={
+              isTreemapFilter(element)
+                ? "min-h-0 min-w-0 flex-1 px-2 pb-2"
+                : "min-h-0 min-w-0 flex-1 px-1 pb-1"
+            }
+            style={{ pointerEvents: "none" }}
           >
-            <FilterWidget
-              element={element}
-              interactive
-              onChange={(selected) => onSelectedChange(selection, selected)}
-            />
+            <div
+              className={
+                isTreemapFilter(element)
+                  ? "h-full w-full overflow-hidden rounded-lg"
+                  : "h-full w-full"
+              }
+              style={{ pointerEvents: "auto" }}
+            >
+              <FilterWidget
+                element={element}
+                interactive
+                onChange={(selected) => onSelectedChange(selection, selected)}
+              />
+            </div>
           </div>
         </div>
       ))}

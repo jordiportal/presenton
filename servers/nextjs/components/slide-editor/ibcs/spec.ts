@@ -11,7 +11,7 @@
  */
 
 export type IbcsScenarioId = "ac" | "py" | "pl" | "fc";
-export type IbcsVisualKind = "kpi_pin";
+export type IbcsVisualKind = "kpi_pin" | "table";
 export type IbcsYearRole = "current" | "previous";
 export type IbcsVersionRole = "actual" | "plan" | "forecast";
 
@@ -49,8 +49,14 @@ export const IBCS_KPI_PIN: IbcsVisualSpec = {
   ],
 };
 
+export const IBCS_TABLE: IbcsVisualSpec = {
+  ...IBCS_KPI_PIN,
+  kind: "table",
+};
+
 export const IBCS_VISUALS: Record<IbcsVisualKind, IbcsVisualSpec> = {
   kpi_pin: IBCS_KPI_PIN,
+  table: IBCS_TABLE,
 };
 
 export type IbcsScenarioValues = {
@@ -82,6 +88,33 @@ export type IbcsConfigLike = {
   measure?: string | null;
   current_year?: string | null;
   values?: IbcsScenarioValues | null;
+  row_dimension?: string | null;
+  columns?: Array<{
+    id: string;
+    role:
+      | "label"
+      | "py"
+      | "pl"
+      | "fc"
+      | "ac"
+      | "delta_py"
+      | "pct_py"
+      | "delta_pl"
+      | "pct_pl"
+      | "delta_fc"
+      | "pct_fc";
+    viz: "text" | "number" | "bar" | "variance" | "variance_hatched" | "percent";
+    label: string;
+    visible?: boolean;
+  }> | null;
+  members?: Array<{
+    code: string;
+    caption: string;
+    ac: number;
+    py: number;
+    pl: number;
+    fc: number;
+  }> | null;
   year_dimension?: string | null;
   version_dimension?: string | null;
   version_codes?: {
@@ -123,16 +156,17 @@ export function specFromConfig(
 export function mergeIbcsConfig(
   current: IbcsConfigLike | null | undefined,
   patch: IbcsConfigLike,
-): IbcsConfigLike & { kind: "kpi_pin"; pin_vs: Exclude<IbcsScenarioId, "ac"> } {
+): IbcsConfigLike & { kind: IbcsVisualKind; pin_vs: Exclude<IbcsScenarioId, "ac"> } {
   const spec = specFromConfig({ ...current, ...patch });
   const versionCodes = {
     ...(current?.version_codes ?? {}),
     ...(patch.version_codes ?? {}),
   };
+  const kind = patch.kind ?? current?.kind ?? "kpi_pin";
   return {
     ...current,
     ...patch,
-    kind: "kpi_pin",
+    kind: kind === "table" ? "table" : "kpi_pin",
     pin_vs: spec.pinVs,
     version_codes:
       Object.keys(versionCodes).length > 0 ? versionCodes : current?.version_codes,
