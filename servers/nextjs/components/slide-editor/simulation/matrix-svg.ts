@@ -15,13 +15,35 @@ import {
   type SimulationFormatOptions,
 } from "@/components/slide-editor/simulation/format";
 
+export type SimulationLayoutMode = "fit" | "natural";
+
 export type SimulationSvgInput = {
   snapshot: SimulationSnapshot | null | undefined;
   width: number;
   height: number;
   format?: SimulationFormatOptions;
   columnPrefs?: SimulationColumnPref[] | null;
+  /**
+   * "fit" (default) squeezes all columns into `width`/`height` (slide visual).
+   * "natural" uses per-column minimum widths + fixed row heights so the table
+   * can overflow and be scrolled (used by the on-canvas inline editor).
+   */
+  mode?: SimulationLayoutMode;
 };
+
+// Natural-mode metrics (shared by SVG render + inline editor so they align).
+const NATURAL_HEADER_H = 28;
+const NATURAL_ROW_H = 24;
+const NATURAL_TOTALS_H = 26;
+const NATURAL_FONT = 11;
+const NATURAL_HEADER_FONT = 10;
+
+/** Minimum width of a column in natural (scrollable) mode. */
+export function simulationColumnMinWidth(column: SimulationColumn): number {
+  if (column.kind === "label") return 180;
+  if (/^simu_m\d+$/.test(column.id)) return 52; // monthly columns are compact
+  return 78;
+}
 
 export type SimulationLayout = {
   width: number;
@@ -68,8 +90,6 @@ function columnWeight(column: SimulationColumn): number {
 export function computeSimulationLayout(
   input: SimulationSvgInput,
 ): SimulationLayout {
-  const width = Math.max(1, input.width);
-  const height = Math.max(1, input.height);
   const columns = resolveDisplayColumns(
     input.snapshot?.columns?.length
       ? input.snapshot.columns
@@ -77,6 +97,34 @@ export function computeSimulationLayout(
     input.columnPrefs,
   );
   const rows = input.snapshot?.rows ?? [];
+
+  if (input.mode === "natural") {
+    let x = 0;
+    const bounds = columns.map((col) => {
+      const w = simulationColumnMinWidth(col);
+      const box = { x, w };
+      x += w;
+      return box;
+    });
+    const bodyH = rows.length * NATURAL_ROW_H;
+    const height = NATURAL_HEADER_H + bodyH + NATURAL_TOTALS_H;
+    return {
+      width: x, // intrinsic content width (may exceed the viewport → scroll)
+      height,
+      columns,
+      bounds,
+      rows,
+      headerH: NATURAL_HEADER_H,
+      totalsH: NATURAL_TOTALS_H,
+      bodyH,
+      rowH: NATURAL_ROW_H,
+      fontSize: NATURAL_FONT,
+      headerFont: NATURAL_HEADER_FONT,
+    };
+  }
+
+  const width = Math.max(1, input.width);
+  const height = Math.max(1, input.height);
 
   const headerH = Math.min(34, Math.max(22, height * 0.09));
   const totalsH = Math.min(30, Math.max(20, height * 0.08));
