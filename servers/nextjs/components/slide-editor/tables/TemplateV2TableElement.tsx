@@ -12,6 +12,10 @@ import { effectiveLineHeight } from "@/components/slide-editor/text/text-line-he
 import { readableTableTextColor } from "@/components/slide-editor/tables/table-colors";
 import { colorWithOpacity } from "@/components/slide-editor/model/render-style";
 import { IbcsTableChart, isIbcsTable } from "@/components/slide-editor/ibcs/IbcsTableChart";
+import {
+  SimulationTableChart,
+  isSimulationTable,
+} from "@/components/slide-editor/simulation/SimulationTableChart";
 
 type UnknownRecord = Record<string, any>;
 type RawElement = UnknownRecord;
@@ -45,6 +49,16 @@ export function TemplateV2TableElement({
   onCellEdit?: (rowIndex: number, colIndex: number) => void;
 }) {
   const rows = rawTableRows(element);
+  if (isSimulationTable(element)) {
+    return (
+      <SimulationTableChart
+        element={element}
+        width={width}
+        height={height}
+        interactive={interactive}
+      />
+    );
+  }
   if (isIbcsTable(element)) {
     return (
       <IbcsTableChart

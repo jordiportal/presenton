@@ -26,6 +26,11 @@ from models.sql.presentation_collaboration import (  # noqa: F401
 )
 from models.sql.presentation_share import PresentationShare  # noqa: F401
 from models.sql.presentation_note import PresentationNote  # noqa: F401
+from models.sql.simulation import (  # noqa: F401
+    SimulationOverride,
+    SimulationRow,
+    SimulationWorkbook,
+)
 from models.sql.template import TemplateModel
 from models.sql.template_create_info import TemplateCreateInfoModel
 from models.sql.template_v2 import TemplateV2
@@ -180,6 +185,9 @@ async def create_db_and_tables():
                         PresentationLease.__table__,
                         PresentationPresence.__table__,
                         PresentationShare.__table__,
+                        SimulationWorkbook.__table__,
+                        SimulationRow.__table__,
+                        SimulationOverride.__table__,
                     ],
                 )
             )

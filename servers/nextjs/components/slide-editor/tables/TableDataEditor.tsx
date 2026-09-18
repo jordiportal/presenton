@@ -28,6 +28,11 @@ import {
   type IbcsTableColumn,
 } from "@/components/slide-editor/ibcs/table-columns";
 import { ibcsFormatFromConfig } from "@/components/slide-editor/ibcs/format";
+import { SimulationQueryPanel } from "@/components/slide-editor/simulation/SimulationQueryPanel";
+import {
+  defaultSimulationConfig,
+  simulationSnapshotToGrid,
+} from "@/components/slide-editor/simulation/spec";
 import { isAdvancedTable } from "@/components/slide-editor/tables/table-style";
 import { tableGridFromExecute } from "@/app/(presentation-generator)/services/api/kh7";
 import {
@@ -75,8 +80,12 @@ function TableDataModal({
   onClose: () => void;
 }) {
   const [draft, setDraft] = useState<TableSlideElement>(() => table);
-  const [dataTab, setDataTab] = useState<"manual" | "kh7" | "ibcs" | "onlyoffice">(
-    table.ibcs?.kind === "table"
+  const [dataTab, setDataTab] = useState<
+    "manual" | "kh7" | "ibcs" | "simulation" | "onlyoffice"
+  >(
+    table.simulation
+      ? "simulation"
+      : table.ibcs?.kind === "table"
       ? "ibcs"
       : table.data_binding?.source === "onlyoffice"
       ? "onlyoffice"
@@ -125,6 +134,7 @@ function TableDataModal({
                     ...current,
                     data_binding: null,
                     ibcs: null,
+                    simulation: null,
                   }));
                 }}
               >
@@ -200,6 +210,19 @@ function TableDataModal({
                     onClick={() => setDataTab("ibcs")}
                   >
                     IBCS
+                  </button>
+                ) : null}
+                {isAdvancedTable(draft) ? (
+                  <button
+                    type="button"
+                    className={`h-7 rounded-full px-3 text-[11px] font-semibold ${
+                      dataTab === "simulation"
+                        ? "bg-white text-[#191919] shadow-sm"
+                        : "text-[#6B6B74]"
+                    }`}
+                    onClick={() => setDataTab("simulation")}
+                  >
+                    Simulación
                   </button>
                 ) : null}
                 <button
@@ -342,6 +365,51 @@ function TableDataModal({
                         return {
                           ...setTableRowsFromStrings(current, grid),
                           ibcs,
+                        };
+                      });
+                    }}
+                  />
+                </div>
+              ) : null}
+              {dataTab === "simulation" ? (
+                <div className="mb-5">
+                  <SimulationQueryPanel
+                    simulation={draft.simulation ?? defaultSimulationConfig()}
+                    extraFilters={draft.data_binding?.filters?.map((item) => ({
+                      dimension: String(item.dimension || item.column || ""),
+                      values: (item.values ?? []).map(String),
+                    }))}
+                    onChange={(config) => {
+                      setDraft((current) => {
+                        const grid = simulationSnapshotToGrid(
+                          config.snapshot,
+                          config.columns,
+                        );
+                        const next =
+                          grid.length > 0
+                            ? setTableRowsFromStrings(current, grid)
+                            : current;
+                        return {
+                          ...next,
+                          ibcs: null,
+                          simulation: config,
+                          max_columns: Math.max(
+                            tableColumnLimit(current),
+                            grid[0]?.length ?? 0,
+                            ADVANCED_TABLE_MAX_COLUMNS,
+                          ),
+                          max_rows: Math.max(
+                            tableRowLimit(current),
+                            grid.length,
+                            ADVANCED_TABLE_MAX_ROWS,
+                          ),
+                          size: {
+                            width: Math.max(current.size?.width ?? 1120, 1120),
+                            height: Math.min(
+                              640,
+                              Math.max(220, 44 + grid.length * 24),
+                            ),
+                          },
                         };
                       });
                     }}

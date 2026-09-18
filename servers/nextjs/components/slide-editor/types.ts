@@ -612,6 +612,75 @@ export type FilterElement = ElementBase & {
   data_binding?: DataBinding | null;
 };
 
+export type SimulationColumnKind = "label" | "source" | "input" | "calc";
+export type SimulationColumnFormat = "text" | "number" | "percent";
+
+export type SimulationColumn = {
+  id: string;
+  label: string;
+  kind: SimulationColumnKind;
+  format: SimulationColumnFormat;
+};
+
+export type SimulationRow = {
+  row_key: string;
+  label: string;
+  values: Record<string, number>;
+};
+
+export type SimulationSnapshot = {
+  pack?: string | null;
+  columns: SimulationColumn[];
+  rows: SimulationRow[];
+  totals?: Record<string, number> | null;
+  workbook_id?: string | null;
+  fetched_at?: string | null;
+};
+
+export type SimulationSpec = {
+  source_query?: string | null;
+  row_dimensions?: string[];
+  uds_measure?: string | null;
+  vn_measure?: string | null;
+  year_dimension?: string | null;
+  version_dimension?: string | null;
+  version_actual?: string | null;
+  current_year?: string | null;
+  incr_query?: string | null;
+  incr_row_dimension?: string | null;
+  incr_uds_measure?: string | null;
+  incr_vn_measure?: string | null;
+  filters?: Kh7FilterBinding[];
+  max_rows?: number | null;
+  monthly?: boolean;
+  month_dimension?: string | null;
+  workdays_adjust?: boolean;
+  holidays?: string[];
+  compare?: boolean;
+  version_forecast?: string | null;
+  version_plan?: string | null;
+};
+
+export type SimulationScale = "auto" | "none" | "thousands" | "millions";
+
+export type SimulationColumnPref = {
+  id: string;
+  label?: string | null;
+  visible?: boolean;
+};
+
+export type SimulationConfig = {
+  pack: string;
+  workbook_id?: string | null;
+  spec?: SimulationSpec | null;
+  snapshot?: SimulationSnapshot | null;
+  unit?: string | null;
+  decimals?: number | null;
+  scale?: SimulationScale | null;
+  scale_label?: string | null;
+  columns?: SimulationColumnPref[] | null;
+};
+
 export type VideoProvider = "file" | "youtube" | "vimeo" | "url";
 
 export type VideoElement = ElementBase & {
@@ -637,6 +706,7 @@ export type TableElement = ElementBase & {
   min_rows?: number | null;
   data_binding?: DataBinding | null;
   ibcs?: IbcsChartConfig | null;
+  simulation?: SimulationConfig | null;
 };
 
 export type VectorCurve = {

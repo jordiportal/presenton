@@ -26,6 +26,8 @@ import {
   type LayoutItem,
   type Padding,
   type Shadow,
+  type SimulationConfig,
+  type SimulationSnapshot,
   type Slide,
   type SlideElement,
   type Stroke,
@@ -876,6 +878,7 @@ function adaptTable(raw: UnknownRecord): SlideElement {
     min_rows: readNumber(raw, "min_rows"),
     data_binding: adaptDataBinding(raw.data_binding),
     ibcs: adaptIbcsConfig(raw.ibcs),
+    simulation: adaptSimulationConfig(raw.simulation),
   };
 }
 
@@ -2123,6 +2126,121 @@ function isFullSlideFilledShape(
     bounds.height === EDITOR_STAGE_HEIGHT &&
     Boolean(element.fill?.color)
   );
+}
+
+function adaptSimulationSnapshot(value: unknown): SimulationSnapshot | null {
+  const raw = asRecord(value);
+  if (!raw) return null;
+  const columns = readArray(raw, "columns")
+    .map((item) => {
+      const record = asRecord(item);
+      const id = readString(record?.id);
+      if (!id) return null;
+      const kind = readString(record?.kind);
+      const format = readString(record?.format);
+      return {
+        id,
+        label: readString(record?.label) ?? "",
+        kind: (kind === "label" || kind === "source" || kind === "input"
+          ? kind
+          : "calc") as SimulationSnapshot["columns"][number]["kind"],
+        format: (format === "text" || format === "percent"
+          ? format
+          : "number") as SimulationSnapshot["columns"][number]["format"],
+      };
+    })
+    .filter((item): item is NonNullable<typeof item> => Boolean(item));
+  if (columns.length === 0) return null;
+  const rows = readArray(raw, "rows")
+    .map((item) => {
+      const record = asRecord(item);
+      if (!record) return null;
+      const values: Record<string, number> = {};
+      const valuesRecord = asRecord(record.values) ?? {};
+      for (const key of Object.keys(valuesRecord)) {
+        values[key] = Number(valuesRecord[key]) || 0;
+      }
+      return {
+        row_key: readString(record.row_key) ?? readString(record.label) ?? "",
+        label: readString(record.label) ?? readString(record.row_key) ?? "",
+        values,
+      };
+    })
+    .filter((item): item is NonNullable<typeof item> => Boolean(item));
+  const totalsRecord = asRecord(raw.totals) ?? {};
+  const totals: Record<string, number> = {};
+  for (const key of Object.keys(totalsRecord)) {
+    totals[key] = Number(totalsRecord[key]) || 0;
+  }
+  return {
+    pack: readString(raw.pack),
+    columns,
+    rows,
+    totals,
+    workbook_id: readString(raw.workbook_id),
+    fetched_at: readString(raw.fetched_at),
+  };
+}
+
+function adaptSimulationConfig(value: unknown): SimulationConfig | null {
+  const raw = asRecord(value);
+  if (!raw) return null;
+  const specRecord = asRecord(raw.spec);
+  const spec = specRecord
+    ? {
+        source_query: readString(specRecord.source_query),
+        row_dimensions: readArray(specRecord, "row_dimensions")
+          .map(String)
+          .filter(Boolean),
+        uds_measure: readString(specRecord.uds_measure),
+        vn_measure: readString(specRecord.vn_measure),
+        year_dimension: readString(specRecord.year_dimension),
+        version_dimension: readString(specRecord.version_dimension),
+        version_actual: readString(specRecord.version_actual),
+        current_year: readString(specRecord.current_year),
+        incr_query: readString(specRecord.incr_query),
+        incr_row_dimension: readString(specRecord.incr_row_dimension),
+        incr_uds_measure: readString(specRecord.incr_uds_measure),
+        incr_vn_measure: readString(specRecord.incr_vn_measure),
+        max_rows: readNumber(specRecord, "max_rows"),
+        monthly: specRecord.monthly === true,
+        month_dimension: readString(specRecord.month_dimension),
+        workdays_adjust: specRecord.workdays_adjust !== false,
+        holidays: readArray(specRecord, "holidays").map(String).filter(Boolean),
+        compare: specRecord.compare === true,
+        version_forecast: readString(specRecord.version_forecast),
+        version_plan: readString(specRecord.version_plan),
+        filters: [],
+      }
+    : null;
+  const scaleRaw = readEnum(
+    raw,
+    ["auto", "none", "thousands", "millions"],
+    "scale",
+  );
+  const columns = readArray(raw, "columns")
+    .map((item) => {
+      const record = asRecord(item);
+      const id = record ? readString(record.id) : null;
+      if (!record || !id) return null;
+      return {
+        id,
+        label: readString(record.label),
+        visible: record.visible === false ? false : true,
+      };
+    })
+    .filter((item): item is NonNullable<typeof item> => Boolean(item));
+  return {
+    pack: readString(raw.pack) || "plan-ventas.v1",
+    workbook_id: readString(raw.workbook_id),
+    spec,
+    snapshot: adaptSimulationSnapshot(raw.snapshot),
+    unit: readString(raw.unit),
+    decimals: readNumber(raw, "decimals"),
+    scale: scaleRaw ?? null,
+    scale_label: readString(raw.scale_label),
+    columns: columns.length ? columns : null,
+  };
 }
 
 function adaptIbcsConfig(value: unknown): IbcsChartConfig | null {

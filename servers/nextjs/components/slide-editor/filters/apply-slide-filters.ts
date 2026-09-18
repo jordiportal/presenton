@@ -36,6 +36,8 @@ import { buildTreemapNodes } from "@/components/slide-editor/filters/treemap-dat
 import {
   setTableRowsFromStrings,
 } from "@/components/slide-editor/model/element-model";
+import { SimulationApi } from "@/components/slide-editor/simulation/api";
+import { simulationSnapshotToGrid } from "@/components/slide-editor/simulation/spec";
 import {
   ROOT_ELEMENTS_COMPONENT_INDEX,
   asRecord,
@@ -125,9 +127,18 @@ export function collectBoundTargets(ui: RawUi): BoundTarget[] {
       return Boolean(binding?.query_id || readString(element.source));
     }
     if (type !== "chart" && type !== "table") return false;
+    if (type === "table") {
+      const workbookId = readString(asRecord(element.simulation)?.workbook_id);
+      if (workbookId) return true;
+    }
     const binding = readBinding(element);
     return Boolean(binding?.query_id);
   });
+}
+
+function simulationWorkbookId(element: RawElement): string | null {
+  if (readString(element.type) !== "table") return null;
+  return readString(asRecord(element.simulation)?.workbook_id);
 }
 
 export async function refreshBoundTargets(
@@ -140,6 +151,23 @@ export async function refreshBoundTargets(
   let nextUi = ui;
   await Promise.all(
     targets.map(async ({ selection, element }) => {
+      const workbookId = simulationWorkbookId(element);
+      if (workbookId) {
+        try {
+          const updated = await refreshSimulationElement(
+            element,
+            workbookId,
+            slideFilters,
+          );
+          nextUi = updateElementInUi(nextUi, selection, () => updated);
+        } catch (err) {
+          console.error("No se pudo aplicar el filtro a la simulación", {
+            workbookId,
+            err,
+          });
+        }
+        return;
+      }
       const binding =
         readBinding(element) ??
         (isTreemapFilter(element) ? treemapBindingFromElement(element) : null);
@@ -458,6 +486,50 @@ async function executeBoundElement(
       grid.columns.length,
     ),
     max_rows: Math.max(Number(element.max_rows) || 24, grid.rows.length + 1),
+  };
+}
+
+async function refreshSimulationElement(
+  element: RawElement,
+  workbookId: string,
+  slideFilters: Array<{ dimension: string; values: string[] }>,
+): Promise<RawElement> {
+  const simulation = asRecord(element.simulation) ?? {};
+  const specRecord = asRecord(simulation.spec) ?? {};
+  const rowDimensions = readArray(specRecord.row_dimensions).map(String);
+  // Slide filters clip the fetch, but never the visual's own grouping dimension.
+  const filters = slideFilters
+    .filter(
+      (item) =>
+        item.dimension &&
+        !rowDimensions.includes(item.dimension) &&
+        (item.values?.length ?? 0) > 0,
+    )
+    .map((item) => ({
+      dimension: item.dimension,
+      values: item.values.map(String),
+    }));
+  const nextSpec = { ...specRecord, filters };
+  const snapshot = await SimulationApi.refresh({
+    workbook_id: workbookId,
+    pack: readString(simulation.pack) || "plan-ventas.v1",
+    spec: nextSpec as never,
+  });
+  const grid = simulationSnapshotToGrid(snapshot);
+  const table =
+    grid.length > 0
+      ? setTableRowsFromStrings(element as unknown as TableElement, grid)
+      : {};
+  return {
+    ...element,
+    ...table,
+    type: "table",
+    simulation: {
+      ...simulation,
+      spec: nextSpec,
+      workbook_id: snapshot.workbook_id ?? workbookId,
+      snapshot,
+    },
   };
 }
 

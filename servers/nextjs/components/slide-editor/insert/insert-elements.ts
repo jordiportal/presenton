@@ -28,6 +28,10 @@ import {
   filterKindLabel,
 } from "@/components/slide-editor/filters/filter-model";
 import { TREEMAP_EXAMPLE } from "@/components/slide-editor/filters/treemap-layout";
+import {
+  defaultSimulationConfig,
+  simulationSnapshotToGrid,
+} from "@/components/slide-editor/simulation/spec";
 import { INFOGRAPHIC_EXAMPLE_ICON_URLS } from "@/components/slide-editor/infographics/infographic-icons";
 import { fitInfographicElementToData } from "@/components/slide-editor/infographics/infographic-sizing";
 import {
@@ -1681,8 +1685,47 @@ function makeAdvancedTableElement(): SlideElement {
   };
 }
 
+function makeSimulationTableElement(): SlideElement {
+  const baseFont: Font = {
+    family: "Inter",
+    size: 12,
+    color: "#344054",
+    line_height: 1.2,
+  };
+  const headerFont: Font = { ...baseFont, color: "#101323", bold: true };
+  const headerFill: Fill = { color: "#F2F4F7", opacity: 1 };
+  const bodyFill: Fill = { color: "#FFFFFF", opacity: 1 };
+  const simulation = defaultSimulationConfig();
+  const grid = simulationSnapshotToGrid(simulation.snapshot);
+  const columns = (grid[0] ?? []).map((text) =>
+    makeTableCell({ text, font: headerFont, color: headerFill }),
+  );
+  const rows = grid
+    .slice(1)
+    .map((row) =>
+      row.map((text) => makeTableCell({ text, font: baseFont, color: bodyFill })),
+    );
+
+  return {
+    type: "table",
+    position: { x: 80, y: 118 },
+    size: { width: 1120, height: 320 },
+    table_style: "advanced",
+    columns: columns.length ? columns : [makeTableCell({ text: "", font: headerFont })],
+    rows: rows.length ? rows : [columns],
+    max_columns: 16,
+    min_columns: 2,
+    max_rows: 80,
+    min_rows: 2,
+    decorative: false,
+    name: "simulation_table",
+    simulation,
+  };
+}
+
 function createDefaultTableInsertElements(kind?: string): SlideElement[] {
   if (kind === "advanced-table") return [makeAdvancedTableElement()];
+  if (kind === "simulation-table") return [makeSimulationTableElement()];
   return kind === "simple-table" ? [makeSimpleTableElement()] : [];
 }
 

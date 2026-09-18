@@ -5,6 +5,8 @@ import { renderIbcsTableSvg } from "@/components/slide-editor/ibcs/table-svg";
 import { ibcsValuesFromChart } from "@/components/slide-editor/ibcs/values";
 import { ibcsFormatFromConfig } from "@/components/slide-editor/ibcs/format";
 import { renderTreemapSvg } from "@/components/slide-editor/filters/treemap-svg";
+import { renderSimulationTableSvg } from "@/components/slide-editor/simulation/matrix-svg";
+import type { SimulationSnapshot } from "@/components/slide-editor/types";
 import type {
   IbcsTableColumn,
   IbcsTableMember,
@@ -708,7 +710,78 @@ function renderTextList(item: JsonRecord, mode: RenderMode): string {
   )}${textOverflowStyle()}"><${tag} style="${listStyle}">${entries}</${tag}></div>`;
 }
 
+function simulationSnapshotFromRaw(
+  raw: JsonRecord,
+): SimulationSnapshot | null {
+  const columns = readArray(raw.columns).map((entry) => {
+    const record = readRecord(entry);
+    return {
+      id: readString(record.id) || readString(record.kind) || "col",
+      label: readString(record.label) ?? "",
+      kind: (readString(record.kind) || "calc") as SimulationSnapshot["columns"][number]["kind"],
+      format: (readString(record.format) ||
+        "number") as SimulationSnapshot["columns"][number]["format"],
+    };
+  });
+  if (columns.length === 0) return null;
+  const rows = readArray(raw.rows).map((entry) => {
+    const record = readRecord(entry);
+    const values: Record<string, number> = {};
+    const valueRecord = readRecord(record.values);
+    for (const key of Object.keys(valueRecord)) {
+      values[key] = Number(valueRecord[key]) || 0;
+    }
+    return {
+      row_key: readString(record.row_key) || readString(record.label) || "",
+      label: readString(record.label) || readString(record.row_key) || "",
+      values,
+    };
+  });
+  const totalsRecord = readRecord(raw.totals);
+  const totals: Record<string, number> = {};
+  for (const key of Object.keys(totalsRecord)) {
+    totals[key] = Number(totalsRecord[key]) || 0;
+  }
+  return { pack: readString(raw.pack), columns, rows, totals };
+}
+
 function renderTable(item: JsonRecord, mode: RenderMode): string {
+  const simulation = readRecord(item.simulation);
+  if (Object.keys(simulation).length > 0) {
+    const box = readBox(item);
+    const snapshot = simulationSnapshotFromRaw(readRecord(simulation.snapshot));
+    const columnPrefs = readArray(simulation.columns).map((entry) => {
+      const record = readRecord(entry);
+      return {
+        id: readString(record.id) || "",
+        label: readString(record.label),
+        visible: record.visible === false ? false : true,
+      };
+    });
+    const rawScale = readString(simulation.scale);
+    const scale = (
+      rawScale === "auto" ||
+      rawScale === "thousands" ||
+      rawScale === "millions"
+        ? rawScale
+        : "none"
+    ) as "auto" | "none" | "thousands" | "millions";
+    const svg = renderSimulationTableSvg({
+      snapshot,
+      width: Math.max(1, box.width ?? 1120),
+      height: Math.max(1, box.height ?? 320),
+      format: {
+        decimals: readNumber(simulation.decimals) ?? null,
+        unit: readString(simulation.unit),
+        scale,
+        scaleLabel: readString(simulation.scale_label),
+      },
+      columnPrefs: columnPrefs.filter((pref) => pref.id),
+    }).replace(/^<\?xml[^>]*>\s*/, "");
+    return `<div style="${frameStyle(item, mode)}${transformStyle(
+      item,
+    )}overflow:hidden">${svg}</div>`;
+  }
   const ibcs = readRecord(item.ibcs);
   if (readString(ibcs.kind) === "table") {
     const box = readBox(item);

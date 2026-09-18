@@ -278,6 +278,7 @@ class Table(BaseModel):
     table_style: Optional[str] = None
     data_binding: Optional[dict[str, Any]] = None
     ibcs: Optional[dict[str, Any]] = None
+    simulation: Optional[dict[str, Any]] = None
 
     # Schema
     decorative: bool
