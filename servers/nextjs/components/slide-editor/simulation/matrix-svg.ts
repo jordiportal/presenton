@@ -1,6 +1,7 @@
 import type {
   SimulationColumn,
   SimulationColumnPref,
+  SimulationRow,
   SimulationSnapshot,
 } from "@/components/slide-editor/types";
 import {
@@ -22,6 +23,32 @@ export type SimulationSvgInput = {
   columnPrefs?: SimulationColumnPref[] | null;
 };
 
+export type SimulationLayout = {
+  width: number;
+  height: number;
+  columns: SimulationColumn[];
+  bounds: Array<{ x: number; w: number }>;
+  rows: SimulationRow[];
+  headerH: number;
+  totalsH: number;
+  bodyH: number;
+  rowH: number;
+  fontSize: number;
+  headerFont: number;
+};
+
+/** Geometry of a single editable (input) cell, in SVG/element-pixel space. */
+export type SimulationInputCell = {
+  rowKey: string;
+  rowIndex: number;
+  column: SimulationColumn;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  value: number;
+};
+
 function escapeXml(value: string): string {
   return value
     .replace(/&/g, "&amp;")
@@ -34,7 +61,13 @@ function columnWeight(column: SimulationColumn): number {
   return column.kind === "label" ? 2.6 : 1;
 }
 
-export function renderSimulationTableSvg(input: SimulationSvgInput): string {
+/**
+ * Compute the table layout (column bounds, header/row/total heights) shared by
+ * the SVG renderer and the on-canvas inline editor so both stay pixel-aligned.
+ */
+export function computeSimulationLayout(
+  input: SimulationSvgInput,
+): SimulationLayout {
   const width = Math.max(1, input.width);
   const height = Math.max(1, input.height);
   const columns = resolveDisplayColumns(
@@ -44,8 +77,6 @@ export function renderSimulationTableSvg(input: SimulationSvgInput): string {
     input.columnPrefs,
   );
   const rows = input.snapshot?.rows ?? [];
-  const totals = input.snapshot?.totals ?? {};
-  const format = input.format ?? {};
 
   const headerH = Math.min(34, Math.max(22, height * 0.09));
   const totalsH = Math.min(30, Math.max(20, height * 0.08));
@@ -62,6 +93,55 @@ export function renderSimulationTableSvg(input: SimulationSvgInput): string {
     x += w;
     return box;
   });
+
+  return {
+    width,
+    height,
+    columns,
+    bounds,
+    rows,
+    headerH,
+    totalsH,
+    bodyH,
+    rowH,
+    fontSize,
+    headerFont,
+  };
+}
+
+/** Return the geometry + current value of every editable cell in the matrix. */
+export function simulationInputCells(
+  input: SimulationSvgInput,
+): SimulationInputCell[] {
+  const layout = computeSimulationLayout(input);
+  const cells: SimulationInputCell[] = [];
+  layout.rows.forEach((row, rowIndex) => {
+    const y = layout.headerH + rowIndex * layout.rowH;
+    layout.columns.forEach((col, colIndex) => {
+      if (col.kind !== "input") return;
+      const box = layout.bounds[colIndex];
+      cells.push({
+        rowKey: row.row_key,
+        rowIndex,
+        column: col,
+        x: box.x,
+        y,
+        w: box.w,
+        h: layout.rowH,
+        value: Number(row.values?.[col.id] ?? 0),
+      });
+    });
+  });
+  return cells;
+}
+
+export function renderSimulationTableSvg(input: SimulationSvgInput): string {
+  const layout = computeSimulationLayout(input);
+  const { width, height, columns, bounds, rows, headerH, totalsH, bodyH, rowH } =
+    layout;
+  const { fontSize, headerFont } = layout;
+  const totals = input.snapshot?.totals ?? {};
+  const format = input.format ?? {};
 
   const parts: string[] = [];
   parts.push(

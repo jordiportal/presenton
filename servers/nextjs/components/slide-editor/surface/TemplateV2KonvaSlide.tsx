@@ -54,6 +54,8 @@ import { ElementToolbar } from "@/components/slide-editor/toolbar/ElementToolbar
 import { ChartDataEditorPopover } from "@/components/slide-editor/charts/ChartEditorContent";
 import { TableDataEditorPopover } from "@/components/slide-editor/tables/TableDataEditor";
 import { isAdvancedTable } from "@/components/slide-editor/tables/table-style";
+import { SimulationInlineEditor } from "@/components/slide-editor/simulation/SimulationInlineEditor";
+import { isSimulationTable } from "@/components/slide-editor/simulation/SimulationTableChart";
 import { FilterEditorPopover } from "@/components/slide-editor/filters/FilterEditor";
 import { FilterOverlay } from "@/components/slide-editor/filters/FilterOverlay";
 import {
@@ -533,6 +535,8 @@ function TemplateV2KonvaSlideComponent({
     useState<ElementSelection | null>(null);
   const [tableEditorSelection, setTableEditorSelection] =
     useState<ElementSelection | null>(null);
+  const [simulationInlineSelection, setSimulationInlineSelection] =
+    useState<ElementSelection | null>(null);
   const [filterEditorSelection, setFilterEditorSelection] =
     useState<ElementSelection | null>(null);
   const [videoEditorSelection, setVideoEditorSelection] =
@@ -842,6 +846,18 @@ function TemplateV2KonvaSlideComponent({
   const tableEditorElement = tableEditorSelection
     ? getElementAtSelection(uiDraft, tableEditorSelection)
     : null;
+  const simulationInlineElement = simulationInlineSelection
+    ? getElementAtSelection(uiDraft, simulationInlineSelection)
+    : null;
+  useEffect(() => {
+    if (!simulationInlineSelection) return;
+    if (
+      !selection ||
+      keyForSelection(selection) !== keyForSelection(simulationInlineSelection)
+    ) {
+      setSimulationInlineSelection(null);
+    }
+  }, [selection, simulationInlineSelection]);
   const filterEditorElement = filterEditorSelection
     ? getElementAtSelection(uiDraft, filterEditorSelection)
     : null;
@@ -2866,6 +2882,16 @@ function TemplateV2KonvaSlideComponent({
         openChartEditor(elementSelection);
         return;
       }
+      if (type === "table" && isSimulationTable(element)) {
+        activateSurface(elementSelection);
+        setSelection(elementSelection);
+        clearInlineEdit();
+        clearTableCellEditing();
+        setTableEditorSelection(null);
+        setChartEditorSelection(null);
+        setSimulationInlineSelection(elementSelection);
+        return;
+      }
       if (type === "table" && isAdvancedTable(element)) {
         openTableEditor(elementSelection);
         return;
@@ -3487,6 +3513,31 @@ function TemplateV2KonvaSlideComponent({
           onClose={clearTableCellEditing}
         />
       ) : null}
+      {isEditMode &&
+        simulationInlineSelection &&
+        simulationInlineElement &&
+        isSimulationTable(simulationInlineElement) &&
+        selection &&
+        keyForSelection(simulationInlineSelection) ===
+          keyForSelection(selection) ? (
+        <SimulationInlineEditor
+          key={`sim:${keyForSelection(simulationInlineSelection)}`}
+          element={simulationInlineElement as RawElement}
+          scale={1}
+          onChange={(simulation) =>
+            updateElement(simulationInlineSelection, (element) => ({
+              ...element,
+              simulation,
+            }))
+          }
+          onClose={() => setSimulationInlineSelection(null)}
+          onOpenConfig={() => {
+            const target = simulationInlineSelection;
+            setSimulationInlineSelection(null);
+            openTableEditor(target);
+          }}
+        />
+      ) : null}
       {isEditMode && inlineEdit && inlineEditBox ? (
         <TemplateV2InlineEditor
           key={keyForSelection(inlineEdit.selection)}
@@ -3545,6 +3596,7 @@ function TemplateV2KonvaSlideComponent({
               max_rows: next.max_rows ?? element.max_rows,
               data_binding: next.data_binding,
               ibcs: next.ibcs,
+              simulation: next.simulation ?? null,
               size: next.size ?? element.size,
             }))
           }
