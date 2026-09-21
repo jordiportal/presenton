@@ -11,7 +11,7 @@
  */
 
 export type IbcsScenarioId = "ac" | "py" | "pl" | "fc";
-export type IbcsVisualKind = "kpi_pin" | "table" | "column";
+export type IbcsVisualKind = "kpi_pin" | "table" | "column" | "waterfall";
 export type IbcsVarianceBaseline = Exclude<IbcsScenarioId, "ac">;
 export type IbcsVarianceRow = {
   baseline: IbcsVarianceBaseline;
@@ -65,11 +65,20 @@ export const IBCS_COLUMN: IbcsVisualSpec = {
   kind: "column",
 };
 
+export const IBCS_WATERFALL: IbcsVisualSpec = {
+  ...IBCS_KPI_PIN,
+  kind: "waterfall",
+};
+
 export const IBCS_VISUALS: Record<IbcsVisualKind, IbcsVisualSpec> = {
   kpi_pin: IBCS_KPI_PIN,
   table: IBCS_TABLE,
   column: IBCS_COLUMN,
+  waterfall: IBCS_WATERFALL,
 };
+
+/** Default start scenario for the bridge (REAL PY → REAL AC). */
+export const IBCS_WATERFALL_FROM_DEFAULT: IbcsVarianceBaseline = "py";
 
 /** Default overlay baseline for the AC column segment (ΔPY). */
 export const IBCS_COLUMN_OVERLAY_DEFAULT: IbcsVarianceBaseline = "py";
@@ -121,11 +130,19 @@ export function isIbcsColumnChartType(value: unknown): value is "ibcs_column" {
   return value === "ibcs_column";
 }
 
-/** True for any chart_type backed by the IBCS complemento (KPI pin or column). */
+export function isIbcsWaterfallChartType(value: unknown): value is "ibcs_waterfall" {
+  return value === "ibcs_waterfall";
+}
+
+/** True for any chart_type backed by the IBCS complemento (KPI pin, column, waterfall). */
 export function isAnyIbcsChartType(
   value: unknown,
-): value is "ibcs_kpi" | "ibcs_column" {
-  return value === "ibcs_kpi" || value === "ibcs_column";
+): value is "ibcs_kpi" | "ibcs_column" | "ibcs_waterfall" {
+  return (
+    value === "ibcs_kpi" ||
+    value === "ibcs_column" ||
+    value === "ibcs_waterfall"
+  );
 }
 
 export function specForKind(kind: IbcsVisualKind | null | undefined): IbcsVisualSpec {
@@ -180,6 +197,9 @@ export type IbcsConfigLike = {
   overlay_baseline?: IbcsVarianceBaseline | null;
   variance_rows?: IbcsVarianceRow[] | null;
   show_total?: boolean | null;
+  bridge_from?: IbcsVarianceBaseline | null;
+  start_label?: string | null;
+  end_label?: string | null;
 };
 
 export const IBCS_DEFAULT_BAR_WIDTH = 14.5;
@@ -217,7 +237,11 @@ export function mergeIbcsConfig(
   };
   const requested = patch.kind ?? current?.kind ?? "kpi_pin";
   const kind: IbcsVisualKind =
-    requested === "table" || requested === "column" ? requested : "kpi_pin";
+    requested === "table" ||
+    requested === "column" ||
+    requested === "waterfall"
+      ? requested
+      : "kpi_pin";
   return {
     ...current,
     ...patch,

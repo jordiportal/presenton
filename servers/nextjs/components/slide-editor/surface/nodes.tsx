@@ -58,7 +58,12 @@ import {
 import { TemplateV2ChartJsElement as RawChartElement } from "@/components/slide-editor/charts/TemplateV2ChartJsElement";
 import { IbcsKpiChart } from "@/components/slide-editor/ibcs/IbcsKpiChart";
 import { IbcsColumnChart } from "@/components/slide-editor/ibcs/IbcsColumnChart";
-import { isIbcsChartType, isIbcsColumnChartType } from "@/components/slide-editor/ibcs/spec";
+import { IbcsWaterfallChart } from "@/components/slide-editor/ibcs/IbcsWaterfallChart";
+import {
+  isIbcsChartType,
+  isIbcsColumnChartType,
+  isIbcsWaterfallChartType,
+} from "@/components/slide-editor/ibcs/spec";
 import { TemplateV2TableElement as RawTableElement } from "@/components/slide-editor/tables/TemplateV2TableElement";
 import { blackOrWhiteTextColor } from "@/components/slide-editor/tables/table-colors";
 import { LatexRunNode } from "@/components/slide-editor/math/LatexRunNode";
@@ -2362,6 +2367,17 @@ function RawElementVisual({
     const legendState = Object.prototype.hasOwnProperty.call(element, "legend")
       ? String(element.legend)
       : String(element.showLegend ?? "auto");
+    if (isIbcsWaterfallChartType(element.chart_type ?? element.chartType)) {
+      return (
+        <IbcsWaterfallChart
+          key={`ibcs-waterfall-${legendState}`}
+          element={element}
+          width={width}
+          height={height}
+          interactive={interactive}
+        />
+      );
+    }
     if (isIbcsColumnChartType(element.chart_type ?? element.chartType)) {
       return (
         <IbcsColumnChart

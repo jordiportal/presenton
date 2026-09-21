@@ -275,6 +275,7 @@ export const chartTypeItems = [
   { id: "polar_area", label: "Polar Area", icon: PieChart },
   { id: "ibcs_kpi", label: "KPI IBCS", icon: TrendingUp },
   { id: "ibcs_column", label: "Columnas IBCS", icon: BarChart3 },
+  { id: "ibcs_waterfall", label: "Cascada IBCS", icon: BarChart3 },
 ] satisfies PaletteItem[];
 
 export const infographicItems = [

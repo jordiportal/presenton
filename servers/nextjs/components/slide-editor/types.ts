@@ -33,6 +33,7 @@ export type ChartType =
   | "horizontal_stacked_bar"
   | "ibcs_kpi"
   | "ibcs_column"
+  | "ibcs_waterfall"
   | "line"
   | "pie"
   | "polar_area"
@@ -81,7 +82,7 @@ export type IbcsVarianceRow = {
 };
 
 export type IbcsChartConfig = {
-  kind: "kpi_pin" | "table" | "column";
+  kind: "kpi_pin" | "table" | "column" | "waterfall";
   pin_vs: Exclude<IbcsScenarioId, "ac">;
   measure?: string | null;
   current_year?: string | null;
@@ -109,6 +110,9 @@ export type IbcsChartConfig = {
   overlay_baseline?: IbcsVarianceBaseline | null;
   variance_rows?: IbcsVarianceRow[] | null;
   show_total?: boolean | null;
+  bridge_from?: IbcsVarianceBaseline | null;
+  start_label?: string | null;
+  end_label?: string | null;
 };
 export type InfographicType =
   | "progress_bar"

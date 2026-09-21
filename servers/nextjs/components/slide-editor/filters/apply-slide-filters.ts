@@ -8,6 +8,7 @@ import {
   mergeIbcsConfig,
   isIbcsChartType,
   isIbcsColumnChartType,
+  isIbcsWaterfallChartType,
   resolveCurrentYear,
   specFromConfig,
   type IbcsConfigLike,
@@ -356,10 +357,16 @@ async function executeBoundElement(
 
   if (
     readString(element.type) === "chart" &&
-    isIbcsColumnChartType(element.chart_type ?? element.chartType)
+    (isIbcsColumnChartType(element.chart_type ?? element.chartType) ||
+      isIbcsWaterfallChartType(element.chart_type ?? element.chartType))
   ) {
+    const chartKind = isIbcsWaterfallChartType(
+      element.chart_type ?? element.chartType,
+    )
+      ? "waterfall"
+      : "column";
     const ibcs = asRecord(element.ibcs) as IbcsConfigLike | null;
-    const spec = specFromConfig({ ...ibcs, kind: "column" });
+    const spec = specFromConfig({ ...ibcs, kind: chartKind });
     const yearFilter = filters.find(
       (item) => String(item.dimension || item.column || "") === spec.yearDimension,
     );
@@ -403,7 +410,7 @@ async function executeBoundElement(
     if (!unit) unit = fetched.unit ?? null;
     if (decimals == null) decimals = fetched.decimals ?? null;
     const nextIbcs = mergeIbcsConfig(ibcs, {
-      kind: "column",
+      kind: chartKind,
       measure,
       current_year: currentYear,
       row_dimension: rowDimension,

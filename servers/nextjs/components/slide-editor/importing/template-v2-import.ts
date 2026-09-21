@@ -1066,6 +1066,7 @@ function adaptChart(raw: UnknownRecord): SlideElement {
         "stacked_bar",
         "ibcs_kpi",
         "ibcs_column",
+        "ibcs_waterfall",
       ],
       "chart_type",
     ) ??
@@ -2254,11 +2255,22 @@ function adaptIbcsConfig(value: unknown): IbcsChartConfig | null {
   const barWidth = raw.bar_width == null ? null : clampIbcsBarWidth(raw.bar_width);
   const rawKind = readString(raw.kind);
   const kind =
-    rawKind === "table" ? "table" : rawKind === "column" ? "column" : "kpi_pin";
+    rawKind === "table"
+      ? "table"
+      : rawKind === "column"
+        ? "column"
+        : rawKind === "waterfall"
+          ? "waterfall"
+          : "kpi_pin";
   const overlayRaw = readString(raw.overlay_baseline);
   const overlayBaseline =
     overlayRaw === "py" || overlayRaw === "pl" || overlayRaw === "fc"
       ? overlayRaw
+      : null;
+  const bridgeRaw = readString(raw.bridge_from);
+  const bridgeFrom =
+    bridgeRaw === "py" || bridgeRaw === "pl" || bridgeRaw === "fc"
+      ? bridgeRaw
       : null;
   return {
     kind,
@@ -2293,6 +2305,9 @@ function adaptIbcsConfig(value: unknown): IbcsChartConfig | null {
     overlay_baseline: overlayBaseline,
     variance_rows: adaptIbcsVarianceRows(raw.variance_rows),
     show_total: raw.show_total === false ? false : raw.show_total === true ? true : null,
+    bridge_from: bridgeFrom,
+    start_label: readString(raw.start_label),
+    end_label: readString(raw.end_label),
   };
 }
 

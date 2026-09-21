@@ -22,11 +22,13 @@ export function IbcsColumnQueryPanel({
   binding,
   extraFilters,
   ibcs,
+  kind = "column",
   onApply,
 }: {
   binding?: DataBinding | null;
   extraFilters?: DataBinding["filters"];
   ibcs?: IbcsChartConfig | null;
+  kind?: "column" | "waterfall";
   onApply: (payload: {
     members: IbcsTableMember[];
     binding: DataBinding;
@@ -45,7 +47,7 @@ export function IbcsColumnQueryPanel({
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [yearInput, setYearInput] = useState(resolveCurrentYear(ibcs?.current_year));
-  const spec = specFromConfig({ ...ibcs, kind: "column" });
+  const spec = specFromConfig({ ...ibcs, kind });
   const year = resolveCurrentYear(yearInput);
 
   useEffect(() => {
@@ -128,7 +130,7 @@ export function IbcsColumnQueryPanel({
       const caption = measureMeta?.caption ?? measure;
       const source = sources.find((item) => item.name === sourceName);
       const nextIbcs = mergeIbcsConfig(ibcs, {
-        kind: "column",
+        kind,
         measure,
         current_year: year,
         row_dimension: rowDimension,

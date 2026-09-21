@@ -3,9 +3,12 @@ import { markdownToPlainChartText } from "@/components/slide-editor/charts/chart
 import { renderIbcsKpiPinSvg } from "@/components/slide-editor/ibcs/kpi-pin-svg";
 import { renderIbcsTableSvg } from "@/components/slide-editor/ibcs/table-svg";
 import { renderIbcsColumnSvg } from "@/components/slide-editor/ibcs/column-svg";
-import type {
-  IbcsVarianceBaseline,
-  IbcsVarianceRow,
+import { renderIbcsWaterfallSvg } from "@/components/slide-editor/ibcs/waterfall-svg";
+import {
+  previousYear,
+  resolveCurrentYear,
+  type IbcsVarianceBaseline,
+  type IbcsVarianceRow,
 } from "@/components/slide-editor/ibcs/spec";
 import { ibcsValuesFromChart } from "@/components/slide-editor/ibcs/values";
 import { ibcsFormatFromConfig } from "@/components/slide-editor/ibcs/format";
@@ -43,7 +46,8 @@ type ChartKind =
   | "radar"
   | "scatter"
   | "ibcs_kpi"
-  | "ibcs_column";
+  | "ibcs_column"
+  | "ibcs_waterfall";
 type InfographicKind =
   | "progress_bar"
   | "gauge"
@@ -1361,6 +1365,56 @@ function renderChart(item: JsonRecord, mode: RenderMode): string {
       overlayBaseline,
       varianceRows: varianceRows.length ? varianceRows : undefined,
       showTotal: ibcs.show_total === false ? false : undefined,
+    }).replace(/^<\?xml[^>]*>\s*/, "");
+    return `<div style="${frameStyle(item, mode)}${transformStyle(
+      item
+    )}overflow:hidden">${svg}</div>`;
+  }
+  if (kind === "ibcs_waterfall") {
+    const ibcs = readRecord(item.ibcs);
+    const fromRaw = readString(ibcs.bridge_from);
+    const from =
+      fromRaw === "pl" || fromRaw === "fc" || fromRaw === "py"
+        ? (fromRaw as IbcsVarianceBaseline)
+        : "py";
+    const varianceRows: IbcsVarianceRow[] = [];
+    for (const entry of readArray(ibcs.variance_rows)) {
+      const record = readRecord(entry);
+      const baseline = readString(record.baseline);
+      if (baseline !== "py" && baseline !== "pl" && baseline !== "fc") continue;
+      varianceRows.push({
+        baseline,
+        style: readString(record.style) === "dashed" ? "dashed" : "solid",
+        label: readString(record.label) ?? null,
+      });
+    }
+    const year = resolveCurrentYear(readString(ibcs.current_year));
+    const startYear = from === "py" ? previousYear(year) : year;
+    const svg = renderIbcsWaterfallSvg({
+      members: readArray(ibcs.members).map((entry) => {
+        const record = readRecord(entry);
+        return {
+          code: readString(record.code) || readString(record.caption) || "",
+          caption: readString(record.caption) || readString(record.code) || "",
+          ac: Number(record.ac) || 0,
+          py: Number(record.py) || 0,
+          pl: Number(record.pl) || 0,
+          fc: Number(record.fc) || 0,
+        } satisfies IbcsTableMember;
+      }),
+      width,
+      height,
+      title: readString(item.title),
+      format: ibcsFormatFromConfig({
+        scale: readString(ibcs.scale),
+        scale_label: readString(ibcs.scale_label),
+        decimals: readNumber(ibcs.decimals),
+        unit: readString(ibcs.unit),
+      }),
+      from,
+      startLabel: readString(ibcs.start_label) || `REAL ${startYear}`,
+      endLabel: readString(ibcs.end_label) || `REAL ${year}`,
+      varianceRows: varianceRows.length ? varianceRows : undefined,
     }).replace(/^<\?xml[^>]*>\s*/, "");
     return `<div style="${frameStyle(item, mode)}${transformStyle(
       item
@@ -2924,6 +2978,13 @@ function chartKindFromValue(value: string | null): ChartKind {
   }
   if (normalized === "ibcs_column" || normalized === "ibcs_columns") {
     return "ibcs_column";
+  }
+  if (
+    normalized === "ibcs_waterfall" ||
+    normalized === "ibcs_bridge" ||
+    normalized === "ibcs_cascade"
+  ) {
+    return "ibcs_waterfall";
   }
   return "bar";
 }

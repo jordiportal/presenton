@@ -34,6 +34,7 @@ const CHART_TYPE_OPTIONS: Array<{
     { value: "polar_area", label: "Polar Area" },
     { value: "ibcs_kpi", label: "KPI IBCS" },
     { value: "ibcs_column", label: "Columnas IBCS" },
+    { value: "ibcs_waterfall", label: "Cascada IBCS" },
   ];
 
 export function ChartToolbarControls({

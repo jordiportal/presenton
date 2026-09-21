@@ -50,6 +50,7 @@ import { Kh7QueryPanel } from "@/components/slide-editor/data/Kh7QueryPanel";
 import { OnlyOfficeQueryPanel } from "@/components/slide-editor/data/OnlyOfficeQueryPanel";
 import { IbcsKpiChart } from "@/components/slide-editor/ibcs/IbcsKpiChart";
 import { IbcsColumnChart } from "@/components/slide-editor/ibcs/IbcsColumnChart";
+import { IbcsWaterfallChart } from "@/components/slide-editor/ibcs/IbcsWaterfallChart";
 import { IbcsConfigPanel } from "@/components/slide-editor/ibcs/IbcsConfigPanel";
 import { IbcsQueryPanel } from "@/components/slide-editor/ibcs/IbcsQueryPanel";
 import { IbcsColumnQueryPanel } from "@/components/slide-editor/ibcs/IbcsColumnQueryPanel";
@@ -59,6 +60,7 @@ import {
   isAnyIbcsChartType,
   isIbcsChartType,
   isIbcsColumnChartType,
+  isIbcsWaterfallChartType,
   mergeIbcsConfig,
 } from "@/components/slide-editor/ibcs/spec";
 import { chartFromIbcsValues } from "@/components/slide-editor/ibcs/values";
@@ -78,6 +80,7 @@ const CHART_TYPES: Array<{ label: string; value: ChartType }> = [
   { label: "Polar Area", value: "polar_area" },
   { label: "KPI IBCS", value: "ibcs_kpi" },
   { label: "Columnas IBCS", value: "ibcs_column" },
+  { label: "Cascada IBCS", value: "ibcs_waterfall" },
 ];
 const DATA_LABEL_TABS: Array<{
   label: string;
@@ -1073,7 +1076,14 @@ function ChartDataModal({
                         scaleX={previewScale}
                         scaleY={previewScale}
                       >
-                        {isIbcsColumnChartType(previewChart.chart_type) ? (
+                        {isIbcsWaterfallChartType(previewChart.chart_type) ? (
+                          <IbcsWaterfallChart
+                            element={previewChart}
+                            height={previewSourceSize.height}
+                            interactive={false}
+                            width={previewSourceSize.width}
+                          />
+                        ) : isIbcsColumnChartType(previewChart.chart_type) ? (
                           <IbcsColumnChart
                             element={previewChart}
                             height={previewSourceSize.height}
@@ -1148,11 +1158,17 @@ function ChartDataModal({
               </div>
               {dataTab === "kh7" ? (
                 <div className="mb-5">
-                  {isIbcsColumnChartType(draftChart.chart_type) ? (
+                  {isIbcsColumnChartType(draftChart.chart_type) ||
+                  isIbcsWaterfallChartType(draftChart.chart_type) ? (
                     <IbcsColumnQueryPanel
                       binding={draftChart.data_binding}
                       extraFilters={draftChart.data_binding?.filters}
                       ibcs={draftChart.ibcs}
+                      kind={
+                        isIbcsWaterfallChartType(draftChart.chart_type)
+                          ? "waterfall"
+                          : "column"
+                      }
                       onApply={({ members, binding, ibcs, measureCaption }) => {
                         const grid = chartGridFromIbcsMembers(members, measureCaption);
                         setDraftChart((currentChart) => ({
@@ -1868,7 +1884,7 @@ function withChartType(chart: ChartElement, chartType: ChartType): ChartElement 
   if (!isAnyIbcsChartType(chartType)) {
     return { ...chart, chart_type: chartType };
   }
-  if (isIbcsColumnChartType(chartType)) {
+  if (isIbcsColumnChartType(chartType) || isIbcsWaterfallChartType(chartType)) {
     const existingMembers = chart.ibcs?.members;
     const members =
       existingMembers && existingMembers.length
@@ -1878,6 +1894,7 @@ function withChartType(chart: ChartElement, chartType: ChartType): ChartElement 
       members,
       chart.series?.[0]?.name || "Ratio",
     );
+    const kind = isIbcsWaterfallChartType(chartType) ? "waterfall" : "column";
     return {
       ...chart,
       chart_type: chartType,
@@ -1886,7 +1903,7 @@ function withChartType(chart: ChartElement, chartType: ChartType): ChartElement 
       y_axis: false,
       legend: false,
       ibcs: mergeIbcsConfig(chart.ibcs, {
-        kind: "column",
+        kind,
         measure: chart.ibcs?.measure ?? chart.data_binding?.measures?.[0],
         current_year: chart.ibcs?.current_year,
         row_dimension: chart.ibcs?.row_dimension,

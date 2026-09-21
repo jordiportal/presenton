@@ -203,7 +203,8 @@ export function chartSupportsMultipleSeries(chartType: ChartType) {
     chartType !== "pie" &&
     chartType !== "donut" &&
     chartType !== "ibcs_kpi" &&
-    chartType !== "ibcs_column"
+    chartType !== "ibcs_column" &&
+    chartType !== "ibcs_waterfall"
   );
 }
 
@@ -452,6 +453,10 @@ export function rawChartType(value: unknown): ChartType {
     case "ibcs_columns":
     case "ibcs_bar":
       return "ibcs_column";
+    case "ibcs_waterfall":
+    case "ibcs_bridge":
+    case "ibcs_cascade":
+      return "ibcs_waterfall";
     default:
       return "bar";
   }

@@ -354,6 +354,7 @@ function chartTypeFromPaletteId(id?: string): ChartType | null {
     case "scatter":
     case "ibcs_kpi":
     case "ibcs_column":
+    case "ibcs_waterfall":
       return normalized as ChartType;
     case "stackedbar":
     case "stacked_bar":
@@ -508,6 +509,49 @@ function makeChartElement(chartType: ChartType): SlideElement {
           { baseline: "fc", style: "dashed", label: "ΔFC%" },
         ],
         show_total: true,
+        members,
+      },
+      ...schema,
+    };
+  }
+
+  if (chartType === "ibcs_waterfall") {
+    const members = [
+      { code: "sinman", caption: "SIN MANCHAS", ac: 5_443_000, py: 4_945_000, pl: 5_000_000, fc: 5_100_000 },
+      { code: "desic", caption: "DESIC INSECTICIDA", ac: 1_530_000, py: 1_242_000, pl: 1_300_000, fc: 1_400_000 },
+      { code: "antical", caption: "ANTICAL", ac: 501_000, py: 394_000, pl: 420_000, fc: 450_000 },
+      { code: "quita", caption: "QUITAGRASAS", ac: 862_000, py: 893_000, pl: 900_000, fc: 880_000 },
+      { code: "otros", caption: "OTROS", ac: 631_000, py: 754_000, pl: 700_000, fc: 690_000 },
+    ];
+    const year = new Date().getFullYear();
+    const categories = members.map((item) => item.caption);
+    const values = members.map((item) => item.ac);
+    return {
+      type: "chart",
+      position: { ...DEFAULT_CHART_INSERT_POSITION },
+      size: { width: 940, height: 480 },
+      chart_type: "ibcs_waterfall",
+      title: null,
+      color: "1A1A1A",
+      axis_color: "D8D8D8",
+      grid_color: "E4E7EC",
+      x_axis: false,
+      y_axis: false,
+      x_axis_grid: false,
+      y_axis_grid: false,
+      legend: false,
+      categories,
+      series: [{ name: "Ratio", values }],
+      colors: ["9DC3E6", "7CB342", "E11D2E"],
+      data: chartData(categories, values, ["9DC3E6"]),
+      ibcs: {
+        kind: "waterfall",
+        pin_vs: "py",
+        current_year: String(year),
+        bridge_from: "py",
+        start_label: `REAL ${year - 1}`,
+        end_label: `REAL ${year}`,
+        variance_rows: [{ baseline: "py", style: "solid", label: "ΔPY%" }],
         members,
       },
       ...schema,

@@ -18,6 +18,7 @@ import {
   IBCS_COLUMN_VARIANCE_DEFAULT,
   IBCS_DEFAULT_BAR_WIDTH,
   IBCS_KPI_PIN,
+  IBCS_WATERFALL_FROM_DEFAULT,
   clampIbcsBarWidth,
   mergeIbcsConfig,
   normalizeVarianceRows,
@@ -131,7 +132,10 @@ export function IbcsConfigPanel({
     scale === "millions" ? "Millones" : scale === "thousands" ? "Miles" : "M";
   const isColumn =
     ibcs?.kind === "column" || chart.chart_type === "ibcs_column";
+  const isWaterfall =
+    ibcs?.kind === "waterfall" || chart.chart_type === "ibcs_waterfall";
   const overlayBaseline = ibcs?.overlay_baseline ?? IBCS_COLUMN_OVERLAY_DEFAULT;
+  const bridgeFrom = ibcs?.bridge_from ?? IBCS_WATERFALL_FROM_DEFAULT;
   const varianceRows = normalizeVarianceRows(
     ibcs?.variance_rows ?? IBCS_COLUMN_VARIANCE_DEFAULT,
   );
@@ -140,7 +144,88 @@ export function IbcsConfigPanel({
 
   return (
     <div className="space-y-3">
-      {isColumn ? (
+      {isWaterfall ? (
+        <>
+          <Field label="Punto de partida del puente">
+            <select
+              className={inputClassName()}
+              value={bridgeFrom}
+              onChange={(event) =>
+                patchIbcs({
+                  bridge_from: event.target.value as IbcsVarianceBaseline,
+                })
+              }
+            >
+              {BASELINE_OPTIONS.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label.replace("Δ", "").replace(/[()]/g, "").trim()}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <div className="grid grid-cols-2 gap-2">
+            <Field label="Etiqueta inicio">
+              <input
+                className={inputClassName()}
+                placeholder="REAL 2025"
+                value={ibcs?.start_label ?? ""}
+                onChange={(event) =>
+                  patchIbcs({ start_label: event.target.value || null })
+                }
+              />
+            </Field>
+            <Field label="Etiqueta fin">
+              <input
+                className={inputClassName()}
+                placeholder="REAL 2026"
+                value={ibcs?.end_label ?? ""}
+                onChange={(event) =>
+                  patchIbcs({ end_label: event.target.value || null })
+                }
+              />
+            </Field>
+          </div>
+          <Field label="Fila de varianza (%)">
+            <div className="flex gap-2">
+              <select
+                className="h-9 flex-1 rounded-lg border border-[#E6E6EA] bg-white px-3 text-[12px]"
+                value={varianceRows[0]?.baseline ?? bridgeFrom}
+                onChange={(event) =>
+                  setVarianceRows([
+                    {
+                      baseline: event.target.value as IbcsVarianceBaseline,
+                      style: varianceRows[0]?.style ?? "solid",
+                      label: varianceRows[0]?.label ?? null,
+                    },
+                  ])
+                }
+              >
+                {BASELINE_OPTIONS.map((item) => (
+                  <option key={item.value} value={item.value}>
+                    {item.label}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="h-9 w-[110px] rounded-lg border border-[#E6E6EA] bg-white px-2 text-[12px]"
+                value={varianceRows[0]?.style ?? "solid"}
+                onChange={(event) =>
+                  setVarianceRows([
+                    {
+                      baseline: varianceRows[0]?.baseline ?? bridgeFrom,
+                      style: event.target.value as "solid" | "dashed",
+                      label: varianceRows[0]?.label ?? null,
+                    },
+                  ])
+                }
+              >
+                <option value="solid">Sólida</option>
+                <option value="dashed">Discontinua</option>
+              </select>
+            </div>
+          </Field>
+        </>
+      ) : isColumn ? (
         <>
           <Field label="Δ integrado en la columna (overlay)">
             <select
@@ -336,7 +421,7 @@ export function IbcsConfigPanel({
         </Field>
       </div>
 
-      {isColumn ? null : (
+      {isColumn || isWaterfall ? null : (
         <label className="block text-[12px] font-medium text-[#191919]">
           Ancho de columna
           <input
