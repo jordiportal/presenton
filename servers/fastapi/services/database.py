@@ -96,6 +96,17 @@ def _scope_owned_selects(execute_state) -> None:
     shared_ids = select(PresentationShare.presentation_id).where(
         PresentationShare.shared_with_user_id == owner_id
     )
+    # Presentations the current user can access: ones they own OR ones shared
+    # with them. Slide (and other per-presentation) visibility must follow the
+    # *presentation* access, not the individual row's creator; otherwise the
+    # owner cannot see slides authored by collaborators in a shared deck (and
+    # vice versa).
+    accessible_presentation_ids = select(PresentationModel.id).where(
+        or_(
+            PresentationModel.owner_id == owner_id,
+            PresentationModel.id.in_(shared_ids),
+        )
+    )
     statement = statement.options(
         with_loader_criteria(
             PresentationModel,
@@ -109,15 +120,29 @@ def _scope_owned_selects(execute_state) -> None:
     statement = statement.options(
         with_loader_criteria(
             SlideModel,
+            lambda row: row.presentation.in_(accessible_presentation_ids),
+            include_aliases=True,
+        )
+    )
+    # Layout codes belong to a presentation and are required to render its
+    # slides. They must follow presentation access so the owner can render
+    # slides authored by collaborators (and vice versa).
+    statement = statement.options(
+        with_loader_criteria(
+            PresentationLayoutCodeModel,
             lambda row: or_(
                 row.owner_id == owner_id,
-                row.presentation.in_(shared_ids),
+                row.presentation.in_(accessible_presentation_ids),
             ),
             include_aliases=True,
         )
     )
     for model in _STRICT_OWNER_MODELS:
-        if model in (PresentationModel, SlideModel):
+        if model in (
+            PresentationModel,
+            SlideModel,
+            PresentationLayoutCodeModel,
+        ):
             continue
         statement = statement.options(
             with_loader_criteria(

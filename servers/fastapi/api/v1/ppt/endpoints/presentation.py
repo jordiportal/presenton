@@ -2453,12 +2453,13 @@ async def stream_presentation(
         for slide in slides:
             slide.ui = _apply_template_content_to_ui(slide.ui, slide.content)
 
-        # Moved this here to make sure new slides are generated before deleting the old ones
+        # Moved this here to make sure new slides are generated before deleting the old ones.
+        # Delete every slide of the deck (not just the current user's own slides) so a
+        # full regeneration of a shared presentation does not leave collaborators' slides
+        # behind as duplicates. Access to this presentation was already enforced by the
+        # owner-scoped load above.
         await sql_session.execute(
-            delete(SlideModel).where(
-                SlideModel.presentation == id,
-                SlideModel.owner_id == get_current_owner_id(),
-            )
+            delete(SlideModel).where(SlideModel.presentation == id)
         )
         await sql_session.commit()
 
@@ -3377,11 +3378,11 @@ async def edit_presentation_with_new_content(
             new_slides.append(new_slide)
             slides_to_delete.append(each_slide.id)
 
+    # Access was verified via require_presentation_access(write=True). Delete the
+    # replaced slides by id regardless of who authored them, so edits to a shared
+    # presentation don't leave duplicate slides from collaborators.
     await sql_session.execute(
-        delete(SlideModel).where(
-            SlideModel.id.in_(slides_to_delete),
-            SlideModel.owner_id == get_current_owner_id(),
-        )
+        delete(SlideModel).where(SlideModel.id.in_(slides_to_delete))
     )
 
     sql_session.add_all(new_slides)
