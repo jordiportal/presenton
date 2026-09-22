@@ -6,6 +6,8 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import {
   ArrowDown,
   ArrowUp,
+  ClipboardCopy,
+  ClipboardPaste,
   Copy,
   EllipsisVertical,
   Plus,
@@ -42,6 +44,11 @@ import {
 import NewSlide from "./NewSlide";
 import { MAX_NUMBER_OF_SLIDES } from "@/utils/presentationLimits";
 import { useCollaboration } from "../hooks/PresentationCollaborationContext";
+import {
+  buildPastedSlideData,
+  copySlideToClipboard,
+  readSlideClipboard,
+} from "../../_shared/slide-clipboard";
 
 interface SlideActionBarProps {
   slide: any;
@@ -73,6 +80,7 @@ const SlideActionBar = ({
   const [showNewSlideSelection, setShowNewSlideSelection] = useState(false);
   const [isSpeakerPopoverOpen, setIsSpeakerPopoverOpen] = useState(false);
   const [isSlideMenuOpen, setIsSlideMenuOpen] = useState(false);
+  const [canPaste, setCanPaste] = useState(false);
   const isStreaming = useSelector(
     (state: RootState) => state.presentationGeneration.isStreaming
   );
@@ -202,6 +210,64 @@ const SlideActionBar = ({
         slide_id: slide?.id,
         slide_index: currentIndex,
         layout: slideLayout,
+      });
+    });
+  };
+
+  const handleCopySlide = () => {
+    const ok = copySlideToClipboard(slide, presentationId);
+    if (!ok) {
+      notify.error(
+        "Could not copy slide",
+        "The clipboard is unavailable in this browser."
+      );
+      return;
+    }
+    notify.success(
+      "Slide copied",
+      "Paste it here or open another presentation and paste."
+    );
+    trackEvent(MixpanelEvent.Presentation_Slide_Added, {
+      pathname,
+      presentation_id: presentationId,
+      source: "copy_slide_action_bar",
+      slide_id: slide?.id,
+      slide_index: currentIndex,
+      layout: slideLayout,
+    });
+  };
+
+  const handlePasteSlide = () => {
+    if (hasReachedSlideLimit) {
+      notifySlideLimitReached();
+      return;
+    }
+    const payload = readSlideClipboard();
+    if (!payload) {
+      notify.error("Nothing to paste", "Copy a slide first.");
+      return;
+    }
+
+    const slideId = uuidv4();
+    const slideData = buildPastedSlideData(payload, {
+      id: slideId,
+      presentationId,
+      index: currentIndex + 1,
+    });
+
+    void runStructureChange(() => {
+      rememberSlides("PASTE_SLIDE");
+      dispatch(addNewSlide({ slideData, index: currentIndex }));
+      const insertedIndex = currentIndex + 1;
+      onSlideSelected(insertedIndex);
+      trackEvent(MixpanelEvent.Presentation_Slide_Added, {
+        pathname,
+        presentation_id: presentationId,
+        inserted_after_index: currentIndex,
+        source: "paste_slide_action_bar",
+        cross_presentation:
+          payload.sourcePresentationId != null &&
+          payload.sourcePresentationId !== presentationId,
       });
     });
   };
@@ -410,7 +476,12 @@ const SlideActionBar = ({
 
           <DropdownMenu.Root
             open={isSlideMenuOpen}
-            onOpenChange={setIsSlideMenuOpen}
+            onOpenChange={(open) => {
+              setIsSlideMenuOpen(open);
+              if (open) {
+                setCanPaste(readSlideClipboard() !== null);
+              }
+            }}
           >
             <DropdownMenu.Trigger asChild>
               <button
@@ -439,6 +510,22 @@ const SlideActionBar = ({
                   <Copy className="h-4 w-4 shrink-0 text-current" />
                   <span>Duplicate Slide</span>
                 </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  className={menuItemClass}
+                  onSelect={handleCopySlide}
+                >
+                  <ClipboardCopy className="h-4 w-4 shrink-0 text-current" />
+                  <span>Copy Slide</span>
+                </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  disabled={!canPaste || hasReachedSlideLimit}
+                  className={menuItemClass}
+                  onSelect={handlePasteSlide}
+                >
+                  <ClipboardPaste className="h-4 w-4 shrink-0 text-current" />
+                  <span>Paste Slide</span>
+                </DropdownMenu.Item>
+                <DropdownMenu.Separator className="my-2 h-px bg-[#EDEEEF]" />
                 <DropdownMenu.Item
                   disabled={currentIndex <= 0}
                   className={menuItemClass}
