@@ -13,6 +13,7 @@ from api.v1.ppt.endpoints.presentation import (
     generate_presentation_async,
     generate_presentation_sync,
 )
+from models.declared_artifact import QueuedDeckGeneration
 from models.generate_presentation_request import GeneratePresentationRequest
 from models.presentation_and_path import PresentationPathAndEditPath
 from models.presentation_with_slides import PresentationWithSlides
@@ -105,7 +106,8 @@ class TestPresentationGenerationAPI:
                 )
             )
 
-        assert response == response_payload
+        assert response.model_dump(exclude={"artifact"}) == response_payload.model_dump()
+        assert response.artifact.external_id == str(response_payload.presentation_id)
         mock_handler.assert_awaited_once()
         assert mock_handler.await_args.kwargs["request_http"] is request_http
 
@@ -135,7 +137,8 @@ class TestPresentationGenerationAPI:
                 )
             )
 
-        assert response == response_payload
+        assert response.model_dump(exclude={"artifact"}) == response_payload.model_dump()
+        assert response.artifact.slide_count == 5
         mock_handler.assert_awaited_once()
 
     def test_generate_presentation_async_enqueues_async_task(self):
@@ -158,7 +161,7 @@ class TestPresentationGenerationAPI:
             )
         )
 
-        assert isinstance(task, AsyncTaskModel)
+        assert isinstance(task, QueuedDeckGeneration)
         assert task.type == "presentation.generate"
         assert task.status == "pending"
         assert task.message == "Queued for generation"
@@ -167,7 +170,9 @@ class TestPresentationGenerationAPI:
         # Present from the moment the task is enqueued, so a polling caller
         # can identify the presentation without waiting for completion.
         assert uuid.UUID(task.data["presentation_id"])
-        assert fake_session.added == [task]
+        assert task.artifact.external_id == task.data["presentation_id"]
+        assert len(fake_session.added) == 1
+        assert fake_session.added[0].id == task.id
         assert fake_session.commit_count == 1
         assert len(background_tasks.tasks) == 1
 

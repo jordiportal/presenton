@@ -22,6 +22,7 @@ import {
   trimTextToWordLimit,
 } from "@/utils/presentationLimits";
 import { sanitizeAnalyticsError } from "@/utils/analytics";
+import { isTruthyEmbedFlag } from "@/utils/embed";
 import { MixpanelEvent, trackEvent } from "@/utils/mixpanel";
 
 import Chat from "../../presentation/components/Chat";
@@ -31,6 +32,7 @@ import {
   ToneType,
   VerbosityType,
 } from "../../upload/type";
+import { DashboardApi } from "../../services/api/dashboard";
 import { PresentationGenerationApi } from "../../services/api/presentation-generation";
 import { useOutlineManagement } from "../hooks/useOutlineManagement";
 import { useOutlineStreaming } from "../hooks/useOutlineStreaming";
@@ -119,6 +121,7 @@ const OutlinePage: React.FC = () => {
   );
   const queryPresentationId = searchParams.get("id")?.trim() || null;
   const suggestedTemplate = searchParams.get("template")?.trim() || null;
+  const isEmbed = isTruthyEmbedFlag(searchParams.get("embed"));
   const presentation_id = queryPresentationId || storedPresentationId;
   const { config: savedConfig, files } = useSelector(
     (state: RootState) => state.pptGenUpload
@@ -169,6 +172,31 @@ const OutlinePage: React.FC = () => {
       setDraftConfig(normalizeOutlineConfig(savedConfig));
     }
   }, [savedConfig]);
+
+  useEffect(() => {
+    // Un deck creado por API (p. ej. desde Brain) llega sin la config de upload.
+    if (savedConfig || !presentation_id) return;
+    let cancelled = false;
+    DashboardApi.getPresentation(presentation_id, { cache: "no-store" })
+      .then((presentation) => {
+        if (cancelled || !presentation) return;
+        setDraftConfig((previous) =>
+          normalizeOutlineConfig({
+            ...previous,
+            prompt: presentation.content ?? previous.prompt,
+            slides: presentation.n_slides ? String(presentation.n_slides) : null,
+            instructions: presentation.instructions ?? previous.instructions,
+            includeTableOfContents: !!presentation.include_table_of_contents,
+            includeTitleSlide: !!presentation.include_title_slide,
+            webSearch: !!presentation.web_search,
+          })
+        );
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [presentation_id, savedConfig]);
 
   useEffect(() => {
     setHasOutlineStreamFinished(false);
@@ -361,7 +389,8 @@ const OutlinePage: React.FC = () => {
       <div className="min-h-screen bg-[#FEFEFF]">
         <OutlineStandardHeader
           title="Outline Generation"
-          onBack={() => router.push("/dashboard")}
+          embed={isEmbed}
+          onBack={isEmbed ? undefined : () => router.push("/dashboard")}
         />
         <EmptyStateView />
       </div>
@@ -384,13 +413,18 @@ const OutlinePage: React.FC = () => {
 
       <OutlineStandardHeader
         title={isTemplateStage ? "Select Template" : "Outline Generation"}
-        onBack={() => {
-          if (isTemplateStage) {
-            router.push("/dashboard");
-            return;
-          }
-          handleReturnToTemplates();
-        }}
+        embed={isEmbed}
+        onBack={
+          isTemplateStage && isEmbed
+            ? undefined
+            : () => {
+                if (isTemplateStage) {
+                  router.push("/dashboard");
+                  return;
+                }
+                handleReturnToTemplates();
+              }
+        }
       />
 
       {isTemplateStage ? (

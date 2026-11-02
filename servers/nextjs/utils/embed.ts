@@ -95,6 +95,27 @@ export function getEmbedToken(): string | null {
   }
 }
 
+/**
+ * Mantiene `embed=1` y el token al navegar dentro del iframe: el layout de
+ * cada página valida la sesión en el servidor y solo ve la query.
+ */
+export function withEmbedParams(path: string): string {
+  if (!isEmbedView()) return path;
+  const url = new URL(path, "http://presenton.local");
+  url.searchParams.set("embed", "1");
+  const token = getEmbedToken();
+  if (token) url.searchParams.set("token", token);
+  return `${url.pathname}${url.search}`;
+}
+
+/** `EventSource` no admite cabeceras: el token viaja en la query. */
+export function withEmbedTokenQuery(url: string): string {
+  const token = getEmbedToken();
+  if (!token) return url;
+  const separator = url.includes("?") ? "&" : "?";
+  return `${url}${separator}token=${encodeURIComponent(token)}`;
+}
+
 export function embedAuthHeaders(): Record<string, string> {
   const token = getEmbedToken();
   return token ? { Authorization: `Bearer ${token}` } : {};

@@ -142,6 +142,14 @@ const STREAM_LOADING_STATE: LoadingState = {
   extra_info: "This can take a few minutes depending on slide count.",
 };
 
+const AWAITING_GENERATION_LOADING_STATE: LoadingState = {
+  isLoading: true,
+  message: "Generating your presentation",
+  showProgress: false,
+  duration: 0,
+  extra_info: "It will open here as soon as it is ready. This can take a few minutes.",
+};
+
 const IDLE_LOADING_STATE: LoadingState = {
   isLoading: false,
   message: "",
@@ -292,10 +300,12 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
   }, []);
 
   // Custom hooks
+  const [awaitingGeneration, setAwaitingGeneration] = useState(false);
   const { fetchUserSlides } = usePresentationData(
     presentation_id,
     setLoading,
-    setError
+    setError,
+    setAwaitingGeneration
   );
 
   const {
@@ -452,8 +462,14 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
       return;
     }
 
-    setLoadingState(stream ? STREAM_LOADING_STATE : DEFAULT_LOADING_STATE);
-  }, [loading, stream]);
+    setLoadingState(
+      stream
+        ? STREAM_LOADING_STATE
+        : awaitingGeneration
+          ? AWAITING_GENERATION_LOADING_STATE
+          : DEFAULT_LOADING_STATE
+    );
+  }, [awaitingGeneration, loading, stream]);
 
   useEffect(() => {
     if (isStreaming && slidesLength > 0) {

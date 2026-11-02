@@ -30,6 +30,13 @@ from enums.webhook_event import WebhookEvent
 from models.api_error_model import APIErrorModel
 from models.generate_presentation_request import GeneratePresentationRequest
 from models.presentation_and_path import PresentationPathAndEditPath
+from models.declared_artifact import (
+    CreatedDeck,
+    GeneratedDeck,
+    QueuedDeckGeneration,
+    deck_artifact,
+    deck_name,
+)
 from services.pptx_video_embed import embed_presentation_videos
 from utils.asset_directory_utils import (
     get_exports_directory,
@@ -1664,7 +1671,11 @@ def _resolve_export_pptx_path(path_or_url: str) -> str:
     )
 
 
-@PRESENTATION_ROUTER.post("/create", response_model=PresentationModel)
+@PRESENTATION_ROUTER.post(
+    "/create",
+    response_model=CreatedDeck,
+    operation_id="create_presentation",
+)
 async def create_presentation(
     content: Annotated[str, Body()],
     n_slides: Annotated[Optional[int], Body()] = None,
@@ -1758,7 +1769,14 @@ async def create_presentation(
         ),
     )
 
-    return presentation
+    return CreatedDeck(
+        **presentation.model_dump(),
+        artifact=deck_artifact(
+            presentation_id,
+            deck_name(content=content),
+            n_slides,
+        ),
+    )
 
 
 @PRESENTATION_ROUTER.post(
@@ -3227,7 +3245,7 @@ async def generate_presentation_handler(
 
 @PRESENTATION_ROUTER.post(
     "/generate",
-    response_model=PresentationPathAndEditPath,
+    response_model=GeneratedDeck,
     operation_id="generate_presentation",
 )
 async def generate_presentation_sync(
@@ -3237,13 +3255,22 @@ async def generate_presentation_sync(
 ):
     try:
         (presentation_id,) = await check_if_api_request_is_valid(request, sql_session)
-        return await generate_presentation_handler(
+        generated = await generate_presentation_handler(
             request,
             presentation_id,
             None,
             export_cookie_header=_build_export_cookie_header(request_http),
             request_http=request_http,
             sql_session=sql_session,
+        )
+        presentation = await sql_session.get(PresentationModel, generated.presentation_id)
+        return GeneratedDeck(
+            **generated.model_dump(),
+            artifact=deck_artifact(
+                generated.presentation_id,
+                deck_name(presentation.title if presentation else None, request.content),
+                presentation.n_slides if presentation else request.n_slides,
+            ),
         )
     except HTTPException:
         raise
@@ -3289,7 +3316,7 @@ async def _run_generate_presentation_task(
 
 @PRESENTATION_ROUTER.post(
     "/generate/async",
-    response_model=AsyncTaskModel,
+    response_model=QueuedDeckGeneration,
     operation_id="generate_presentation_async",
 )
 async def generate_presentation_async(
@@ -3322,7 +3349,14 @@ async def generate_presentation_async(
             async_status.id,
             _build_export_cookie_header(request_http),
         )
-        return async_status
+        return QueuedDeckGeneration(
+            **async_status.model_dump(mode="json"),
+            artifact=deck_artifact(
+                presentation_id,
+                deck_name(content=request.content),
+                request.n_slides,
+            ),
+        )
 
     except Exception as e:
         if not isinstance(e, HTTPException):

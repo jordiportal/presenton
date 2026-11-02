@@ -4,6 +4,7 @@ from api.v1.ppt.endpoints.anthropic import ANTHROPIC_ROUTER
 from api.v1.ppt.endpoints.chat import CHAT_ROUTER
 from api.v1.ppt.endpoints.collaboration import COLLABORATION_ROUTER
 from api.v1.ppt.endpoints.notes import NOTES_ROUTER
+from api.v1.ppt.endpoints.ops import OPS_ROUTER
 from api.v1.ppt.endpoints.shares import SHARES_ROUTER, USERS_ROUTER
 from api.v1.ppt.endpoints.community import COMMUNITY_ROUTER
 from api.v1.ppt.endpoints.codex_auth import CODEX_AUTH_ROUTER
@@ -55,5 +56,6 @@ API_V1_PPT_ROUTER.include_router(PRESENTATION_ROUTER)
 API_V1_PPT_ROUTER.include_router(THEMES_ROUTER)
 API_V1_PPT_ROUTER.include_router(THEME_ROUTER)
 API_V1_PPT_ROUTER.include_router(CHAT_ROUTER)
+API_V1_PPT_ROUTER.include_router(OPS_ROUTER)
 API_V1_PPT_ROUTER.include_router(TEMPLATE_ROUTER)
 API_V1_PPT_ROUTER.include_router(COMMUNITY_ROUTER)
