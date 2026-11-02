@@ -20,6 +20,7 @@ import {
   MessageSquarePlus,
 } from "lucide-react";
 import { askBrain } from "@/utils/brain-bridge";
+import { withEmbedParams } from "@/utils/embed";
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import {
@@ -479,9 +480,11 @@ const PresentationHeader = ({
       });
     }
     router.push(
-      `/presentation?id=${presentation_id}&stream=true${
-        generationMode === "smart" ? "&type=smart" : ""
-      }`
+      withEmbedParams(
+        `/presentation?id=${presentation_id}&stream=true${
+          generationMode === "smart" ? "&type=smart" : ""
+        }`
+      )
     );
   };
   const downloadLink = (path: string, fileName: string) => {

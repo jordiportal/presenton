@@ -154,7 +154,9 @@ const OutlinePage: React.FC = () => {
     isRegeneratingOutline || streamState.isLoading || streamState.isStreaming;
   const isOutlineReady =
     hasSelectedTemplate && hasOutlineStreamFinished && !outlineControlsBusy;
-  const isOutlineAssistantVisible = !isTemplateStage && hasSelectedTemplate;
+  // Embebido en Brain, el agente de Brain es el asistente: dos chats lían.
+  const isOutlineAssistantVisible =
+    !isEmbed && !isTemplateStage && hasSelectedTemplate;
   const isRegenerateDisabled = !isOutlineReady;
   const outlineStreamFinished =
     !isTemplateStage &&
@@ -441,7 +443,7 @@ const OutlinePage: React.FC = () => {
         </main>
       ) : (
         <>
-          <div className="lg:mr-[369px]">
+          <div className={isOutlineAssistantVisible ? "lg:mr-[369px]" : undefined}>
             <main className="mx-auto w-[calc(100%-2.5rem)] max-w-[967px] pb-28 pt-10 sm:w-[calc(100%-5rem)]">
               <OutlinePromptBar
                 config={draftConfig}
@@ -508,7 +510,12 @@ const OutlinePage: React.FC = () => {
             </aside>
           )}
 
-          <div className="pointer-events-none fixed bottom-6 left-5 right-5 z-50 flex justify-center sm:left-10 sm:right-10 lg:left-0 lg:right-[369px]">
+          <div
+            className={cn(
+              "pointer-events-none fixed bottom-6 left-5 right-5 z-50 flex justify-center sm:left-10 sm:right-10 lg:left-0",
+              isOutlineAssistantVisible ? "lg:right-[369px]" : "lg:right-0"
+            )}
+          >
             <div className="pointer-events-auto">
               <GenerateButton
                 loadingState={loadingState}
