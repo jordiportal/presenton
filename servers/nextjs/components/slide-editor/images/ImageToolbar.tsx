@@ -49,6 +49,7 @@ import {
   VideosApi,
   emitVideoJobQueued,
 } from "@/app/(presentation-generator)/services/api/videos";
+import { MediaModelSelect, useMediaModels } from "@/components/media/MediaModelSelect";
 import { notify } from "@/components/ui/sonner";
 import type { RootState } from "@/store/store";
 
@@ -313,7 +314,9 @@ export function ImageToolbar({
   const presentationId = useSelector(
     (state: RootState) => state.presentationGeneration.presentationData?.id,
   );
-  const videoModel = (llmConfig?.OPENAI_COMPAT_VIDEO_MODEL || "").trim();
+  const videoModels = useMediaModels("video");
+  const [videoModelChoice, setVideoModelChoice] = useState("");
+  const videoModel = videoModels.default || (llmConfig?.OPENAI_COMPAT_VIDEO_MODEL || "").trim();
   const canAnimate = Boolean(onReplaceWithVideo);
   const [openPanel, setOpenPanel] = useState<ImagePanel>(null);
   const [imagePickerOpen, setImagePickerOpen] = useState(false);
@@ -607,6 +610,7 @@ export function ImageToolbar({
         opacity: element.opacity,
         name: element.name || "video",
         decorative: element.decorative ?? false,
+        model: videoModelChoice || null,
       });
       emitVideoJobQueued(task);
       setOpenPanel(null);
@@ -748,6 +752,12 @@ export function ImageToolbar({
                     className="mt-1 w-full resize-none rounded-[8px] border border-[#E7E8EC] px-2 py-1.5 text-[13px] text-[#191919] outline-none focus:border-[#7A5AF8]"
                   />
                 </label>
+                <MediaModelSelect
+                  models={videoModels}
+                  value={videoModelChoice}
+                  onChange={setVideoModelChoice}
+                  disabled={isAnimating}
+                />
                 <button
                   type="button"
                   disabled={isAnimating}

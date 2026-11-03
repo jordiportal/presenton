@@ -142,6 +142,14 @@ const STREAM_LOADING_STATE: LoadingState = {
   extra_info: "This can take a few minutes depending on slide count.",
 };
 
+const AWAITING_GENERATION_LOADING_STATE: LoadingState = {
+  isLoading: true,
+  message: "Generating your presentation",
+  showProgress: false,
+  duration: 0,
+  extra_info: "It will open here as soon as it is ready. This can take a few minutes.",
+};
+
 const IDLE_LOADING_STATE: LoadingState = {
   isLoading: false,
   message: "",
@@ -292,10 +300,12 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
   }, []);
 
   // Custom hooks
+  const [awaitingGeneration, setAwaitingGeneration] = useState(false);
   const { fetchUserSlides } = usePresentationData(
     presentation_id,
     setLoading,
-    setError
+    setError,
+    setAwaitingGeneration
   );
 
   const {
@@ -452,8 +462,14 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
       return;
     }
 
-    setLoadingState(stream ? STREAM_LOADING_STATE : DEFAULT_LOADING_STATE);
-  }, [loading, stream]);
+    setLoadingState(
+      stream
+        ? STREAM_LOADING_STATE
+        : awaitingGeneration
+          ? AWAITING_GENERATION_LOADING_STATE
+          : DEFAULT_LOADING_STATE
+    );
+  }, [awaitingGeneration, loading, stream]);
 
   useEffect(() => {
     if (isStreaming && slidesLength > 0) {
@@ -1175,18 +1191,28 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
           />
           )}
 
-          {isEmbed ? null : (
+          {isEmbed && isSmartPresentation ? null : (
           <div
             id="presentation-mobile-assistant"
             role={isMobileAssistantOpen ? "dialog" : undefined}
             aria-label={isMobileAssistantOpen ? "AI Assistant" : undefined}
             aria-modal={isMobileAssistantOpen ? true : undefined}
             className={cn(
-              "h-screen w-[calc(100vw-16px)] max-w-[375px] shrink-0 flex-col bg-white shadow-[-12px_0_32px_rgba(16,24,40,0.18)] transition-[width] duration-200 xl:relative xl:z-auto xl:h-full xl:max-w-none xl:self-start xl:border-l xl:border-[#EDEEEF] xl:shadow-none",
-              isRightPanelOpen ? "xl:w-[383px]" : "xl:w-[90px]",
-              isMobileAssistantOpen
-                ? "fixed inset-y-0 right-0 z-[70] flex"
-                : "hidden xl:flex"
+              isEmbed
+                ? "relative flex h-full shrink-0 flex-col self-start border-l border-[#EDEEEF] bg-white transition-[width] duration-200"
+                : "h-screen w-[calc(100vw-16px)] max-w-[375px] shrink-0 flex-col bg-white shadow-[-12px_0_32px_rgba(16,24,40,0.18)] transition-[width] duration-200 xl:relative xl:z-auto xl:h-full xl:max-w-none xl:self-start xl:border-l xl:border-[#EDEEEF] xl:shadow-none",
+              isEmbed
+                ? isRightPanelOpen
+                  ? "w-[320px] xl:w-[383px]"
+                  : "w-[90px]"
+                : isRightPanelOpen
+                  ? "xl:w-[383px]"
+                  : "xl:w-[90px]",
+              isEmbed
+                ? null
+                : isMobileAssistantOpen
+                  ? "fixed inset-y-0 right-0 z-[70] flex"
+                  : "hidden xl:flex"
             )}
           >
             {isRightPanelOpen ? (
@@ -1194,7 +1220,10 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
                 type="button"
                 aria-label="Close tools panel"
                 onClick={() => setIsRightPanelOpen(false)}
-                className="absolute -left-[10px] top-1/2 z-[80] hidden h-[36px] w-[16px] -translate-y-1/2 items-center justify-center rounded-full border-2 border-[#E8E5FF] bg-[#FEFEFF] text-[#6938EF] shadow-[0_10px_26px_rgba(52,48,96,0.10)] transition-[border-color,box-shadow,color] hover:border-[#D9D6FE] hover:text-[#5925DC] hover:shadow-[0_12px_30px_rgba(52,48,96,0.16)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7A5AF8] focus-visible:ring-offset-2 xl:flex"
+                className={cn(
+                  "absolute -left-[10px] top-1/2 z-[80] h-[36px] w-[16px] -translate-y-1/2 items-center justify-center rounded-full border-2 border-[#E8E5FF] bg-[#FEFEFF] text-[#6938EF] shadow-[0_10px_26px_rgba(52,48,96,0.10)] transition-[border-color,box-shadow,color] hover:border-[#D9D6FE] hover:text-[#5925DC] hover:shadow-[0_12px_30px_rgba(52,48,96,0.16)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7A5AF8] focus-visible:ring-offset-2",
+                  isEmbed ? "flex" : "hidden xl:flex"
+                )}
               >
                 <ChevronRight
                   className="h-4 w-4"
@@ -1203,6 +1232,7 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
                 />
               </button>
             ) : null}
+            {isEmbed ? null : (
             <div className="flex h-14 shrink-0 items-center justify-between border-b border-[#EDEEEF] px-4 xl:hidden">
               <div className="flex items-center gap-2 text-sm font-semibold text-[#101323]">
                 <Sparkles className="h-4 w-4 text-[#7A5AF8]" aria-hidden="true" />
@@ -1218,8 +1248,10 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
                 <X className="h-4 w-4" aria-hidden="true" />
               </button>
             </div>
+            )}
             <div className="min-h-0 flex-1">
               <PresentationActions
+                hideAi={isEmbed}
                 presentationId={presentation_id}
                 presentationType={isSmartPresentation ? "smart" : "standard"}
                 variant={isTemplateV2Presentation ? "template-v2" : "presentation"}

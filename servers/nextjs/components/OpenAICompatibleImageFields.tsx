@@ -31,6 +31,8 @@ export interface OpenAICompatibleImageFieldsProps {
    * `stacked` — full-width onboarding / LLM selection layout (CustomConfig-style blocks).
    */
   layout?: "stacked" | "textProviderSettings";
+  /** Only URL and key: the caller renders its own model list. */
+  hideModelPicker?: boolean;
 }
 
 /**
@@ -45,6 +47,7 @@ export default function OpenAICompatibleImageFields({
   onModelChange,
   onModelListMetaChange,
   layout = "stacked",
+  hideModelPicker = false,
 }: OpenAICompatibleImageFieldsProps) {
   const [models, setModels] = useState<string[]>([]);
   const [modelsLoading, setModelsLoading] = useState(false);
@@ -61,7 +64,7 @@ export default function OpenAICompatibleImageFields({
     }
     setModels([]);
     setModelsChecked(false);
-    onModelChange("");
+    if (!hideModelPicker) onModelChange("");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlKey]);
 
@@ -146,7 +149,7 @@ export default function OpenAICompatibleImageFields({
               placeholder="Base URL (include /v1)"
             />
           </div>
-          {(!modelsChecked || (modelsChecked && models.length === 0)) && (
+          {!hideModelPicker && (!modelsChecked || (modelsChecked && models.length === 0)) && (
             <button
               type="button"
               onClick={() => void fetchModels()}
@@ -169,7 +172,7 @@ export default function OpenAICompatibleImageFields({
           )}
         </div>
 
-        {modelsChecked && models.length > 0 ? (
+        {!hideModelPicker && modelsChecked && models.length > 0 ? (
           <div className="w-[222px]">
             <div>
               <label className="mb-3 block text-sm font-medium text-gray-700">Select image model</label>

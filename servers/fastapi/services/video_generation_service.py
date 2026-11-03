@@ -58,9 +58,9 @@ def get_video_model() -> str:
     return _trim(get_openai_compat_video_model_env())
 
 
-def get_video_provider() -> str:
+def get_video_provider(model: Optional[str] = None) -> str:
     """LiteLLM needs the underlying provider on status/content routes."""
-    model = get_video_model()
+    model = model or get_video_model()
     if "/" in model:
         return model.split("/", 1)[0]
     return DEFAULT_VIDEO_PROVIDER
@@ -77,30 +77,30 @@ def _videos_endpoint(base_url: str) -> str:
     return f"{trimmed}/videos"
 
 
-def _auth_headers(api_key: str) -> dict[str, str]:
+def _auth_headers(api_key: str, model: Optional[str] = None) -> dict[str, str]:
     return {
         "Authorization": f"Bearer {api_key}",
         "x-litellm-api-key": api_key,
-        "custom-llm-provider": get_video_provider(),
+        "custom-llm-provider": get_video_provider(model),
     }
 
 
-def _with_provider_query(url: str) -> str:
+def _with_provider_query(url: str, model: Optional[str] = None) -> str:
     parsed = urlparse(url)
     query = dict(parse_qsl(parsed.query, keep_blank_values=True))
-    query.setdefault("custom_llm_provider", get_video_provider())
-    model = get_video_model()
+    query.setdefault("custom_llm_provider", get_video_provider(model))
+    model = model or get_video_model()
     if model:
         query.setdefault("model", model)
     return urlunparse(parsed._replace(query=urlencode(query)))
 
 
-def _content_url(endpoint: str, video_id: str) -> str:
-    return _with_provider_query(f"{endpoint.rstrip('/')}/{video_id}/content")
+def _content_url(endpoint: str, video_id: str, model: Optional[str] = None) -> str:
+    return _with_provider_query(f"{endpoint.rstrip('/')}/{video_id}/content", model)
 
 
-def _status_url(endpoint: str, video_id: str) -> str:
-    return _with_provider_query(f"{endpoint.rstrip('/')}/{video_id}")
+def _status_url(endpoint: str, video_id: str, model: Optional[str] = None) -> str:
+    return _with_provider_query(f"{endpoint.rstrip('/')}/{video_id}", model)
 
 
 def _pixel_size(content: bytes) -> str:
@@ -415,7 +415,9 @@ async def animate_image_to_video(
     image_url: str,
     prompt: Optional[str] = None,
     seconds: Optional[str] = None,
+    model: Optional[str] = None,
 ) -> str:
+    """`model` overrides the default; validate it with `resolve_video_model`."""
     if not video_generation_configured():
         raise ValueError(
             "Configure OPENAI_COMPAT_VIDEO_MODEL (and the LiteLLM URL/key) "
@@ -424,14 +426,14 @@ async def animate_image_to_video(
 
     base_url = get_video_base_url()
     api_key = get_video_api_key()
-    model = get_video_model()
+    model = _trim(model) or get_video_model()
     prompt_text = _trim(prompt) or DEFAULT_ANIMATE_PROMPT
     duration = _trim(seconds) or DEFAULT_SECONDS
     image_bytes, mime, _suffix = await _load_image_bytes(image_url)
 
     endpoint = _videos_endpoint(base_url)
     headers = {
-        **_auth_headers(api_key),
+        **_auth_headers(api_key, model),
         "Content-Type": "application/json",
         "Accept": "application/json",
     }
@@ -469,7 +471,7 @@ async def animate_image_to_video(
                     and not _is_direct_video_url(result_url or "")
                 ):
                     payload = await _poll_until_ready(
-                        session, _status_url(endpoint, created_id), headers
+                        session, _status_url(endpoint, created_id, model), headers
                     )
                     result_url = _extract_result_url(payload)
                     status = _extract_status(payload)
@@ -497,7 +499,7 @@ async def animate_image_to_video(
                 if video_bytes is None and created_id:
                     try:
                         content, downloaded_type = await _get_bytes(
-                            session, _content_url(endpoint, created_id), headers
+                            session, _content_url(endpoint, created_id, model), headers
                         )
                         video_bytes = await _coerce_video_bytes(
                             session, content, downloaded_type, headers, base_url

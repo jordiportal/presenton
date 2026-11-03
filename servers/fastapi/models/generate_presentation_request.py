@@ -26,8 +26,12 @@ class GeneratePresentationRequest(BaseModel):
         default=None,
         description="Language for the presentation. If omitted, model auto-detects language.",
     )
-    template: str = Field(
-        default="general", description="Template to use for the presentation"
+    template: Optional[str] = Field(
+        default=None,
+        description=(
+            "Template to use for the presentation. If omitted, the instance "
+            "default template (Settings) is used, falling back to 'general'."
+        ),
     )
     include_table_of_contents: bool = Field(
         default=False, description="Whether to include a table of contents"

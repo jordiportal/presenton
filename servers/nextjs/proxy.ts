@@ -80,8 +80,10 @@ function isSecureRequest(request: NextRequest): boolean {
   );
 }
 
+const EMBED_PAGE_PATHS = new Set(["/presentation", "/outline"]);
+
 function stampEmbedPresentation(request: NextRequest): NextResponse | null {
-  if (request.nextUrl.pathname !== "/presentation") {
+  if (!EMBED_PAGE_PATHS.has(request.nextUrl.pathname)) {
     return null;
   }
   const queryToken = request.nextUrl.searchParams.get("token")?.trim();
@@ -186,7 +188,7 @@ export async function proxy(request: NextRequest) {
   if (embedResponse) {
     return embedResponse;
   }
-  if (pathname === "/presentation") {
+  if (EMBED_PAGE_PATHS.has(pathname)) {
     // El layout exige sesión; aquí solo se sella el token de embed.
     return NextResponse.next();
   }
@@ -228,6 +230,10 @@ export async function proxy(request: NextRequest) {
   if (request.cookies.get(PRESENTON_EMBED_COOKIE)?.value && isFastApiApiPath(pathname)) {
     return rewriteToFastApi(request);
   }
+  // SSE del iframe (`EventSource` sin cabeceras): FastAPI valida `?token=`.
+  if (request.nextUrl.searchParams.get("token") && isFastApiApiPath(pathname)) {
+    return rewriteToFastApi(request);
+  }
 
   const authStatus = await getAuthStatus(request);
   if (authStatus.authenticated) {
@@ -252,5 +258,6 @@ export const config = {
     "/static/:path*",
     "/pdf-maker",
     "/presentation",
+    "/outline",
   ],
 };

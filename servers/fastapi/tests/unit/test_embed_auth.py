@@ -91,6 +91,95 @@ def test_extract_query_y_cookie():
     )
 
 
+def test_embed_jwt_resuelve_el_usuario_de_keycloak(monkeypatch):
+    import asyncio
+
+    from api.v1.auth import principal as principal_mod
+
+    monkeypatch.setenv("PRESENTON_EMBED_SECRET", SECRET)
+    owner = type("User", (), {})()
+    owner.id = uuid.uuid4()
+    owner.username = "jordi@example.com"
+    owner.is_superuser = False
+
+    async def ensure(_session, identity, _sub=""):
+        assert identity == "jordi@example.com"
+        return owner
+
+    monkeypatch.setattr(principal_mod, "ensure_presenton_user_from_sso", ensure)
+
+    resolved, user = asyncio.run(
+        principal_mod.resolve_request_principal(
+            _request(authorization=f"Bearer {_brain_jwt(sub='Jordi@Example.com')}"),
+            object(),
+        )
+    )
+    assert user is owner
+    assert resolved is not None
+    assert resolved.method == "embed"
+    assert resolved.user_id == owner.id
+    assert resolved.username == "jordi@example.com"
+
+
+def test_embed_jwt_manda_sobre_la_cookie_de_sesion(monkeypatch):
+    import asyncio
+
+    from api.v1.auth import principal as principal_mod
+    from api.v1.auth.config import SESSION_COOKIE_NAME
+
+    monkeypatch.setenv("PRESENTON_EMBED_SECRET", SECRET)
+    owner = type("User", (), {})()
+    owner.id = uuid.uuid4()
+    owner.username = "jordi@example.com"
+    owner.is_superuser = False
+
+    async def ensure(_session, identity, _sub=""):
+        return owner
+
+    def cookie_must_not_run():
+        raise AssertionError("la cookie no debe pisar el JWT de embed")
+
+    monkeypatch.setattr(principal_mod, "ensure_presenton_user_from_sso", ensure)
+    monkeypatch.setattr(principal_mod, "get_jwt_strategy", cookie_must_not_run)
+
+    resolved, user = asyncio.run(
+        principal_mod.resolve_request_principal(
+            _request(
+                authorization=f"Bearer {_brain_jwt(sub='jordi@example.com')}",
+                cookie=f"{SESSION_COOKIE_NAME}=session-jwt",
+            ),
+            object(),
+        )
+    )
+    assert user is owner
+    assert resolved is not None
+    assert resolved.user_id == owner.id
+
+
+def test_embed_sin_email_no_crea_usuario(monkeypatch):
+    import asyncio
+
+    from api.v1.auth import principal as principal_mod
+
+    monkeypatch.setenv("PRESENTON_EMBED_SECRET", SECRET)
+
+    def ensure_must_not_run(*_args, **_kwargs):
+        raise AssertionError("un sub sin email no aprovisiona usuario")
+
+    monkeypatch.setattr(
+        principal_mod, "ensure_presenton_user_from_sso", ensure_must_not_run
+    )
+
+    resolved, user = asyncio.run(
+        principal_mod.resolve_request_principal(
+            _request(authorization=f"Bearer {_brain_jwt(sub='user-1')}"),
+            object(),
+        )
+    )
+    assert resolved is None
+    assert user is None
+
+
 def test_resolve_principal_servicio(monkeypatch):
     from api.v1.auth.principal import resolve_request_principal
 
@@ -150,22 +239,17 @@ def test_ensure_embed_owner_crea_la_fila(monkeypatch):
     assert user.is_active is True
 
 
-def test_resolve_principal_jwt_embed(monkeypatch):
+def test_resolve_principal_jwt_embed_sin_email_no_es_brain_service(monkeypatch):
+    """Un JWT sin email ya no cae en el owner compartido."""
     from api.v1.auth.principal import resolve_request_principal
 
     monkeypatch.setenv("PRESENTON_EMBED_SECRET", SECRET)
 
-    class UnusedSession:
-        async def get(self, *_args, **_kwargs):
-            raise AssertionError("embed JWT no consulta la DB")
-
     principal, user = __import__("asyncio").run(
         resolve_request_principal(
             _request(authorization=f"Bearer {_brain_jwt()}"),
-            UnusedSession(),
+            object(),
         )
     )
+    assert principal is None
     assert user is None
-    assert principal is not None
-    assert principal.method == "embed"
-    assert principal.username == "brain-embed"

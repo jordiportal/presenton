@@ -425,17 +425,23 @@ def test_default_template_name_resolves_bundled_template_without_schema_page():
 
 
 def test_create_presentation_stores_current_version(fake_async_session):
-    presentation = _run(
+    created = _run(
         presentation_endpoint.create_presentation(
             content="Create a short deck.",
+            n_slides=6,
             sql_session=fake_async_session,
         )
     )
 
+    [presentation] = fake_async_session.added
     assert presentation.version == PresentationVersion.V2_STANDARD
     assert presentation.content == "Create a short deck."
-    assert fake_async_session.added == [presentation]
     assert fake_async_session.commit_count == 1
+    assert created.id == presentation.id
+    assert created.model_dump()["content"] == "Create a short deck."
+    assert created.artifact.external_id == str(presentation.id)
+    assert created.artifact.name == "Create a short deck."
+    assert created.artifact.slide_count == 6
 
 
 def test_create_blank_presentation_is_template_free_and_editable():

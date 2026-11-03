@@ -216,6 +216,22 @@ class GenerateAssetItemInput(StrictSchemaModel):
         max_length=4000,
         description="Image prompt or icon search query.",
     )
+    model: str | None = Field(
+        ...,
+        max_length=200,
+        description=(
+            "Image model, only when the user asks for one: one of the enabled "
+            "models (GET /images/models). null for the default."
+        ),
+    )
+
+    @model_validator(mode="before")
+    @classmethod
+    def _model_defaults_to_null(cls, data: Any) -> Any:
+        # Required for OpenAI strict schemas, but older callers omit it.
+        if isinstance(data, dict):
+            return {"model": None, **data}
+        return data
 
 
 class GenerateAssetsInput(StrictSchemaModel):

@@ -21,7 +21,7 @@ from fastapi import (
 )
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from sqlalchemy import delete
+from sqlalchemy import delete, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 from constants.presentation import MAX_NUMBER_OF_SLIDES
@@ -30,6 +30,13 @@ from enums.webhook_event import WebhookEvent
 from models.api_error_model import APIErrorModel
 from models.generate_presentation_request import GeneratePresentationRequest
 from models.presentation_and_path import PresentationPathAndEditPath
+from models.declared_artifact import (
+    CreatedDeck,
+    GeneratedDeck,
+    QueuedDeckGeneration,
+    deck_artifact,
+    deck_name,
+)
 from services.pptx_video_embed import embed_presentation_videos
 from utils.asset_directory_utils import (
     get_exports_directory,
@@ -122,6 +129,7 @@ from templates.v2.schema import get_template_schema
 from templates.v2.content import hydrate_repeated_top_level_groups
 from templates.v2.theme import template_theme_for_presentation
 from templates.default_templates import resolve_default_template_id
+from services.provider_settings import get_provider_settings
 from services.community_presentations import (
     build_community_design_context,
     load_community_references,
@@ -140,6 +148,7 @@ logger = logging.getLogger(__name__)
 PRESENTATION_ROUTER = APIRouter(prefix="/presentation", tags=["Presentation"])
 ASYNC_TASK_TYPE_PRESENTATION_GENERATE = "presentation.generate"
 CUSTOM_TEMPLATE_PREFIX = "custom-"
+FALLBACK_TEMPLATE = "general"
 BLANK_PRESENTATION_LAYOUT_GROUP = "blank"
 BLANK_PRESENTATION_LAYOUT_ID = "__blank_slide__"
 BLANK_PRESENTATION_SLIDE_UI: dict[str, Any] = {
@@ -231,6 +240,45 @@ async def _resolve_requested_template(
         status_code=400,
         detail="Template not found. Please use a valid template.",
     )
+
+
+async def _find_template_id(
+    template_name: Optional[str],
+    sql_session: AsyncSession,
+) -> Optional[str]:
+    """Template V2 id for an id, bundled name or display name; None if unknown."""
+    name = (template_name or "").strip()
+    if not name:
+        return None
+    try:
+        template = await _resolve_requested_template(name, sql_session)
+    except HTTPException:
+        pass
+    else:
+        if template:
+            return template.id
+        return resolve_default_template_id(name)
+    bundled_id = resolve_default_template_id(name.lower())
+    if bundled_id:
+        return bundled_id
+    result = await sql_session.execute(
+        select(TemplateV2.id)
+        .where(func.lower(TemplateV2.name) == name.lower())
+        .limit(1)
+    )
+    return result.scalars().first()
+
+
+async def _default_template(sql_session: AsyncSession) -> str:
+    """Instance default template (Settings → DEFAULT_TEMPLATE), else 'general'."""
+    try:
+        settings = await get_provider_settings(sql_session)
+    except Exception:
+        settings = {}
+    configured = str(settings.get("DEFAULT_TEMPLATE") or "").strip()
+    if configured and await _find_template_id(configured, sql_session):
+        return configured
+    return FALLBACK_TEMPLATE
 
 
 def _copy_template_layout_payload(
@@ -1664,7 +1712,11 @@ def _resolve_export_pptx_path(path_or_url: str) -> str:
     )
 
 
-@PRESENTATION_ROUTER.post("/create", response_model=PresentationModel)
+@PRESENTATION_ROUTER.post(
+    "/create",
+    response_model=CreatedDeck,
+    operation_id="create_presentation",
+)
 async def create_presentation(
     content: Annotated[str, Body()],
     n_slides: Annotated[Optional[int], Body()] = None,
@@ -1678,6 +1730,16 @@ async def create_presentation(
     web_search: Annotated[bool, Body()] = False,
     generation_mode: Annotated[Literal["standard", "smart"], Body()] = "standard",
     community_design_ids: Annotated[Optional[List[int]], Body()] = None,
+    template: Annotated[
+        Optional[str],
+        Body(
+            description=(
+                "Template id or name (see template_list). The outline screen "
+                "uses it instead of asking; if omitted, the instance default "
+                "template applies."
+            ),
+        ),
+    ] = None,
     sql_session: AsyncSession = Depends(get_async_session),
 ):
 
@@ -1713,6 +1775,15 @@ async def create_presentation(
             detail="A prompt, document, or community reference is required",
         )
 
+    template_id = None
+    if template and template.strip():
+        template_id = await _find_template_id(template, sql_session)
+        if not template_id:
+            raise HTTPException(
+                status_code=400,
+                detail="Template not found. Use template_list to pick a valid template.",
+            )
+
     presentation_id = uuid.uuid4()
     language_to_store = (language or "").strip()
     validated_file_paths = (
@@ -1738,6 +1809,7 @@ async def create_presentation(
         web_search=web_search,
         generation_mode=generation_mode,
         community_design_ids=normalized_community_ids or None,
+        template=template_id,
     )
 
     sql_session.add(presentation)
@@ -1758,7 +1830,14 @@ async def create_presentation(
         ),
     )
 
-    return presentation
+    return CreatedDeck(
+        **presentation.model_dump(),
+        artifact=deck_artifact(
+            presentation_id,
+            deck_name(content=content),
+            n_slides,
+        ),
+    )
 
 
 @PRESENTATION_ROUTER.post(
@@ -2724,6 +2803,9 @@ async def check_if_api_request_is_valid(
             detail="Number of slides cannot be less than 3 if table of contents is included",
         )
 
+    if not (request.template or "").strip():
+        request.template = await _default_template(sql_session)
+
     # Checking if template is valid. Generation supports TemplateV2 rows and
     # bundled TemplateV2 names only.
     template = await _resolve_requested_template(
@@ -3227,7 +3309,7 @@ async def generate_presentation_handler(
 
 @PRESENTATION_ROUTER.post(
     "/generate",
-    response_model=PresentationPathAndEditPath,
+    response_model=GeneratedDeck,
     operation_id="generate_presentation",
 )
 async def generate_presentation_sync(
@@ -3237,13 +3319,22 @@ async def generate_presentation_sync(
 ):
     try:
         (presentation_id,) = await check_if_api_request_is_valid(request, sql_session)
-        return await generate_presentation_handler(
+        generated = await generate_presentation_handler(
             request,
             presentation_id,
             None,
             export_cookie_header=_build_export_cookie_header(request_http),
             request_http=request_http,
             sql_session=sql_session,
+        )
+        presentation = await sql_session.get(PresentationModel, generated.presentation_id)
+        return GeneratedDeck(
+            **generated.model_dump(),
+            artifact=deck_artifact(
+                generated.presentation_id,
+                deck_name(presentation.title if presentation else None, request.content),
+                presentation.n_slides if presentation else request.n_slides,
+            ),
         )
     except HTTPException:
         raise
@@ -3289,7 +3380,7 @@ async def _run_generate_presentation_task(
 
 @PRESENTATION_ROUTER.post(
     "/generate/async",
-    response_model=AsyncTaskModel,
+    response_model=QueuedDeckGeneration,
     operation_id="generate_presentation_async",
 )
 async def generate_presentation_async(
@@ -3322,7 +3413,14 @@ async def generate_presentation_async(
             async_status.id,
             _build_export_cookie_header(request_http),
         )
-        return async_status
+        return QueuedDeckGeneration(
+            **async_status.model_dump(mode="json"),
+            artifact=deck_artifact(
+                presentation_id,
+                deck_name(content=request.content),
+                request.n_slides,
+            ),
+        )
 
     except Exception as e:
         if not isinstance(e, HTTPException):

@@ -30,7 +30,7 @@ function presentationIdFromUrl(): string | null {
 }
 
 /**
- * En el iframe, el generate es un turno de presenton_designer (chat de Brain).
+ * Caja "Pedir a Brain" del iframe: el pedido es un turno del chat de Brain.
  * Devuelve true si el pedido salió al padre.
  */
 export function askBrain(
@@ -54,7 +54,7 @@ export function askBrain(
   }
   lines.push(`Pedido: ${text}`);
   lines.push(
-    "No regeneres el deck entero. Consulta el deck (presenton_get_presentation), retoca con presenton_edit_slide / presenton_update_slide, e imágenes con generate_image + la tool de update. Usa el external_id del artefacto."
+    "Carga la capability presentation_presenton. No regeneres el deck: lee (presenton_deck_get_slide_at_index) y retoca con presenton_deck_*. Imágenes y vídeo con el motor de Presenton (presenton_deck_generate_assets, presenton_animate_image_async), nunca generate_image. Usa el external_id del artefacto como presentation_id."
   );
 
   const payload: BrainPresentonAsk = {

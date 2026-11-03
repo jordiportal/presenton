@@ -27,8 +27,7 @@ import { useSelector } from "react-redux";
 import { ImagesApi } from "@/app/(presentation-generator)/services/api/images";
 import type { ImageAssetResponse } from "@/app/(presentation-generator)/services/api/types";
 import { notify } from "@/components/ui/sonner";
-import { askBrain } from "@/utils/brain-bridge";
-import { isEmbedView } from "@/utils/embed";
+import { MediaModelSelect, useMediaModels, type MediaModels } from "@/components/media/MediaModelSelect";
 import { cn } from "@/lib/utils";
 import type { RootState } from "@/store/store";
 import { resolveBackendAssetSource } from "@/utils/api";
@@ -96,12 +95,13 @@ export function ImagePickerModal({
   const provider = normalizedProvider(llmConfig?.IMAGE_PROVIDER);
   const stockProvider = STOCK_IMAGE_PROVIDERS.has(provider) ? provider : null;
   const providerLabel = IMAGE_PROVIDERS[provider]?.label ?? "AI image provider";
-  const generationDisabled =
-    Boolean(llmConfig?.DISABLE_IMAGE_GENERATION) && !isEmbedView();
+  const generationDisabled = Boolean(llmConfig?.DISABLE_IMAGE_GENERATION);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [view, setView] = useState<PickerView>("discover");
   const [query, setQuery] = useState(initialPrompt || "");
   const [variationCount, setVariationCount] = useState(4);
+  const imageModels = useMediaModels("image");
+  const [imageModel, setImageModel] = useState("");
   const [discoverImages, setDiscoverImages] = useState<PickerImage[]>([]);
   const [uploadedImages, setUploadedImages] = useState<PickerImage[]>([]);
   const [isLoadingLibrary, setIsLoadingLibrary] = useState(false);
@@ -269,19 +269,12 @@ export function ImagePickerModal({
 
   const generateImages = async () => {
     if (!query.trim() || generationDisabled) return;
-    if (isEmbedView() && askBrain(`Genera una imagen: ${query.trim()}`)) {
-      notify.success(
-        "Pedido enviado a Brain",
-        "El diseñador genera la imagen en el chat de la mesa."
-      );
-      return;
-    }
     setIsWorking(true);
     setError(null);
     try {
       const responses = await Promise.allSettled(
         Array.from({ length: variationCount }, () =>
-          ImagesApi.generateImage(query.trim()),
+          ImagesApi.generateImage(query.trim(), imageModel || null),
         ),
       );
       const images: PickerImage[] = responses.flatMap((response) => {
@@ -480,6 +473,9 @@ export function ImagePickerModal({
                     providerLabel={providerLabel}
                     query={query}
                     variationCount={variationCount}
+                    imageModels={imageModels}
+                    imageModel={imageModel}
+                    onImageModelChange={setImageModel}
                     onQueryChange={setQuery}
                     onRun={runDiscover}
                     onVariationChange={(delta) =>
@@ -585,6 +581,9 @@ function DiscoverControls({
   providerLabel,
   query,
   variationCount,
+  imageModels,
+  imageModel,
+  onImageModelChange,
   onQueryChange,
   onRun,
   onVariationChange,
@@ -595,6 +594,9 @@ function DiscoverControls({
   providerLabel: string;
   query: string;
   variationCount: number;
+  imageModels: MediaModels;
+  imageModel: string;
+  onImageModelChange: (model: string) => void;
   onQueryChange: (value: string) => void;
   onRun: () => void;
   onVariationChange: (delta: number) => void;
@@ -631,53 +633,62 @@ function DiscoverControls({
   }
 
   return (
-    <div className="flex h-[76px] flex-none gap-2.5" aria-label={`Generate with ${providerLabel}`}>
-      <textarea
-        autoFocus
-        value={query}
-        onChange={(event) => onQueryChange(event.target.value)}
-        onKeyDown={(event) => {
-          if ((event.metaKey || event.ctrlKey) && event.key === "Enter" && canRun) {
-            onRun();
-          }
-        }}
-        placeholder="Describe your image"
-        className="min-w-0 flex-1 resize-none rounded-[8px] border border-[rgba(219,219,219,0.6)] bg-white px-2.5 py-3 text-[14px] font-normal outline-none shadow-[0_4px_7px_rgba(0,0,0,0.04)] placeholder:text-[#999] focus:border-[#B9BBC1]"
-      />
-      <div className="flex w-[150px] flex-none flex-col gap-2.5">
-        <div className="flex h-[34px] items-center rounded-full border border-[#EDEEEF] bg-white">
+    <div className="flex flex-none flex-col gap-2">
+      <div className="flex h-[76px] flex-none gap-2.5" aria-label={`Generate with ${providerLabel}`}>
+        <textarea
+          autoFocus
+          value={query}
+          onChange={(event) => onQueryChange(event.target.value)}
+          onKeyDown={(event) => {
+            if ((event.metaKey || event.ctrlKey) && event.key === "Enter" && canRun) {
+              onRun();
+            }
+          }}
+          placeholder="Describe your image"
+          className="min-w-0 flex-1 resize-none rounded-[8px] border border-[rgba(219,219,219,0.6)] bg-white px-2.5 py-3 text-[14px] font-normal outline-none shadow-[0_4px_7px_rgba(0,0,0,0.04)] placeholder:text-[#999] focus:border-[#B9BBC1]"
+        />
+        <div className="flex w-[150px] flex-none flex-col gap-2.5">
+          <div className="flex h-[34px] items-center rounded-full border border-[#EDEEEF] bg-white">
+            <button
+              type="button"
+              aria-label="Fewer variations"
+              disabled={variationCount <= 1 || isWorking}
+              onClick={() => onVariationChange(-1)}
+              className="flex h-full w-9 items-center justify-center rounded-l-full hover:bg-[#F9FAFB] disabled:opacity-35"
+            >
+              <Minus className="size-3.5" />
+            </button>
+            <span className="flex h-4 flex-1 items-center justify-center border-x border-[#EDEEEF] text-[12px] font-semibold">
+              {variationCount} {variationCount === 1 ? "Variation" : "Variations"}
+            </span>
+            <button
+              type="button"
+              aria-label="More variations"
+              disabled={variationCount >= 4 || isWorking}
+              onClick={() => onVariationChange(1)}
+              className="flex h-full w-9 items-center justify-center rounded-r-full hover:bg-[#F9FAFB] disabled:opacity-35"
+            >
+              <Plus className="size-3.5" />
+            </button>
+          </div>
           <button
             type="button"
-            aria-label="Fewer variations"
-            disabled={variationCount <= 1 || isWorking}
-            onClick={() => onVariationChange(-1)}
-            className="flex h-full w-9 items-center justify-center rounded-l-full hover:bg-[#F9FAFB] disabled:opacity-35"
+            aria-label={`Generate ${variationCount} image variations with ${providerLabel}`}
+            onClick={onRun}
+            disabled={!canRun}
+            className="flex h-8 items-center justify-center rounded-[38.4px] bg-[#EDEEEF] px-[12.8px] py-2 text-[#191919] transition hover:bg-[#E1E1E5] disabled:cursor-not-allowed disabled:text-[#999]"
           >
-            <Minus className="size-3.5" />
-          </button>
-          <span className="flex h-4 flex-1 items-center justify-center border-x border-[#EDEEEF] text-[12px] font-semibold">
-            {variationCount} {variationCount === 1 ? "Variation" : "Variations"}
-          </span>
-          <button
-            type="button"
-            aria-label="More variations"
-            disabled={variationCount >= 4 || isWorking}
-            onClick={() => onVariationChange(1)}
-            className="flex h-full w-9 items-center justify-center rounded-r-full hover:bg-[#F9FAFB] disabled:opacity-35"
-          >
-            <Plus className="size-3.5" />
+            {isWorking ? <Loader2 className="size-4 animate-spin" /> : <ArrowUp className="size-4" />}
           </button>
         </div>
-        <button
-          type="button"
-          aria-label={`Generate ${variationCount} image variations with ${providerLabel}`}
-          onClick={onRun}
-          disabled={!canRun}
-          className="flex h-8 items-center justify-center rounded-[38.4px] bg-[#EDEEEF] px-[12.8px] py-2 text-[#191919] transition hover:bg-[#E1E1E5] disabled:cursor-not-allowed disabled:text-[#999]"
-        >
-          {isWorking ? <Loader2 className="size-4 animate-spin" /> : <ArrowUp className="size-4" />}
-        </button>
       </div>
+      <MediaModelSelect
+        models={imageModels}
+        value={imageModel}
+        onChange={onImageModelChange}
+        disabled={isWorking || disabled}
+        className="max-w-[360px]"
+      />
     </div>
   );
 }

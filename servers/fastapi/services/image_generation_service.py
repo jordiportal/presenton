@@ -41,6 +41,7 @@ from utils.image_provider import (
 from utils.asset_directory_utils import absolute_fastapi_asset_url
 from utils.image_generation_error import normalize_image_generation_error
 import uuid
+from typing import Optional
 
 
 COMFYUI_MAX_SEED = 0xFFFFFFFFFFFFFFFF
@@ -93,9 +94,13 @@ class ImageGenerationService:
     def is_stock_provider_selected(self):
         return is_pixels_selected() or is_pixabay_selected()
 
-    async def generate_image(self, prompt: ImagePrompt) -> str | ImageAsset:
+    async def generate_image(
+        self, prompt: ImagePrompt, model: Optional[str] = None
+    ) -> str | ImageAsset:
         """
         Generates an image based on the provided prompt.
+        - `model` overrides the default model (OpenAI-compatible gateway only);
+        validate it with `services.media_models.resolve_image_model` first.
         - If no image generation function is available, returns a placeholder image.
         - If the stock provider is selected, it uses the prompt directly,
         otherwise it uses the full image prompt with theme.
@@ -116,10 +121,10 @@ class ImageGenerationService:
 
         try:
             if is_parallel_image_generation_enabled():
-                image_path = await self._call_image_provider(image_prompt)
+                image_path = await self._call_image_provider(image_prompt, model)
             else:
                 async with _get_image_generation_lock():
-                    image_path = await self._call_image_provider(image_prompt)
+                    image_path = await self._call_image_provider(image_prompt, model)
             if image_path:
                 if image_path.startswith("http"):
                     return image_path
@@ -130,6 +135,7 @@ class ImageGenerationService:
                         extras={
                             "prompt": prompt.prompt,
                             "theme_prompt": prompt.theme_prompt,
+                            **({"model": model} if model else {}),
                         },
                     )
                 elif image_path.startswith("/app_data/") or image_path.startswith(
@@ -145,9 +151,15 @@ class ImageGenerationService:
                 raise
             raise normalized_error from e
 
-    async def _call_image_provider(self, image_prompt: str) -> str:
+    async def _call_image_provider(
+        self, image_prompt: str, model: Optional[str] = None
+    ) -> str:
         if self.is_stock_provider_selected():
             return await self.image_gen_func(image_prompt)
+        if model and self.image_gen_func == self.generate_image_openai_compatible:
+            return await self.generate_image_openai_compatible(
+                image_prompt, self.output_directory, model=model
+            )
         return await self.image_gen_func(image_prompt, self.output_directory)
 
     async def generate_image_openai(
@@ -845,11 +857,11 @@ class ImageGenerationService:
                         raise Exception(f"Failed to download image: {response.status}")
 
     async def generate_image_openai_compatible(
-        self, prompt: str, output_directory: str
+        self, prompt: str, output_directory: str, model: Optional[str] = None
     ) -> str:
         base_url = get_openai_compat_image_base_url_env()
         api_key = get_openai_compat_image_api_key_env()
-        model = get_openai_compat_image_model_env()
+        model = model or get_openai_compat_image_model_env()
 
         if not base_url or not api_key or not model:
             raise ValueError(

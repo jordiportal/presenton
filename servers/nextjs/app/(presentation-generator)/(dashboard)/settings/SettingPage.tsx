@@ -15,8 +15,10 @@ import { trackEvent, MixpanelEvent } from "@/utils/mixpanel";
 import SettingSideBar, { SettingsSection } from "./SettingSideBar";
 import TextProvider from "./TextProvider";
 import ImageProvider from "./ImageProvider";
+import VideoProvider from "./VideoProvider";
 import WebSearchProvider from "./WebSearchProvider";
 import PrivacySettings from "./PrivacySettings";
+import PresentationSettings from "./PresentationSettings";
 import {
   IMAGE_PROVIDERS,
   LLM_PROVIDERS,
@@ -324,7 +326,7 @@ const SettingsPage = () => {
   useEffect(() => {
     if (
       llmConfig.LLM === "presenton" &&
-      (selectedProvider === "image-provider" || selectedProvider === "web-search-provider")
+      (selectedProvider === "image-provider" || selectedProvider === "video-provider" || selectedProvider === "web-search-provider")
     ) {
       setSelectedProvider("text-provider");
     }
@@ -451,7 +453,9 @@ const SettingsPage = () => {
             llmConfig={llmConfig}
           />}
           {selectedProvider === 'image-provider' && llmConfig.LLM !== "presenton" && <ImageProvider llmConfig={llmConfig} setLlmConfig={setLlmConfig} />}
+          {selectedProvider === 'video-provider' && llmConfig.LLM !== "presenton" && <VideoProvider llmConfig={llmConfig} setLlmConfig={setLlmConfig} />}
           {selectedProvider === 'web-search-provider' && llmConfig.LLM !== "presenton" && <WebSearchProvider llmConfig={llmConfig} setLlmConfig={setLlmConfig} />}
+          {selectedProvider === 'presentations' && <PresentationSettings llmConfig={llmConfig} setLlmConfig={setLlmConfig} />}
           {selectedProvider === 'privacy' && <PrivacySettings />}
           {selectedProvider === "admin" && <AdminPanel embedded />}
           {selectedProvider === "session" && (
@@ -473,7 +477,7 @@ const SettingsPage = () => {
       </main>
 
       {/* Fixed Bottom Button — hidden on Sign out; nothing to save there */}
-      {!["session", "admin"].includes(selectedProvider) ? (
+      {!["session", "admin", "presentations"].includes(selectedProvider) ? (
         <div className="fixed bottom-20 right-5 z-50 mx-auto">
           <button
             onClick={handleSaveConfig}

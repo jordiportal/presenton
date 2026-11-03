@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
 import { useRouter } from "next/navigation";
 import { notify } from "@/components/ui/sonner";
@@ -6,6 +6,7 @@ import { setPresentationData } from "@/store/slices/presentationGeneration";
 import { clearHistory } from "@/store/slices/undoRedoSlice";
 import { applyPresentationThemeToElement } from "../utils/applyPresentationThemeDom";
 import { normalizeBackendAssetUrls } from "@/utils/api";
+import { withEmbedParams } from "@/utils/embed";
 import { useFontLoader } from "../../hooks/useFontLoad";
 import { DashboardApi } from "../../services/api/dashboard";
 import TemplateService from "../../services/api/template";
@@ -16,19 +17,50 @@ import {
 } from "@/lib/template-theme";
 
 
+// La generación async solo guarda el deck al final (varios minutos).
+const PENDING_DECK_POLL_MS = 4_000;
+const PENDING_DECK_MAX_WAIT_MS = 20 * 60_000;
+
+/** Creado con `/presentation/create` y aún sin esquema: le toca la pantalla de outline. */
+const isAwaitingOutline = (data: any): boolean =>
+  !!data &&
+  data.type !== "smart" &&
+  !data.outlines &&
+  Array.isArray(data.slides) &&
+  data.slides.length === 0;
+
 export const usePresentationData = (
   presentationId: string,
   setLoading: (loading: boolean) => void,
-  setError: (error: boolean) => void
+  setError: (error: boolean) => void,
+  onAwaitingGeneration?: (waiting: boolean) => void
 ) => {
   const dispatch = useDispatch();
   const router = useRouter();
+  const pendingSinceRef = useRef<number | null>(null);
+  const pendingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const fetchUserSlides = useCallback(async (options?: { clearHistory?: boolean }) => {
+  useEffect(
+    () => () => {
+      if (pendingTimerRef.current) clearTimeout(pendingTimerRef.current);
+    },
+    []
+  );
+
+  const fetchUserSlides = useCallback(async (options?: { clearHistory?: boolean }): Promise<any> => {
     try {
       const data = await DashboardApi.getPresentation(presentationId, {
         cache: "no-store",
       });
+      if (pendingSinceRef.current !== null) {
+        pendingSinceRef.current = null;
+        onAwaitingGeneration?.(false);
+      }
+
+      if (isAwaitingOutline(data)) {
+        router.replace(withEmbedParams(`/outline?id=${presentationId}`));
+        return undefined;
+      }
 
       if (data?.version === "v1-standard") {
         notify.warning(
@@ -77,13 +109,26 @@ export const usePresentationData = (
 
       return normalizedData;
     } catch (error) {
+      if ((error as { status?: number })?.status === 404) {
+        const now = Date.now();
+        pendingSinceRef.current ??= now;
+        if (now - pendingSinceRef.current < PENDING_DECK_MAX_WAIT_MS) {
+          onAwaitingGeneration?.(true);
+          pendingTimerRef.current = setTimeout(() => {
+            void fetchUserSlides(options);
+          }, PENDING_DECK_POLL_MS);
+          return undefined;
+        }
+        pendingSinceRef.current = null;
+        onAwaitingGeneration?.(false);
+      }
       setError(true);
       notify.error("Failed to load presentation", "The presentation could not be loaded. Please try again.");
       console.error("Error fetching user slides:", error);
       setLoading(false);
       return undefined;
     }
-  }, [presentationId, dispatch, router, setLoading, setError]);
+  }, [presentationId, dispatch, router, setLoading, setError, onAwaitingGeneration]);
 
   return {
     fetchUserSlides,

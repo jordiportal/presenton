@@ -125,6 +125,13 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
                 request.state.internal_session_token = (
                     await get_jwt_strategy().write_token(user)
                 )
+            elif principal.method in {"embed", "service"} and request.method == "POST":
+                # The headless export page only accepts a session cookie.
+                embed_owner = await session.get(User, principal.user_id)
+                if embed_owner is not None:
+                    request.state.internal_session_token = (
+                        await get_jwt_strategy().write_token(embed_owner)
+                    )
             context_token = set_current_owner_id(principal.user_id)
             admin_context_token = set_current_owner_is_admin(principal.is_admin)
             from services.presentation_access import list_shared_asset_owner_ids

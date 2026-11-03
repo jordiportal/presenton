@@ -5,9 +5,9 @@ El mismo secreto (``PRESENTON_EMBED_SECRET``) sirve para:
 - Bearer plano: tools OpenAPI de Brain (``auth_type: bearer``).
 - JWT HS256 (``iss=brain``, ``aud=brain.embed``): iframe ``?token=``.
 
-Ambos principals comparten un ``owner_id`` estable para que los assets
-creados por las tools sean visibles en el embed (misma carpeta
-``/app_data/.../users/<id>/``).
+El Bearer plano sigue siendo el principal ``service`` (``brain-service``).
+El JWT de embed lleva en ``sub`` el email del usuario de Brain: Presenton lo
+resuelve al usuario local de Keycloak y el deck queda a su nombre.
 """
 
 from __future__ import annotations

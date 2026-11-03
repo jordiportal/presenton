@@ -97,3 +97,84 @@ def test_auth_disabled_runtime_still_checks_presenton_cloud_proxy(monkeypatch):
     assert captured["session"] == "desktop-session"
     assert captured["user"] is None
     assert captured["kwargs"] == {"allow_unowned": True}
+
+
+def _brain_request(method):
+    return Request(
+        {
+            "type": "http",
+            "method": method,
+            "scheme": "http",
+            "path": "/api/v1/ppt/presentation/generate/async",
+            "query_string": b"",
+            "headers": [(b"authorization", b"Bearer secret")],
+            "client": ("127.0.0.1", 1234),
+            "server": ("127.0.0.1", 5001),
+        }
+    )
+
+
+def _run_brain_request(monkeypatch, method):
+    from api.v1.auth.embed import BRAIN_EMBED_OWNER_ID
+    from api.v1.auth.principal import AuthPrincipal
+    import services.presentation_access as presentation_access
+
+    owner = object()
+
+    class FakeSession:
+        async def scalar(self, _query):
+            return 1
+
+        async def get(self, _model, key):
+            return owner if key == BRAIN_EMBED_OWNER_ID else None
+
+    class SessionContext:
+        async def __aenter__(self):
+            return FakeSession()
+
+        async def __aexit__(self, *_args):
+            return None
+
+    class Strategy:
+        async def write_token(self, user):
+            assert user is owner
+            return "export-jwt"
+
+    async def principal(_request, _session):
+        return (
+            AuthPrincipal(
+                user_id=BRAIN_EMBED_OWNER_ID,
+                username="brain-service",
+                is_admin=True,
+                method="service",
+            ),
+            None,
+        )
+
+    async def no_shared_owners(_session, _user_id):
+        return []
+
+    seen = {}
+
+    async def call_next(request):
+        seen["token"] = getattr(request.state, "internal_session_token", None)
+        return Response("ok")
+
+    monkeypatch.setattr(middlewares, "is_disable_auth_enabled", lambda: False)
+    monkeypatch.setattr(middlewares, "async_session_maker", SessionContext)
+    monkeypatch.setattr(middlewares, "resolve_request_principal", principal)
+    monkeypatch.setattr(middlewares, "get_jwt_strategy", lambda: Strategy())
+    monkeypatch.setattr(
+        presentation_access, "list_shared_asset_owner_ids", no_shared_owners
+    )
+
+    asyncio.run(SessionAuthMiddleware(app=None).dispatch(_brain_request(method), call_next))
+    return seen["token"]
+
+
+def test_brain_service_post_gets_an_export_session(monkeypatch):
+    assert _run_brain_request(monkeypatch, "POST") == "export-jwt"
+
+
+def test_brain_service_get_skips_the_export_session(monkeypatch):
+    assert _run_brain_request(monkeypatch, "GET") is None

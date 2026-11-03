@@ -11,6 +11,16 @@ interface StockSearchOptions {
 
 const REDACTED_SECRET_PLACEHOLDER = "__configured__";
 
+export type ImageModelOptions = {
+  provider: string;
+  enabled: boolean;
+  default: string;
+  alternatives: string[];
+  models: string[];
+  /** False for providers with a single fixed model. */
+  selectable: boolean;
+};
+
 export class ImagesApi {
  
  static async uploadImage(file: File): Promise<ImageAssetResponse> {
@@ -51,8 +61,20 @@ export class ImagesApi {
     ) as ImageAssetResponse[];
   }
 
-  static async generateImage(prompt: string): Promise<string> {
+  static async getImageModels(): Promise<ImageModelOptions> {
+    const response = await fetch(getApiUrl(`/api/v1/ppt/images/models`), {
+      cache: "no-cache",
+    });
+    return (await ApiResponseHandler.handleResponse(
+      response,
+      "Failed to read image models",
+    )) as ImageModelOptions;
+  }
+
+  /** `model` must be one of `getImageModels().models`; omit for the default. */
+  static async generateImage(prompt: string, model?: string | null): Promise<string> {
     const params = new URLSearchParams({ prompt });
+    if (model) params.set("model", model);
     const response = await fetch(
       getApiUrl(`/api/v1/ppt/images/generate?${params.toString()}`),
       { cache: "no-cache" },

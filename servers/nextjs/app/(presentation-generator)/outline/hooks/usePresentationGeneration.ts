@@ -13,6 +13,7 @@ import {
   MAX_NUMBER_OF_SLIDES,
 } from "@/utils/presentationLimits";
 import { store } from "@/store/store";
+import { withEmbedParams } from "@/utils/embed";
 
 const DEFAULT_LOADING_STATE: LoadingState = {
   message: "",
@@ -119,7 +120,9 @@ export const usePresentationGeneration = (
         dispatch(clearPresentationData());
         clearTheme();
         router.replace(
-          `/presentation?id=${presentationId}&stream=true&type=standard`
+          withEmbedParams(
+            `/presentation?id=${presentationId}&stream=true&type=standard`
+          )
         );
       }
     } catch (error: any) {

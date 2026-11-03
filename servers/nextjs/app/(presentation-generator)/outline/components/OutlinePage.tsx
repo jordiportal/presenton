@@ -22,6 +22,7 @@ import {
   trimTextToWordLimit,
 } from "@/utils/presentationLimits";
 import { sanitizeAnalyticsError } from "@/utils/analytics";
+import { isTruthyEmbedFlag } from "@/utils/embed";
 import { MixpanelEvent, trackEvent } from "@/utils/mixpanel";
 
 import Chat from "../../presentation/components/Chat";
@@ -31,6 +32,7 @@ import {
   ToneType,
   VerbosityType,
 } from "../../upload/type";
+import { DashboardApi } from "../../services/api/dashboard";
 import { PresentationGenerationApi } from "../../services/api/presentation-generation";
 import { useOutlineManagement } from "../hooks/useOutlineManagement";
 import { useOutlineStreaming } from "../hooks/useOutlineStreaming";
@@ -41,6 +43,7 @@ import OutlineContent from "./OutlineContent";
 import OutlinePromptBar from "./OutlinePromptBar";
 import OutlineStandardHeader from "./OutlineStandardHeader";
 import TemplateSelection from "./TemplateSelection";
+import { TemplateListLoadingState } from "../../components/TemplateListUi";
 
 const DEFAULT_OUTLINE_CONFIG: PresentationConfig = {
   slides: null,
@@ -119,15 +122,28 @@ const OutlinePage: React.FC = () => {
   );
   const queryPresentationId = searchParams.get("id")?.trim() || null;
   const suggestedTemplate = searchParams.get("template")?.trim() || null;
+  const isEmbed = isTruthyEmbedFlag(searchParams.get("embed"));
   const presentation_id = queryPresentationId || storedPresentationId;
   const { config: savedConfig, files } = useSelector(
     (state: RootState) => state.pptGenUpload
   );
+  const defaultTemplate = useSelector(
+    (state: RootState) => state.userConfig.llm_config.DEFAULT_TEMPLATE
+  )?.trim() || null;
 
   const [isTemplateStage, setIsTemplateStage] = useState(true);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(
     null
   );
+  const [selectedTemplateName, setSelectedTemplateName] = useState<
+    string | null
+  >(null);
+  // undefined mientras se carga el deck: evita mostrar la galería un instante.
+  const [deckTemplate, setDeckTemplate] = useState<string | null | undefined>(
+    presentation_id ? undefined : null
+  );
+  const preferredTemplate =
+    suggestedTemplate || deckTemplate || defaultTemplate;
   const [draftConfig, setDraftConfig] = useState<PresentationConfig>(
     savedConfig ? normalizeOutlineConfig(savedConfig) : DEFAULT_OUTLINE_CONFIG
   );
@@ -151,7 +167,9 @@ const OutlinePage: React.FC = () => {
     isRegeneratingOutline || streamState.isLoading || streamState.isStreaming;
   const isOutlineReady =
     hasSelectedTemplate && hasOutlineStreamFinished && !outlineControlsBusy;
-  const isOutlineAssistantVisible = !isTemplateStage && hasSelectedTemplate;
+  // Embebido en Brain, el agente de Brain es el asistente: dos chats lían.
+  const isOutlineAssistantVisible =
+    !isEmbed && !isTemplateStage && hasSelectedTemplate;
   const isRegenerateDisabled = !isOutlineReady;
   const outlineStreamFinished =
     !isTemplateStage &&
@@ -169,6 +187,38 @@ const OutlinePage: React.FC = () => {
       setDraftConfig(normalizeOutlineConfig(savedConfig));
     }
   }, [savedConfig]);
+
+  useEffect(() => {
+    if (!presentation_id) {
+      setDeckTemplate(null);
+      return;
+    }
+    let cancelled = false;
+    DashboardApi.getPresentation(presentation_id, { cache: "no-store" })
+      .then((presentation) => {
+        if (cancelled) return;
+        setDeckTemplate(presentation?.template?.trim() || null);
+        // Un deck creado por API (p. ej. desde Brain) llega sin la config de upload.
+        if (!presentation || savedConfig) return;
+        setDraftConfig((previous) =>
+          normalizeOutlineConfig({
+            ...previous,
+            prompt: presentation.content ?? previous.prompt,
+            slides: presentation.n_slides ? String(presentation.n_slides) : null,
+            instructions: presentation.instructions ?? previous.instructions,
+            includeTableOfContents: !!presentation.include_table_of_contents,
+            includeTitleSlide: !!presentation.include_title_slide,
+            webSearch: !!presentation.web_search,
+          })
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setDeckTemplate(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [presentation_id, savedConfig]);
 
   useEffect(() => {
     setHasOutlineStreamFinished(false);
@@ -214,10 +264,24 @@ const OutlinePage: React.FC = () => {
       position: number;
     }) => {
       setSelectedTemplateId(template.id);
+      setSelectedTemplateName(template.name);
       setIsTemplateStage(false);
       scrollToPageTop();
     },
     []
+  );
+
+  const handlePreferredTemplateResolved = useCallback(
+    (template: {
+      id: string;
+      name: string;
+      source: "default" | "custom";
+      position: number;
+    }) => {
+      if (selectedTemplateId) return;
+      handleTemplateSelect(template);
+    },
+    [handleTemplateSelect, selectedTemplateId]
   );
 
   const handleRegenerateOutline = useCallback(async () => {
@@ -361,7 +425,8 @@ const OutlinePage: React.FC = () => {
       <div className="min-h-screen bg-[#FEFEFF]">
         <OutlineStandardHeader
           title="Outline Generation"
-          onBack={() => router.push("/dashboard")}
+          embed={isEmbed}
+          onBack={isEmbed ? undefined : () => router.push("/dashboard")}
         />
         <EmptyStateView />
       </div>
@@ -384,31 +449,61 @@ const OutlinePage: React.FC = () => {
 
       <OutlineStandardHeader
         title={isTemplateStage ? "Select Template" : "Outline Generation"}
-        onBack={() => {
-          if (isTemplateStage) {
-            router.push("/dashboard");
-            return;
-          }
-          handleReturnToTemplates();
-        }}
+        embed={isEmbed}
+        onBack={
+          isTemplateStage && isEmbed && !selectedTemplateId
+            ? undefined
+            : () => {
+                if (isTemplateStage) {
+                  if (selectedTemplateId) {
+                    setIsTemplateStage(false);
+                    scrollToPageTop();
+                    return;
+                  }
+                  router.push("/dashboard");
+                  return;
+                }
+                handleReturnToTemplates();
+              }
+        }
       />
 
       {isTemplateStage ? (
         <main className="mx-auto w-full max-w-[1440px] px-5 pb-12 pt-10 sm:px-10 lg:px-20">
-          <TemplateSelection
-            presentationId={presentation_id}
-            selectedTemplateId={selectedTemplateId}
-            suggestedTemplate={suggestedTemplate}
-            onSuggestedTemplateResolved={(template) =>
-              setSelectedTemplateId((current) => current ?? template.id)
-            }
-            onSelectTemplate={handleTemplateSelect}
-          />
+          {deckTemplate === undefined ? (
+            <TemplateListLoadingState />
+          ) : (
+            <TemplateSelection
+              presentationId={presentation_id}
+              selectedTemplateId={selectedTemplateId}
+              suggestedTemplate={selectedTemplateId ? null : preferredTemplate}
+              onSuggestedTemplateResolved={handlePreferredTemplateResolved}
+              onSelectTemplate={handleTemplateSelect}
+            />
+          )}
         </main>
       ) : (
         <>
-          <div className="lg:mr-[369px]">
+          <div className={isOutlineAssistantVisible ? "lg:mr-[369px]" : undefined}>
             <main className="mx-auto w-[calc(100%-2.5rem)] max-w-[967px] pb-28 pt-10 sm:w-[calc(100%-5rem)]">
+              {selectedTemplateName && (
+                <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-[#E4E0FF] bg-[#F7F5FF] px-4 py-2.5 text-xs text-[#3A3A3A]">
+                  <span className="min-w-0 truncate">
+                    Template:{" "}
+                    <strong className="font-semibold text-[#5141E5]">
+                      {selectedTemplateName}
+                    </strong>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleReturnToTemplates}
+                    disabled={streamState.isStreaming}
+                    className="shrink-0 rounded-full border border-[#D9D6FE] bg-white px-3 py-1 font-semibold text-[#5141E5] transition hover:bg-[#F4F3FF] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Change template
+                  </button>
+                </div>
+              )}
               <OutlinePromptBar
                 config={draftConfig}
                 disabled={outlineControlsBusy}
@@ -474,7 +569,12 @@ const OutlinePage: React.FC = () => {
             </aside>
           )}
 
-          <div className="pointer-events-none fixed bottom-6 left-5 right-5 z-50 flex justify-center sm:left-10 sm:right-10 lg:left-0 lg:right-[369px]">
+          <div
+            className={cn(
+              "pointer-events-none fixed bottom-6 left-5 right-5 z-50 flex justify-center sm:left-10 sm:right-10 lg:left-0",
+              isOutlineAssistantVisible ? "lg:right-[369px]" : "lg:right-0"
+            )}
+          >
             <div className="pointer-events-auto">
               <GenerateButton
                 loadingState={loadingState}

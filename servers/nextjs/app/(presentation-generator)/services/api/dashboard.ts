@@ -29,6 +29,7 @@ export interface PresentationResponse {
   structure?: any;
   components?: any;
   fonts?: any;
+  template?: string | null;
   slides: any[];
   access_role?: "owner" | "editor" | "viewer";
   owner_username?: string | null;

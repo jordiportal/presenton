@@ -54,6 +54,16 @@ export type EnqueueAnimateImageParams = {
   opacity?: number | null;
   name?: string | null;
   decorative?: boolean | null;
+  /** One of `VideoCapabilities.models`; omit for the default. */
+  model?: string | null;
+};
+
+export type VideoCapabilities = {
+  image_to_video: boolean;
+  model: string;
+  default: string;
+  alternatives: string[];
+  models: string[];
 };
 
 export class VideosApi {
@@ -71,17 +81,14 @@ export class VideosApi {
     )) as VideoAssetResponse;
   }
 
-  static async getCapabilities(): Promise<{
-    image_to_video: boolean;
-    model: string;
-  }> {
+  static async getCapabilities(): Promise<VideoCapabilities> {
     const response = await fetch(getApiUrl(`/api/v1/ppt/videos/capabilities`), {
       cache: "no-cache",
     });
     return (await ApiResponseHandler.handleResponse(
       response,
       "Failed to read video capabilities",
-    )) as { image_to_video: boolean; model: string };
+    )) as VideoCapabilities;
   }
 
   static async enqueueAnimate(
@@ -105,6 +112,7 @@ export class VideosApi {
         opacity: params.opacity ?? undefined,
         name: params.name || undefined,
         decorative: params.decorative ?? undefined,
+        model: params.model || undefined,
       }),
     });
     return (await ApiResponseHandler.handleResponse(

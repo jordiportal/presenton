@@ -104,9 +104,12 @@ export interface LLMConfig {
   OPENAI_COMPAT_IMAGE_BASE_URL?: string;
   OPENAI_COMPAT_IMAGE_API_KEY?: string;
   OPENAI_COMPAT_IMAGE_MODEL?: string;
+  /** Comma-separated models selectable instead of OPENAI_COMPAT_IMAGE_MODEL. */
+  OPENAI_COMPAT_IMAGE_ALT_MODELS?: string;
   OPENAI_COMPAT_VIDEO_BASE_URL?: string;
   OPENAI_COMPAT_VIDEO_API_KEY?: string;
   OPENAI_COMPAT_VIDEO_MODEL?: string;
+  OPENAI_COMPAT_VIDEO_ALT_MODELS?: string;
 
   // Dalle 3 Quality
   DALL_E_3_QUALITY?: string;
@@ -147,6 +150,9 @@ export interface LLMConfig {
   CODEX_USERNAME?: string;
   CODEX_EMAIL?: string;
   CODEX_IS_PRO?: boolean;
+
+  // Template V2 (id) used when a deck doesn't pick one
+  DEFAULT_TEMPLATE?: string;
 
   // Only used in UI settings
   USE_CUSTOM_URL?: boolean;

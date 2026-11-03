@@ -36,7 +36,9 @@ REVISION_TEMPLATE_V2_THEME = "e4c7a9b2d6f1"
 REVISION_PRESENTATION_COLLABORATION = "f5b8c1d2e3a4"
 REVISION_PRESENTATION_SHARES = "a6c2d3e4f5b7"
 REVISION_PRESENTATION_NOTES = "b7e4f5a6c8d9"
-REVISION_HEAD = REVISION_PRESENTATION_NOTES
+REVISION_SIMULATION = "c1a2b3d4e5f6"
+REVISION_PRESENTATION_TEMPLATE = "d4e6f8a0b2c3"
+REVISION_HEAD = REVISION_PRESENTATION_TEMPLATE
 
 
 async def migrate_database_on_startup() -> None:
@@ -140,6 +142,12 @@ def _infer_revision_from_schema(
         for table in owned_tables
     )
     if "provider_settings" in tables and "user" in tables and ownership_ready:
+        if "presentation_notes" in tables and _has_column(
+            inspector, "presentations", "template"
+        ):
+            return REVISION_PRESENTATION_TEMPLATE
+        if "simulation_workbook" in tables:
+            return REVISION_SIMULATION
         if "presentation_notes" in tables:
             return REVISION_PRESENTATION_NOTES
         if "presentation_shares" in tables:

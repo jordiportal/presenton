@@ -787,7 +787,7 @@ class ChatTools:
 
         for index, asset in enumerate(payload.assets):
             if asset.kind == "image":
-                url = await self._memory.generate_image(asset.prompt)
+                url = await self._memory.generate_image(asset.prompt, model=asset.model)
             else:
                 url = await self._memory.generate_icon(asset.prompt)
 
@@ -796,6 +796,7 @@ class ChatTools:
                     "index": index,
                     "kind": asset.kind,
                     "prompt": asset.prompt,
+                    **({"model": asset.model} if asset.model else {}),
                     "url": url,
                 }
             )
