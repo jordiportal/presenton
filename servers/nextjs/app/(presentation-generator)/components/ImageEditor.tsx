@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { PresentationGenerationApi } from "../services/api/presentation-generation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { notify } from "@/components/ui/sonner";
+import { MediaModelSelect, useMediaModels } from "@/components/media/MediaModelSelect";
 import { PreviousGeneratedImagesResponse } from "../services/api/params";
 import { trackEvent, MixpanelEvent } from "@/utils/mixpanel";
 import { ImagesApi } from "../services/api/images";
@@ -69,6 +70,8 @@ const ImageEditor = ({
     PreviousGeneratedImagesResponse[]
   >([]);
   const [prompt, setPrompt] = useState<string>("");
+  const imageModels = useMediaModels("image");
+  const [imageModel, setImageModel] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [stockSearchResults, setStockSearchResults] = useState<string[]>([]);
   const [isSearchingStock, setIsSearchingStock] = useState(false);
@@ -284,9 +287,7 @@ const ImageEditor = ({
       setIsGenerating(true);
       setError(null);
       trackEvent(MixpanelEvent.ImageEditor_GenerateImage_API_Call);
-      const response = await PresentationGenerationApi.generateImage({
-        prompt: prompt,
-      });
+      const response = await ImagesApi.generateImage(prompt, imageModel || null);
 
       setPreviewImages(resolveEditorImageSource(response));
     } catch (err: any) {
@@ -411,6 +412,15 @@ const ImageEditor = ({
                       onChange={(e) => setPrompt(e.target.value)}
                       className="min-h-[100px]"
                     />
+                    {!stockImageProvider ? (
+                      <MediaModelSelect
+                        models={imageModels}
+                        value={imageModel}
+                        onChange={setImageModel}
+                        disabled={isGenerating}
+                        className="mt-2"
+                      />
+                    ) : null}
                   </div>
 
                   <Button

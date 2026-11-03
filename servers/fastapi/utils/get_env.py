@@ -533,6 +533,14 @@ def get_openai_compat_video_model_env():
     return os.getenv("OPENAI_COMPAT_VIDEO_MODEL")
 
 
+def get_openai_compat_image_alt_models_env():
+    return os.getenv("OPENAI_COMPAT_IMAGE_ALT_MODELS")
+
+
+def get_openai_compat_video_alt_models_env():
+    return os.getenv("OPENAI_COMPAT_VIDEO_ALT_MODELS")
+
+
 def get_kh7_bi_url_env() -> str | None:
     raw = (os.getenv("KH7_BI_URL") or "").strip().rstrip("/")
     return raw or None

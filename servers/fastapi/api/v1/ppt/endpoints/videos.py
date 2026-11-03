@@ -13,6 +13,7 @@ from enums.async_task_status import AsyncTaskStatus
 from models.api_error_model import APIErrorModel
 from models.sql.async_task import AsyncTaskModel
 from services.database import async_session_maker, get_async_session
+from services.media_models import resolve_video_model, video_model_options
 from services.video_generation_service import (
     animate_image_to_video,
     get_video_model,
@@ -108,6 +109,10 @@ class AnimateImageRequest(BaseModel):
     opacity: Optional[float] = None
     name: Optional[str] = None
     decorative: Optional[bool] = None
+    model: Optional[str] = Field(
+        default=None,
+        description="One of /videos/capabilities `models`; omit for the default.",
+    )
 
 
 def _animate_task_data(
@@ -130,6 +135,7 @@ def _animate_task_data(
         "opacity": body.opacity,
         "name": body.name,
         "decorative": body.decorative,
+        "model": body.model,
     }
     if file_url:
         data["file_url"] = file_url
@@ -165,6 +171,7 @@ async def _run_animate_image_task(task_id: str, body: AnimateImageRequest) -> No
                 body.image_url,
                 prompt=body.prompt,
                 seconds=body.seconds,
+                model=body.model,
             )
         await _update_animate_task(
             task_id,
@@ -193,9 +200,13 @@ async def _run_animate_image_task(task_id: str, body: AnimateImageRequest) -> No
 
 @VIDEOS_ROUTER.get("/capabilities")
 async def video_capabilities() -> dict[str, object]:
+    options = video_model_options()
     return {
         "image_to_video": video_generation_configured(),
         "model": get_video_model(),
+        "default": options["default"],
+        "alternatives": options["alternatives"],
+        "models": options["models"],
     }
 
 
@@ -218,6 +229,10 @@ async def animate_image(
                 "on the LiteLLM-compatible image provider."
             ),
         )
+    try:
+        body.model = resolve_video_model(body.model)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     task = AsyncTaskModel(
         type=ASYNC_TASK_TYPE_VIDEO_ANIMATE,

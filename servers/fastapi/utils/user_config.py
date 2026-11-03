@@ -98,6 +98,8 @@ from utils.get_env import (
     get_openai_compat_video_base_url_env,
     get_openai_compat_video_api_key_env,
     get_openai_compat_video_model_env,
+    get_openai_compat_image_alt_models_env,
+    get_openai_compat_video_alt_models_env,
 )
 from utils.parsers import parse_bool_or_none
 from utils.user_config_store import read_user_config_file, update_user_config_file
@@ -197,6 +199,8 @@ from utils.set_env import (
     set_openai_compat_video_base_url_env,
     set_openai_compat_video_api_key_env,
     set_openai_compat_video_model_env,
+    set_openai_compat_image_alt_models_env,
+    set_openai_compat_video_alt_models_env,
 )
 
 
@@ -386,6 +390,16 @@ def get_user_config():
         or get_openai_compat_video_api_key_env(),
         OPENAI_COMPAT_VIDEO_MODEL=existing_config.OPENAI_COMPAT_VIDEO_MODEL
         or get_openai_compat_video_model_env(),
+        OPENAI_COMPAT_IMAGE_ALT_MODELS=(
+            existing_config.OPENAI_COMPAT_IMAGE_ALT_MODELS
+            if existing_config.OPENAI_COMPAT_IMAGE_ALT_MODELS is not None
+            else get_openai_compat_image_alt_models_env()
+        ),
+        OPENAI_COMPAT_VIDEO_ALT_MODELS=(
+            existing_config.OPENAI_COMPAT_VIDEO_ALT_MODELS
+            if existing_config.OPENAI_COMPAT_VIDEO_ALT_MODELS is not None
+            else get_openai_compat_video_alt_models_env()
+        ),
     )
 
 
@@ -605,6 +619,11 @@ def update_env_with_user_config():
         set_openai_compat_video_api_key_env(user_config.OPENAI_COMPAT_VIDEO_API_KEY)
     if user_config.OPENAI_COMPAT_VIDEO_MODEL:
         set_openai_compat_video_model_env(user_config.OPENAI_COMPAT_VIDEO_MODEL)
+    # Empty string is a valid choice (no alternatives), so test for None.
+    if user_config.OPENAI_COMPAT_IMAGE_ALT_MODELS is not None:
+        set_openai_compat_image_alt_models_env(user_config.OPENAI_COMPAT_IMAGE_ALT_MODELS)
+    if user_config.OPENAI_COMPAT_VIDEO_ALT_MODELS is not None:
+        set_openai_compat_video_alt_models_env(user_config.OPENAI_COMPAT_VIDEO_ALT_MODELS)
 
 
 def save_codex_tokens_to_user_config(*, include_model: bool = False) -> None:

@@ -389,3 +389,11 @@ def set_openai_compat_video_api_key_env(value: str):
 
 def set_openai_compat_video_model_env(value: str):
     os.environ["OPENAI_COMPAT_VIDEO_MODEL"] = value
+
+
+def set_openai_compat_image_alt_models_env(value: str):
+    os.environ["OPENAI_COMPAT_IMAGE_ALT_MODELS"] = value
+
+
+def set_openai_compat_video_alt_models_env(value: str):
+    os.environ["OPENAI_COMPAT_VIDEO_ALT_MODELS"] = value

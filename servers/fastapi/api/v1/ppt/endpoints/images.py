@@ -1,5 +1,5 @@
 from io import BytesIO
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, Depends, File, UploadFile, HTTPException, Query, Header
 from PIL import Image, UnidentifiedImageError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,6 +9,7 @@ from models.image_prompt import ImagePrompt
 from models.sql.image_asset import ImageAsset
 from services.database import get_async_session
 from services.image_generation_service import ImageGenerationService
+from services.media_models import image_model_options, resolve_image_model
 from utils.asset_directory_utils import (
     filesystem_image_path_to_app_data_url,
     get_images_directory,
@@ -162,15 +163,33 @@ async def search_stock_images(
     return images
 
 
+@IMAGES_ROUTER.get("/models")
+async def image_models() -> dict:
+    """Default image model and the alternatives enabled in Settings."""
+    return image_model_options()
+
+
 @IMAGES_ROUTER.get("/generate")
 async def generate_image(
-    prompt: str, sql_session: AsyncSession = Depends(get_async_session)
+    prompt: str,
+    model: Optional[str] = Query(
+        default=None,
+        description="One of /images/models `models`; omit for the default.",
+    ),
+    sql_session: AsyncSession = Depends(get_async_session),
 ):
+    try:
+        model_override = resolve_image_model(model)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
     images_directory = get_images_directory()
     image_prompt = ImagePrompt(prompt=prompt)
     image_generation_service = ImageGenerationService(images_directory)
 
-    image = await image_generation_service.generate_image(image_prompt)
+    image = await image_generation_service.generate_image(
+        image_prompt, model=model_override
+    )
     if not isinstance(image, ImageAsset):
         return normalize_slide_asset_url(image) if isinstance(image, str) else image
 

@@ -15,6 +15,7 @@ import { trackEvent, MixpanelEvent } from "@/utils/mixpanel";
 import SettingSideBar, { SettingsSection } from "./SettingSideBar";
 import TextProvider from "./TextProvider";
 import ImageProvider from "./ImageProvider";
+import VideoProvider from "./VideoProvider";
 import WebSearchProvider from "./WebSearchProvider";
 import PrivacySettings from "./PrivacySettings";
 import PresentationSettings from "./PresentationSettings";
@@ -325,7 +326,7 @@ const SettingsPage = () => {
   useEffect(() => {
     if (
       llmConfig.LLM === "presenton" &&
-      (selectedProvider === "image-provider" || selectedProvider === "web-search-provider")
+      (selectedProvider === "image-provider" || selectedProvider === "video-provider" || selectedProvider === "web-search-provider")
     ) {
       setSelectedProvider("text-provider");
     }
@@ -452,6 +453,7 @@ const SettingsPage = () => {
             llmConfig={llmConfig}
           />}
           {selectedProvider === 'image-provider' && llmConfig.LLM !== "presenton" && <ImageProvider llmConfig={llmConfig} setLlmConfig={setLlmConfig} />}
+          {selectedProvider === 'video-provider' && llmConfig.LLM !== "presenton" && <VideoProvider llmConfig={llmConfig} setLlmConfig={setLlmConfig} />}
           {selectedProvider === 'web-search-provider' && llmConfig.LLM !== "presenton" && <WebSearchProvider llmConfig={llmConfig} setLlmConfig={setLlmConfig} />}
           {selectedProvider === 'presentations' && <PresentationSettings llmConfig={llmConfig} setLlmConfig={setLlmConfig} />}
           {selectedProvider === 'privacy' && <PrivacySettings />}

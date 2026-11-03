@@ -4,7 +4,7 @@ import logging
 import os
 import re
 import uuid
-from typing import Any
+from typing import Any, Optional
 
 from jsonschema import Draft202012Validator
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,6 +21,7 @@ from models.sql.template_v2 import TemplateV2
 from services.icon_finder_service import ICON_FINDER_SERVICE
 from services.documents_loader import DocumentsLoader
 from services.image_generation_service import ImageGenerationService
+from services.media_models import resolve_image_model
 from services.mem0_presentation_memory_service import MEM0_PRESENTATION_MEMORY_SERVICE
 from services.temp_file_service import TEMP_FILE_SERVICE
 from templates.presentation_layout import PresentationLayoutModel, SlideLayoutModel
@@ -894,9 +895,12 @@ class PresentationChatMemoryLayer:
         layout_model = await self._get_layout_model(presentation)
         return layout_model.icon_weight if layout_model else DEFAULT_ICON_WEIGHT
 
-    async def generate_image(self, prompt: str) -> str:
+    async def generate_image(self, prompt: str, model: Optional[str] = None) -> str:
+        model_override = resolve_image_model(model)
         image_generation_service = ImageGenerationService(get_images_directory())
-        image = await image_generation_service.generate_image(ImagePrompt(prompt=prompt))
+        image = await image_generation_service.generate_image(
+            ImagePrompt(prompt=prompt), model=model_override
+        )
 
         if isinstance(image, ImageAsset):
             self._sql_session.add(image)

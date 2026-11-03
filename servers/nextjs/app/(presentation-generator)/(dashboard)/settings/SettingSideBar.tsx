@@ -1,10 +1,10 @@
 import React from 'react'
-import { LayoutTemplate, LogOut, Search, Shield, ShieldCheck } from 'lucide-react'
+import { Clapperboard, LayoutTemplate, LogOut, Search, Shield, ShieldCheck } from 'lucide-react'
 import { IMAGE_PROVIDERS, LLM_PROVIDERS } from '@/utils/providerConstants'
 import { useSelector } from 'react-redux'
 import { RootState } from '@/store/store'
 
-export type SettingsSection = 'text-provider' | 'image-provider' | 'web-search-provider' | 'presentations' | 'privacy' | 'admin' | 'session'
+export type SettingsSection = 'text-provider' | 'image-provider' | 'video-provider' | 'web-search-provider' | 'presentations' | 'privacy' | 'admin' | 'session'
 
 const SettingSideBar = ({ selectedProvider, setSelectedProvider, presentonSelected = false }: { selectedProvider: SettingsSection, setSelectedProvider: (provider: SettingsSection) => void, presentonSelected?: boolean }) => {
     const { llm_config } = useSelector((state: RootState) => state.userConfig)
@@ -30,6 +30,12 @@ const SettingSideBar = ({ selectedProvider, setSelectedProvider, presentonSelect
                                     <img src={imageProviderIcon} className=' object-cover w-full h-full overflow-hidden' alt='image provider' />
                                 </div>
                                 <p className='text-[#191919] text-xs  font-medium' >Image Provider</p>
+                            </button>
+                            <button className={` w-full rounded-[6px] px-3 py-4 flex items-center gap-1.5 border  ${selectedProvider === 'video-provider' ? 'bg-[#F4F3FF] border-[#D9D6FE]' : 'bg-white border-[#EDEEEF]'}`} onClick={() => setSelectedProvider('video-provider')}>
+                                <div className='relative w-[18px] h-[18px] rounded-full overflow-hidden border border-[#EDEEEF] flex items-center justify-center bg-white'>
+                                    <Clapperboard className='w-3 h-3 text-[#5146E5]' />
+                                </div>
+                                <p className='text-[#191919] text-xs font-medium'>Video Provider</p>
                             </button>
                             <button className={` w-full rounded-[6px] px-3 py-4 flex items-center gap-1.5 border  ${selectedProvider === 'web-search-provider' ? 'bg-[#F4F3FF] border-[#D9D6FE]' : 'bg-white border-[#EDEEEF]'}`} onClick={() => setSelectedProvider('web-search-provider')}>
                                 <div className='relative w-[18px] h-[18px] rounded-full overflow-hidden border border-[#EDEEEF] flex items-center justify-center bg-white'>

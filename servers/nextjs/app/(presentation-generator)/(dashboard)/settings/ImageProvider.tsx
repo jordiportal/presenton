@@ -6,24 +6,15 @@ import { Select, SelectItem, SelectContent, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch'
 import { LLMConfig } from '@/types/llm_config'
 import OpenAICompatibleImageFields from '@/components/OpenAICompatibleImageFields'
+import MediaModelsField from './MediaModelsField'
 import { DALLE_3_QUALITY_OPTIONS, GPT_IMAGE_1_5_QUALITY_OPTIONS, IMAGE_PROVIDERS } from '@/utils/providerConstants'
 import { Check, ChevronUp, Eye, EyeOff } from 'lucide-react'
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { MixpanelEvent, trackEvent } from '@/utils/mixpanel'
 
 const ImageProvider = ({ llmConfig, setLlmConfig }: { llmConfig: LLMConfig, setLlmConfig: (config: any) => void }) => {
     const [showApiKey, setShowApiKey] = useState(false);
     const [openImageProviderSelect, setOpenImageProviderSelect] = useState(false);
-    const [openaiCompatListMeta, setOpenaiCompatListMeta] = useState<{
-        modelsChecked: boolean
-        modelCount: number
-    }>({ modelsChecked: false, modelCount: 0 })
-
-    useEffect(() => {
-        if (llmConfig.IMAGE_PROVIDER !== 'openai_compatible') {
-            setOpenaiCompatListMeta({ modelsChecked: false, modelCount: 0 })
-        }
-    }, [llmConfig.IMAGE_PROVIDER])
     const isImageGenerationDisabled = llmConfig.DISABLE_IMAGE_GENERATION ?? false;
     const handleChangeImageGenerationDisabled = (value: boolean) => {
         trackEvent(MixpanelEvent.Settings_Provider_Selected, {
@@ -236,9 +227,9 @@ const ImageProvider = ({ llmConfig, setLlmConfig }: { llmConfig: LLMConfig, setL
 
                                             if (provider.value === "openai_compatible") {
                                                 return (
-                                                    <div className="space-y-4">
                                                     <OpenAICompatibleImageFields
                                                         layout="textProviderSettings"
+                                                        hideModelPicker
                                                         baseUrl={llmConfig.OPENAI_COMPAT_IMAGE_BASE_URL || ""}
                                                         apiKey={llmConfig.OPENAI_COMPAT_IMAGE_API_KEY || ""}
                                                         model={llmConfig.OPENAI_COMPAT_IMAGE_MODEL || ""}
@@ -251,29 +242,7 @@ const ImageProvider = ({ llmConfig, setLlmConfig }: { llmConfig: LLMConfig, setL
                                                         onModelChange={(v) => {
                                                             setLlmConfig((prev: any) => ({ ...prev, OPENAI_COMPAT_IMAGE_MODEL: v }));
                                                         }}
-                                                        onModelListMetaChange={setOpenaiCompatListMeta}
                                                     />
-                                                    <div className="w-[205px]">
-                                                        <label className="mb-2 block text-sm font-medium text-gray-700">
-                                                            Image-to-video model
-                                                        </label>
-                                                        <input
-                                                            type="text"
-                                                            placeholder="LiteLLM video slug"
-                                                            className="w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                                                            value={llmConfig.OPENAI_COMPAT_VIDEO_MODEL || ""}
-                                                            onChange={(e) => {
-                                                                setLlmConfig((prev: any) => ({
-                                                                    ...prev,
-                                                                    OPENAI_COMPAT_VIDEO_MODEL: e.target.value,
-                                                                }));
-                                                            }}
-                                                        />
-                                                        <p className="mt-1.5 text-xs text-gray-500">
-                                                            Uses the same LiteLLM URL and key. Required to animate slide images.
-                                                        </p>
-                                                    </div>
-                                                    </div>
                                                 );
                                             }
 
@@ -425,36 +394,24 @@ const ImageProvider = ({ llmConfig, setLlmConfig }: { llmConfig: LLMConfig, setL
                 </div>
             </div>
 
-            {!isImageGenerationDisabled &&
-                llmConfig.IMAGE_PROVIDER === "openai_compatible" &&
-                openaiCompatListMeta.modelsChecked &&
-                openaiCompatListMeta.modelCount === 0 && (
-                    <>
-                        <div className="mb-4 rounded-lg border border-yellow-200 bg-yellow-50 p-3">
-                            <p className="text-sm text-yellow-800">
-                                No models found. Please make sure your provider credentials are valid and the selected provider is reachable.
-                            </p>
-                        </div>
-                        <div className="flex w-full justify-end">
-                            <div className="w-[205px]">
-                                <label className="mb-2 block text-sm font-medium text-gray-700">Image model id</label>
-                                <input
-                                    type="text"
-                                    placeholder="e.g. dall-e-3, gpt-image-1"
-                                    className="w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                                    value={llmConfig.OPENAI_COMPAT_IMAGE_MODEL || ""}
-                                    onChange={(e) => {
-                                        setLlmConfig((prev: any) => ({
-                                            ...prev,
-                                            OPENAI_COMPAT_IMAGE_MODEL: e.target.value,
-                                        }));
-                                    }}
-                                />
-                            </div>
-                        </div>
-                    </>
-                )}
-
+            {!isImageGenerationDisabled && llmConfig.IMAGE_PROVIDER === "openai_compatible" && (
+                <MediaModelsField
+                    title="Image models"
+                    description="The default model generates every image. Enable alternatives so users (and Khai) can pick another model from the image dialog."
+                    baseUrl={llmConfig.OPENAI_COMPAT_IMAGE_BASE_URL || ""}
+                    apiKey={llmConfig.OPENAI_COMPAT_IMAGE_API_KEY || ""}
+                    defaultModel={llmConfig.OPENAI_COMPAT_IMAGE_MODEL || ""}
+                    alternatives={llmConfig.OPENAI_COMPAT_IMAGE_ALT_MODELS || ""}
+                    placeholder="e.g. gpt-image-1"
+                    onChange={({ defaultModel, alternatives }) => {
+                        setLlmConfig((prev: any) => ({
+                            ...prev,
+                            OPENAI_COMPAT_IMAGE_MODEL: defaultModel,
+                            OPENAI_COMPAT_IMAGE_ALT_MODELS: alternatives,
+                        }));
+                    }}
+                />
+            )}
 
             {/* Web Grounding Toggle - show at the end, below models dropdown */}
             {/* <div className="bg-white flex justify-between items-center p-10 rounded-[12px]">
