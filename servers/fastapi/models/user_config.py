@@ -155,3 +155,6 @@ class UserConfig(BaseModel):
     CODEX_USERNAME: Optional[str] = None
     CODEX_EMAIL: Optional[str] = None
     CODEX_IS_PRO: Optional[bool] = None
+
+    # Template V2 used when a deck doesn't pick one (id or name)
+    DEFAULT_TEMPLATE: Optional[str] = None

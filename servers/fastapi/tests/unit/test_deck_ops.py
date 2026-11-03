@@ -62,9 +62,10 @@ def test_operation_ids_son_estables_y_por_familia():
     )
 
 
-def test_quedan_fuera_assets_y_alias():
+def test_assets_con_el_motor_de_presenton_y_sin_alias():
     ids = _route_ids(OPS_ROUTER)
-    assert not any("generate_assets" in op for op in ids)
+    assert ids["deck_generate_assets"] == "/ops/generate_assets"
+    assert ids["deck_smart_generate_assets"] == "/ops/smart/generate_assets"
     assert "deck_create_component" not in ids
 
 

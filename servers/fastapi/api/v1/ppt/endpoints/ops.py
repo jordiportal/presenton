@@ -28,9 +28,8 @@ OPS_ROUTER = APIRouter(prefix="/ops", tags=["Deck operations"])
 
 DeckType = Literal["standard", "smart"]
 
-# generateAssets: images come from Brain's media hub, not from Presenton.
 # createComponent: alias of addComponent.
-EXCLUDED_TOOLS = frozenset({"generateAssets", "createComponent"})
+EXCLUDED_TOOLS = frozenset({"createComponent"})
 READ_ONLY_PREFIXES = ("get", "search", "read")
 RESERVED_FIELDS = ("presentation_id", "user_request")
 

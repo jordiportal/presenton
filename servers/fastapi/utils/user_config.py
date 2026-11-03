@@ -370,6 +370,8 @@ def get_user_config():
             if existing_config.CODEX_IS_PRO is not None
             else parse_bool_or_none(get_codex_is_pro_env())
         ),
+        DEFAULT_TEMPLATE=existing_config.DEFAULT_TEMPLATE
+        or os.getenv("DEFAULT_TEMPLATE"),
         OPEN_WEBUI_IMAGE_URL=existing_config.OPEN_WEBUI_IMAGE_URL or get_open_webui_image_url_env(),
         OPEN_WEBUI_IMAGE_API_KEY=existing_config.OPEN_WEBUI_IMAGE_API_KEY or get_open_webui_image_api_key_env(),
         OPENAI_COMPAT_IMAGE_BASE_URL=existing_config.OPENAI_COMPAT_IMAGE_BASE_URL

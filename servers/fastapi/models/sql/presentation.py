@@ -72,6 +72,8 @@ class PresentationModel(SQLModel, table=True):
     web_search: bool = Field(sa_column=Column(Boolean), default=False)
     theme: Optional[dict] = Field(sa_column=Column(JSON), default=None)
     fonts: Optional[dict] = Field(sa_column=Column(JSON), default=None)
+    # Template V2 elegida al crear; el esquema la usa en vez de pedirla.
+    template: Optional[str] = Field(sa_column=Column(String), default=None)
     generation_mode: Literal["standard", "smart"] = Field(
         sa_column=Column(String, nullable=False, default="standard"),
         default="standard",
@@ -101,6 +103,7 @@ class PresentationModel(SQLModel, table=True):
             web_search=self.web_search,
             theme=copy.deepcopy(self.theme),
             fonts=copy.deepcopy(self.fonts),
+            template=self.template,
             generation_mode=self.generation_mode,
             community_design_ids=copy.deepcopy(self.community_design_ids),
         )

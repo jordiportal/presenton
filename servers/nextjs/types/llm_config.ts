@@ -148,6 +148,9 @@ export interface LLMConfig {
   CODEX_EMAIL?: string;
   CODEX_IS_PRO?: boolean;
 
+  // Template V2 (id) used when a deck doesn't pick one
+  DEFAULT_TEMPLATE?: string;
+
   // Only used in UI settings
   USE_CUSTOM_URL?: boolean;
 

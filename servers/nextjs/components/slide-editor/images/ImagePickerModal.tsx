@@ -27,8 +27,6 @@ import { useSelector } from "react-redux";
 import { ImagesApi } from "@/app/(presentation-generator)/services/api/images";
 import type { ImageAssetResponse } from "@/app/(presentation-generator)/services/api/types";
 import { notify } from "@/components/ui/sonner";
-import { askBrain } from "@/utils/brain-bridge";
-import { isEmbedView } from "@/utils/embed";
 import { cn } from "@/lib/utils";
 import type { RootState } from "@/store/store";
 import { resolveBackendAssetSource } from "@/utils/api";
@@ -96,8 +94,7 @@ export function ImagePickerModal({
   const provider = normalizedProvider(llmConfig?.IMAGE_PROVIDER);
   const stockProvider = STOCK_IMAGE_PROVIDERS.has(provider) ? provider : null;
   const providerLabel = IMAGE_PROVIDERS[provider]?.label ?? "AI image provider";
-  const generationDisabled =
-    Boolean(llmConfig?.DISABLE_IMAGE_GENERATION) && !isEmbedView();
+  const generationDisabled = Boolean(llmConfig?.DISABLE_IMAGE_GENERATION);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [view, setView] = useState<PickerView>("discover");
   const [query, setQuery] = useState(initialPrompt || "");
@@ -269,13 +266,6 @@ export function ImagePickerModal({
 
   const generateImages = async () => {
     if (!query.trim() || generationDisabled) return;
-    if (isEmbedView() && askBrain(`Genera una imagen: ${query.trim()}`)) {
-      notify.success(
-        "Pedido enviado a Brain",
-        "El diseñador genera la imagen en el chat de la mesa."
-      );
-      return;
-    }
     setIsWorking(true);
     setError(null);
     try {

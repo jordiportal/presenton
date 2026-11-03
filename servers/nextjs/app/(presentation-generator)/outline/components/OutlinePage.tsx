@@ -43,6 +43,7 @@ import OutlineContent from "./OutlineContent";
 import OutlinePromptBar from "./OutlinePromptBar";
 import OutlineStandardHeader from "./OutlineStandardHeader";
 import TemplateSelection from "./TemplateSelection";
+import { TemplateListLoadingState } from "../../components/TemplateListUi";
 
 const DEFAULT_OUTLINE_CONFIG: PresentationConfig = {
   slides: null,
@@ -126,11 +127,23 @@ const OutlinePage: React.FC = () => {
   const { config: savedConfig, files } = useSelector(
     (state: RootState) => state.pptGenUpload
   );
+  const defaultTemplate = useSelector(
+    (state: RootState) => state.userConfig.llm_config.DEFAULT_TEMPLATE
+  )?.trim() || null;
 
   const [isTemplateStage, setIsTemplateStage] = useState(true);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(
     null
   );
+  const [selectedTemplateName, setSelectedTemplateName] = useState<
+    string | null
+  >(null);
+  // undefined mientras se carga el deck: evita mostrar la galería un instante.
+  const [deckTemplate, setDeckTemplate] = useState<string | null | undefined>(
+    presentation_id ? undefined : null
+  );
+  const preferredTemplate =
+    suggestedTemplate || deckTemplate || defaultTemplate;
   const [draftConfig, setDraftConfig] = useState<PresentationConfig>(
     savedConfig ? normalizeOutlineConfig(savedConfig) : DEFAULT_OUTLINE_CONFIG
   );
@@ -176,12 +189,17 @@ const OutlinePage: React.FC = () => {
   }, [savedConfig]);
 
   useEffect(() => {
-    // Un deck creado por API (p. ej. desde Brain) llega sin la config de upload.
-    if (savedConfig || !presentation_id) return;
+    if (!presentation_id) {
+      setDeckTemplate(null);
+      return;
+    }
     let cancelled = false;
     DashboardApi.getPresentation(presentation_id, { cache: "no-store" })
       .then((presentation) => {
-        if (cancelled || !presentation) return;
+        if (cancelled) return;
+        setDeckTemplate(presentation?.template?.trim() || null);
+        // Un deck creado por API (p. ej. desde Brain) llega sin la config de upload.
+        if (!presentation || savedConfig) return;
         setDraftConfig((previous) =>
           normalizeOutlineConfig({
             ...previous,
@@ -194,7 +212,9 @@ const OutlinePage: React.FC = () => {
           })
         );
       })
-      .catch(() => undefined);
+      .catch(() => {
+        if (!cancelled) setDeckTemplate(null);
+      });
     return () => {
       cancelled = true;
     };
@@ -244,10 +264,24 @@ const OutlinePage: React.FC = () => {
       position: number;
     }) => {
       setSelectedTemplateId(template.id);
+      setSelectedTemplateName(template.name);
       setIsTemplateStage(false);
       scrollToPageTop();
     },
     []
+  );
+
+  const handlePreferredTemplateResolved = useCallback(
+    (template: {
+      id: string;
+      name: string;
+      source: "default" | "custom";
+      position: number;
+    }) => {
+      if (selectedTemplateId) return;
+      handleTemplateSelect(template);
+    },
+    [handleTemplateSelect, selectedTemplateId]
   );
 
   const handleRegenerateOutline = useCallback(async () => {
@@ -417,10 +451,15 @@ const OutlinePage: React.FC = () => {
         title={isTemplateStage ? "Select Template" : "Outline Generation"}
         embed={isEmbed}
         onBack={
-          isTemplateStage && isEmbed
+          isTemplateStage && isEmbed && !selectedTemplateId
             ? undefined
             : () => {
                 if (isTemplateStage) {
+                  if (selectedTemplateId) {
+                    setIsTemplateStage(false);
+                    scrollToPageTop();
+                    return;
+                  }
                   router.push("/dashboard");
                   return;
                 }
@@ -431,20 +470,40 @@ const OutlinePage: React.FC = () => {
 
       {isTemplateStage ? (
         <main className="mx-auto w-full max-w-[1440px] px-5 pb-12 pt-10 sm:px-10 lg:px-20">
-          <TemplateSelection
-            presentationId={presentation_id}
-            selectedTemplateId={selectedTemplateId}
-            suggestedTemplate={suggestedTemplate}
-            onSuggestedTemplateResolved={(template) =>
-              setSelectedTemplateId((current) => current ?? template.id)
-            }
-            onSelectTemplate={handleTemplateSelect}
-          />
+          {deckTemplate === undefined ? (
+            <TemplateListLoadingState />
+          ) : (
+            <TemplateSelection
+              presentationId={presentation_id}
+              selectedTemplateId={selectedTemplateId}
+              suggestedTemplate={selectedTemplateId ? null : preferredTemplate}
+              onSuggestedTemplateResolved={handlePreferredTemplateResolved}
+              onSelectTemplate={handleTemplateSelect}
+            />
+          )}
         </main>
       ) : (
         <>
           <div className={isOutlineAssistantVisible ? "lg:mr-[369px]" : undefined}>
             <main className="mx-auto w-[calc(100%-2.5rem)] max-w-[967px] pb-28 pt-10 sm:w-[calc(100%-5rem)]">
+              {selectedTemplateName && (
+                <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-[#E4E0FF] bg-[#F7F5FF] px-4 py-2.5 text-xs text-[#3A3A3A]">
+                  <span className="min-w-0 truncate">
+                    Template:{" "}
+                    <strong className="font-semibold text-[#5141E5]">
+                      {selectedTemplateName}
+                    </strong>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleReturnToTemplates}
+                    disabled={streamState.isStreaming}
+                    className="shrink-0 rounded-full border border-[#D9D6FE] bg-white px-3 py-1 font-semibold text-[#5141E5] transition hover:bg-[#F4F3FF] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Change template
+                  </button>
+                </div>
+              )}
               <OutlinePromptBar
                 config={draftConfig}
                 disabled={outlineControlsBusy}

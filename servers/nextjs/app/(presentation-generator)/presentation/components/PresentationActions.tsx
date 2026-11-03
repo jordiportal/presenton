@@ -114,6 +114,8 @@ type PresentationActionsProps = React.ComponentProps<typeof Chat> & {
   presentationData?: unknown;
   panelOpen?: boolean;
   onPanelOpenChange?: (open: boolean) => void;
+  /** Embebido en Brain: su agente es el asistente, sin chat propio. */
+  hideAi?: boolean;
 };
 
 type ActionId =
@@ -1240,11 +1242,13 @@ function ActionsSidebar({
   activeAction,
   aiOnly = false,
   blocksUnavailable = false,
+  hideAi = false,
   onActionSelect,
 }: {
   activeAction: ActionId;
   aiOnly?: boolean;
   blocksUnavailable?: boolean;
+  hideAi?: boolean;
   onActionSelect: (action: ActionId) => void;
 }) {
   return (
@@ -1258,15 +1262,17 @@ function ActionsSidebar({
           background: "rgba(244, 243, 255, 0.60)",
         }}
       >
-        <PrimaryActionButton
-          active={activeAction === "ai"}
-          iconSrc={actionIconSrc.ai}
-          label="AI"
-          onClick={() => onActionSelect("ai")}
-        />
+        {!hideAi && (
+          <PrimaryActionButton
+            active={activeAction === "ai"}
+            iconSrc={actionIconSrc.ai}
+            label="AI"
+            onClick={() => onActionSelect("ai")}
+          />
+        )}
         {!aiOnly && (
           <>
-            <div className="h-0 w-[30px] border-t border-[#EDEEEF]" />
+            {!hideAi && <div className="h-0 w-[30px] border-t border-[#EDEEEF]" />}
             <PrimaryActionButton
               active={activeAction === "blocks"}
               disabled={blocksUnavailable}
@@ -1304,6 +1310,7 @@ function ActionsPanel({
   activeAction,
   aiOnly = false,
   blocksUnavailable = false,
+  hideAi = false,
   chatProps,
   editingDisabled = false,
   onBlockSelect,
@@ -1322,12 +1329,14 @@ function ActionsPanel({
   activeAction: ActionId;
   aiOnly?: boolean;
   blocksUnavailable?: boolean;
+  hideAi?: boolean;
   chatProps: Omit<
     PresentationActionsProps,
     | "editingDisabled"
     | "presentationData"
     | "panelOpen"
     | "onPanelOpenChange"
+    | "hideAi"
   >;
   editingDisabled?: boolean;
   onBlockSelect: (block: TemplateBlock) => void;
@@ -1345,13 +1354,15 @@ function ActionsPanel({
 }) {
   return (
     <div className="min-w-0 flex-1 bg-white">
-      <div className={cn("h-full", activeAction === "ai" ? "block" : "hidden")}>
-        <Chat
-          {...chatProps}
-          presentationData={presentationData}
-          inputDisabled={editingDisabled}
-        />
-      </div>
+      {!hideAi && (
+        <div className={cn("h-full", activeAction === "ai" ? "block" : "hidden")}>
+          <Chat
+            {...chatProps}
+            presentationData={presentationData}
+            inputDisabled={editingDisabled}
+          />
+        </div>
+      )}
 
       {!aiOnly && !blocksUnavailable && activeAction === "blocks" && (
         <BlocksPanel
@@ -1496,17 +1507,23 @@ const PresentationActions = (props: PresentationActionsProps) => {
     presentationData,
     panelOpen = true,
     onPanelOpenChange = () => undefined,
+    hideAi = false,
     ...chatProps
   } = props;
   const aiOnly = props.presentationType === "smart";
   const blocksUnavailable = isTemplateFreePresentation(presentationData);
+  const fallbackAction: ActionId = hideAi
+    ? blocksUnavailable
+      ? "texts"
+      : "blocks"
+    : "ai";
   const templateTheme = useMemo(
     () => resolvePresentationTheme(presentationData),
     [presentationData],
   );
   const [{ activeAction }, dispatchUiState] = useReducer(
     presentationActionsUiReducer,
-    initialPresentationActionsUiState,
+    hideAi ? { activeAction: fallbackAction } : initialPresentationActionsUiState,
   );
   const [templateV2SelectionContext, setTemplateV2SelectionContext] = useState<{
     slideIndex: number | null;
@@ -1539,13 +1556,17 @@ const PresentationActions = (props: PresentationActionsProps) => {
       : chatProps.currentSlide;
 
   useEffect(() => {
+    if (hideAi && activeAction === "ai") {
+      dispatchUiState({ type: "selectAction", activeAction: fallbackAction });
+      return;
+    }
     if (
       (aiOnly || (blocksUnavailable && activeAction === "blocks")) &&
-      activeAction !== "ai"
+      activeAction !== fallbackAction
     ) {
-      dispatchUiState({ type: "selectAction", activeAction: "ai" });
+      dispatchUiState({ type: "selectAction", activeAction: fallbackAction });
     }
-  }, [activeAction, aiOnly, blocksUnavailable]);
+  }, [activeAction, aiOnly, blocksUnavailable, fallbackAction, hideAi]);
 
   useEffect(() => {
     setHiddenSlideReference(null);
@@ -1553,6 +1574,7 @@ const PresentationActions = (props: PresentationActionsProps) => {
   }, [props.currentSlide]);
 
   useEffect(() => {
+    if (hideAi) return;
     const activateAiPanel = () => {
       dispatchUiState({ type: "selectAction", activeAction: "ai" });
       onPanelOpenChange(true);
@@ -1565,7 +1587,7 @@ const PresentationActions = (props: PresentationActionsProps) => {
         activateAiPanel,
       );
     };
-  }, [onPanelOpenChange]);
+  }, [hideAi, onPanelOpenChange]);
 
   useEffect(() => {
     const handleSurfaceSelected = (event: Event) => {
@@ -1817,6 +1839,9 @@ const PresentationActions = (props: PresentationActionsProps) => {
   };
 
   const handleActionSelect = (nextAction: ActionId) => {
+    if (hideAi && nextAction === "ai") {
+      return;
+    }
     if (aiOnly && nextAction !== "ai") {
       return;
     }
@@ -1848,6 +1873,7 @@ const PresentationActions = (props: PresentationActionsProps) => {
           activeAction={activeAction}
           aiOnly={aiOnly}
           blocksUnavailable={blocksUnavailable}
+          hideAi={hideAi}
           chatProps={{
             ...chatProps,
             currentSlide: chatSlide,
@@ -1879,6 +1905,7 @@ const PresentationActions = (props: PresentationActionsProps) => {
         activeAction={activeAction}
         aiOnly={aiOnly}
         blocksUnavailable={blocksUnavailable}
+        hideAi={hideAi}
         onActionSelect={handleActionSelect}
       />
     </div>
